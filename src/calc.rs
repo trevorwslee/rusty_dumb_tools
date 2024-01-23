@@ -45,8 +45,8 @@ macro_rules! assert_calc_eq_result {
         let res = $res;
         let calc_res = calc.get_result();
         let check_calc_res = match calc_res {
-            Ok(calc_res) => calc_res,
-            Err(_) => res + 1.0,
+            CalcResult::Final(calc_res) => calc_res,
+            _ => res + 1.0,
         };
         if check_calc_res != res {
             println!("XXX");
@@ -75,6 +75,8 @@ pub fn test_calc_empty() {
     let mut calc = DumbCalcProcessor::new();
     assert_calc_eq_result!(&calc, 0.0);
     calc.parse_and_push("123");
+    calc.eval().unwrap();
+    assert_eq!(123.0, calc.calc_impl.result);
     calc.eval().unwrap();
     assert_eq!(123.0, calc.calc_impl.result);
     calc.reset();
@@ -310,41 +312,46 @@ impl DumbCalcProcessor {
     /// please use [`DumbCalcProcessor::parse_and_push`] if you want to push multiple "calculation units" in a string, like a string of a complete infix expression
     pub fn push(&mut self, unit: &str) -> Result<(), String> {
         let unit = unit.trim();
-        let push_unit = match unit {
-            "(" => Unit::OpenBracket,
-            ")" => Unit::CloseBracket,
-            "+" => Unit::Operator(Op::ADD),
-            "-" => Unit::Operator(Op::SUBTRACT),
-            "*" => Unit::Operator(Op::MULTIPLY),
-            "/" => Unit::Operator(Op::DIVIDE),
-            "neg" => Unit::Operator(Op::NEGATE),
-            "sin" => Unit::Operator(Op::SIN),
-            "cos" => Unit::Operator(Op::COS),
-            "tan" => Unit::Operator(Op::TAN),
-            "asin" => Unit::Operator(Op::ASIN),
-            "acos" => Unit::Operator(Op::ACOS),
-            "atan" => Unit::Operator(Op::ATAN),
-            "log" => Unit::Operator(Op::LOG),
-            "ln" => Unit::Operator(Op::LN),
-            "sqrt" => Unit::Operator(Op::SQRT),
-            "square" => Unit::Operator(Op::SQUARE),
-            "inv" => Unit::Operator(Op::INVERSE),
-            "exp" => Unit::Operator(Op::EXP),
-            "mod" => Unit::Operator(Op::MOD),
-            "abs" => Unit::Operator(Op::ABS),
-            "%" => Unit::Operator(Op::PERCENT),
-            "PI" => Unit::Operand(std::f64::consts::PI),
-            "E" => Unit::Operand(std::f64::consts::E),
-            _ => match unit.parse::<f64>() {
-                Ok(operand) => Unit::Operand(operand),
-                Err(_) => {
-                    let err_msg = format!("'{}' is not a valid unit", unit);
-                    return Err(err_msg);
-                }
-            },
-        };
-        self.calc_impl.push(push_unit);
-        Ok(())
+        if unit == "=" {
+            self.eval();
+            return Ok(());
+        } else {
+            let push_unit = match unit {
+                "(" => Unit::OpenBracket,
+                ")" => Unit::CloseBracket,
+                "+" => Unit::Operator(Op::ADD),
+                "-" => Unit::Operator(Op::SUBTRACT),
+                "*" => Unit::Operator(Op::MULTIPLY),
+                "/" => Unit::Operator(Op::DIVIDE),
+                "neg" => Unit::Operator(Op::NEGATE),
+                "sin" => Unit::Operator(Op::SIN),
+                "cos" => Unit::Operator(Op::COS),
+                "tan" => Unit::Operator(Op::TAN),
+                "asin" => Unit::Operator(Op::ASIN),
+                "acos" => Unit::Operator(Op::ACOS),
+                "atan" => Unit::Operator(Op::ATAN),
+                "log" => Unit::Operator(Op::LOG),
+                "ln" => Unit::Operator(Op::LN),
+                "sqrt" => Unit::Operator(Op::SQRT),
+                "square" => Unit::Operator(Op::SQUARE),
+                "inv" => Unit::Operator(Op::INVERSE),
+                "exp" => Unit::Operator(Op::EXP),
+                "mod" => Unit::Operator(Op::MOD),
+                "abs" => Unit::Operator(Op::ABS),
+                "%" => Unit::Operator(Op::PERCENT),
+                "PI" => Unit::Operand(std::f64::consts::PI),
+                "E" => Unit::Operand(std::f64::consts::E),
+                _ => match unit.parse::<f64>() {
+                    Ok(operand) => Unit::Operand(operand),
+                    Err(_) => {
+                        let err_msg = format!("'{}' is not a valid unit", unit);
+                        return Err(err_msg);
+                    }
+                },
+            };
+            self.calc_impl.push(push_unit);
+            Ok(())
+        }
     }
     /// parse and push multiple "calculation units" in a string, like a string of a complete infix expression;
     /// each parsed "calculation unit" will be pushed one by one with [`DumbCalcProcessor::push`]
@@ -358,19 +365,30 @@ impl DumbCalcProcessor {
         Ok(())
     }
     /// evaluate the pushed "calculation units" and get the result;
+    /// the result will also be assigned to [`DumbCalcProcessor::result`], which can be used as the "initial" value of the next sequence of "calculation units"
     pub fn eval(&mut self) -> Result<f64, String> {
         self.calc_impl.eval();
-        self.get_result()
+        match self.get_result() {
+            CalcResult::Final(result) => Ok(result),
+            CalcResult::Intermediate(result) => panic!("unexpected intermediate result {}", result),
+            CalcResult::Error(err_msg) => Err(err_msg),
+        }
     }
-    /// return the result, which may be an intermediate result; call [`DumbCalcProcessor::eval`] to ensure the result is the final result
-    pub fn get_result(&self) -> Result<f64, String> {
+    /// return the calculation result so far; call [`DumbCalcProcessor::eval`] to evaluate the pushed "calculation units", and assign the result to it (as final result)
+    pub fn get_result(&self) -> CalcResult {
         let result = self.calc_impl.result;
         if result.is_nan() {
-            return Err("result is NaN".to_string());
+            CalcResult::Error("result is NaN".to_string())
         } else if result.is_infinite() {
-            return Err("result is infinity".to_string());
+            CalcResult::Error("result is infinity".to_string())
         } else {
-            return Ok(result);
+            let scanned = &self.calc_impl.scanned;
+            if scanned.len() > 0 {
+                let intermediate_result = scanned.last().unwrap();
+                CalcResult::Intermediate(*intermediate_result)
+            } else {
+                CalcResult::Final(result)
+            }
         }
     }
     // /// like [`DumbCalcProcessor::get_result`]
@@ -419,7 +437,15 @@ fn _to_next_unit_token(mut idx: usize, s: &Vec<char>) -> Option<(usize, usize)> 
     while idx < max_idx {
         let c = s[idx];
         if start_idx == -1 {
-            if c == '(' || c == ')' || c == '+' || c == '-' || c == '*' || c == '/' || c == '%' {
+            if c == '('
+                || c == ')'
+                || c == '+'
+                || c == '-'
+                || c == '*'
+                || c == '/'
+                || c == '%'
+                || c == '='
+            {
                 return Some((idx, idx + 1));
             }
             if c.is_whitespace() {
@@ -438,6 +464,7 @@ fn _to_next_unit_token(mut idx: usize, s: &Vec<char>) -> Option<(usize, usize)> 
             || c == '*'
             || c == '/'
             || c == '%'
+            || c == '='
         {
             end_idx = idx;
             break;
@@ -595,6 +622,55 @@ impl CalcImpl {
             }
             Unit::OpenBracket => {} // if it an open (, ignore it
             _ => panic!("unexpected unit {:?} ... self={:?}", unit, self),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub enum CalcResult {
+    Final(f64),
+    Intermediate(f64),
+    Error(String),
+}
+impl CalcResult {
+    pub fn unwrap(&self) -> f64 {
+        match *self {
+            CalcResult::Final(result) => result,
+            CalcResult::Intermediate(result) => result,
+            CalcResult::Error(ref err_msg) => panic!("Error: {}", err_msg),
+        }
+    }
+    pub fn is_final(&self) -> bool {
+        match *self {
+            CalcResult::Final(_) => true,
+            _ => false,
+        }
+    }
+    pub fn is_intermediate(&self) -> bool {
+        match *self {
+            CalcResult::Intermediate(_) => true,
+            _ => false,
+        }
+    }
+    pub fn is_ok(&self) -> bool {
+        match *self {
+            CalcResult::Error(_) => false,
+            _ => true,
+        }
+    }
+    pub fn is_err(&self) -> bool {
+        match *self {
+            CalcResult::Error(_) => true,
+            _ => false,
+        }
+    }
+}
+impl fmt::Display for CalcResult {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match *self {
+            CalcResult::Final(result) => write!(f, "{}.", result),
+            CalcResult::Intermediate(result) => write!(f, "{}", result),
+            CalcResult::Error(ref err_msg) => write!(f, "Error: {}", err_msg),
         }
     }
 }

@@ -1,4 +1,12 @@
-use rusty_dumb_tools::{arg::DumbArgBuilder, arg::DumbArgParser, calc, sap_arg};
+use std::io;
+use std::io::Write;
+
+use rusty_dumb_tools::{
+    arg::DumbArgBuilder,
+    arg::DumbArgParser,
+    calc::{self, CalcResult},
+    sap_arg,
+};
 
 use crate::debug;
 
@@ -10,6 +18,7 @@ pub fn create_demo_parser() -> DumbArgParser {
         .set_description("a demo")
         .set_with_desc_enums(vec![
             "calc:DumbCalcProcessor command-line input demo",
+            "calc-repl:DumbCalcProcessor REPL demo",
             "arg:DumbArgParser debug",
         ])
         .set_rest()
@@ -34,6 +43,9 @@ pub fn handle_demo(parser: DumbArgParser) {
             let mut demo_parser = _create_demo_parser_calc();
             parser.process_rest_args("tool", &mut demo_parser);
             _handle_demo_calc(demo_parser);
+        }
+        "calc-repl" => {
+            _handle_demo_calc_repl();
         }
         _ => panic!("Unknown tool: {}", tool),
     };
@@ -77,11 +89,63 @@ fn _handle_demo_calc(parser: DumbArgParser) {
     println!("|");
     match calc.eval() {
         Ok(_) => {
-            println!("| = {}", calc.get_result().unwrap());
+            println!("| = {}", calc.get_result());
         }
         Err(e) => {
             println!("| Error: {}", e);
         }
     }
     println!("|");
+}
+fn _handle_demo_calc_repl() {
+    let mut calc = calc::DumbCalcProcessor::new();
+    let mut units = String::new();
+
+    loop {
+        print!("> {}", units);
+        io::stdout().flush().unwrap();
+
+        let mut input = String::new();
+        std::io::stdin()
+            .read_line(&mut input)
+            .expect("Failed to read line");
+
+        let mut unit = input.trim();
+
+        if unit == "" {
+            unit = "=";
+        }
+
+        if unit == "=" {
+            calc.eval();
+        } else {
+            let push_res = calc.parse_and_push(unit);
+            match push_res {
+                Ok(_) => {}
+                Err(e) => {
+                    println!("| Error: {}", e);
+                    continue;
+                }
+            }
+        }
+
+        units.push_str(unit);
+        units.push(' ');
+
+        let result = calc.get_result();
+
+        let sep = match result {
+            CalcResult::Final(_) => {
+                units.clear();
+                "="
+            }
+            CalcResult::Intermediate(_) => ":",
+            CalcResult::Error(_) => {
+                units.clear();
+                calc.reset();
+                "!"
+            }
+        };
+        println!("| {} {}", sep, result);
+    }
 }

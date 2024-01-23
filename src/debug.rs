@@ -9,12 +9,12 @@ pub fn debug_calc_processor() {
     println!("2");
     calc.push("2").unwrap();
     calc.eval().unwrap();
-    println!("= {}", calc.get_result().unwrap());
+    println!("= {}", calc.get_result());
     assert_eq!(2.0, calc.get_result().unwrap());
 
     println!("CLEAR");
     calc.reset();
-    println!("= {}", calc.get_result().unwrap());
+    println!("= {}", calc.get_result());
     assert_eq!(0.0, calc.get_result().unwrap());
 
     println!("2 + (3 * 4) - 1");
@@ -28,7 +28,7 @@ pub fn debug_calc_processor() {
     calc.push("-").unwrap();
     calc.push("1").unwrap();
     calc.eval().unwrap();
-    println!("= {}", calc.get_result().unwrap());
+    println!("= {}", calc.get_result());
     assert_eq!(13.0, calc.get_result().unwrap());
 
     println!("+ (3 * 4) - 1");
@@ -41,14 +41,14 @@ pub fn debug_calc_processor() {
     calc.push("-").unwrap();
     calc.push("1").unwrap();
     calc.eval().unwrap();
-    println!("= {}", calc.get_result().unwrap());
+    println!("= {}", calc.get_result());
     assert_eq!(24.0, calc.get_result().unwrap());
 
     println!("- 24");
     calc.push("-").unwrap();
     calc.push("24.0").unwrap();
     calc.eval().unwrap();
-    println!("= {}", calc.get_result().unwrap());
+    println!("= {}", calc.get_result());
     assert_eq!(0.0, calc.get_result().unwrap());
 
     // calc.reset();

@@ -3,7 +3,7 @@ name = "rusty_dumb_tools"
 version = "0.1.0"
 edition = "2021"
 description = "A collection of simply tools."
-#repository = "https://github.com/username/repo"
+repository = "https://github.com/trevorwslee/rusty_dumb_tools"
 license = "MIT"
 exclude = [".vscode", ".ignore"]
 
