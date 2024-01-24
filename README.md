@@ -2,10 +2,12 @@
 
 A collection of simple tools in ***Rust*** as ***Rust*** modules:
 * `crate::arg::DumbArgParser`: A simple argument parser.
-  It can be useful for handling ***Rust*** command line argument parsing for a ***Rust*** program.
+  It can be useful for handling command line argument parsing for a ***Rust*** program.
 * `crate::calc::DumbCalcProcessor`: A simple infix calculation processor 
   It can be used to implement a simple calculator in ***Rust***.
 
+
+You may also want to refer to [`crate.io` page `RustyDumbTools`](https://crates.io/crates/rusty_dumb_tools).
 
 
 # Thank You!

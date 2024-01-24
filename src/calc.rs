@@ -84,6 +84,16 @@ pub fn test_calc_empty() {
     assert_eq!(0.0, calc.calc_impl.result);
 }
 #[test]
+pub fn test_calc_general() {
+    let mut calc = DumbCalcProcessor::new();
+    calc.parse_and_push("1.5");
+    calc.eval().unwrap();
+    assert_eq!(1.5, calc.get_result().unwrap());
+    calc.parse_and_push("+ 2.5 * 3 - 4");
+    calc.eval().unwrap();
+    assert_eq!(5.0, calc.get_result().unwrap());
+}
+#[test]
 pub fn test_calc_parse() {
     test_calc_prase_and_push!(" 2 + 2 * ( 1 + 1 ) - ( 2 + 2 ) / (1 + 1) ", 4.0);
     test_calc_prase_and_push!("2+3*(4+5-6)-(2+3)/(1+1)", 8.5);
@@ -288,6 +298,18 @@ pub fn debug_calc() {
 
 /// a simple infix calculation processor that accepts a stream of "calculation units" and evaluate the result;
 /// please refer to [`DumbCalcProcessor::push`] for the acceptable "calculation units"
+///
+/// example:
+/// ```
+/// use rusty_dumb_tools::calc::DumbCalcProcessor;
+/// let mut calc = DumbCalcProcessor::new();
+/// calc.push("1.5");  // push a single "calculation unit", like a number or operator
+/// calc.eval().unwrap();  // evaluate the pushed "calculation units" and get the result
+/// assert_eq!(1.5, calc.get_result().unwrap());
+/// calc.parse_and_push("+ 2.5 * 3 - 4"); // based on last calculation result, parse and push additional "calculation units"
+/// calc.eval().unwrap();  // evaluate the pushed "calculation units" and get the result
+/// assert_eq!(5.0, calc.get_result().unwrap());
+/// ```
 #[derive(Debug)]
 pub struct DumbCalcProcessor {
     calc_impl: CalcImpl,
@@ -308,6 +330,7 @@ impl DumbCalcProcessor {
     ///   - an unary operator should come after the operand that it operates on;
     ///   - these unary operators have the same highest precedence
     /// * a constant: "PI", "E"
+    /// * a "=", which will evaluate the pushed "calculation units"
     ///
     /// please use [`DumbCalcProcessor::parse_and_push`] if you want to push multiple "calculation units" in a string, like a string of a complete infix expression
     pub fn push(&mut self, unit: &str) -> Result<(), String> {
@@ -365,7 +388,8 @@ impl DumbCalcProcessor {
         Ok(())
     }
     /// evaluate the pushed "calculation units" and get the result;
-    /// the result will also be assigned to [`DumbCalcProcessor::result`], which can be used as the "initial" value of the next sequence of "calculation units"
+    /// the result will also be assigned to the internal `result`, which can be used as the "initial" value of the next sequence of "calculation units";
+    /// please refer to [`DumbCalcProcessor::get_result`] for the result
     pub fn eval(&mut self) -> Result<f64, String> {
         self.calc_impl.eval();
         match self.get_result() {
@@ -375,6 +399,8 @@ impl DumbCalcProcessor {
         }
     }
     /// return the calculation result so far; call [`DumbCalcProcessor::eval`] to evaluate the pushed "calculation units", and assign the result to it (as final result)
+    ///
+    /// note that the result is a [`CalcResult`] enum, that can be one of three kinds -- final, intermediate, or error
     pub fn get_result(&self) -> CalcResult {
         let result = self.calc_impl.result;
         if result.is_nan() {
@@ -505,8 +531,17 @@ impl CalcImpl {
         match last_pushed {
             Some(last_pushed_unit) => match last_pushed_unit {
                 Unit::Operand(_) => {
-                    if push_unit == Unit::OpenBracket {
-                        self._push(Unit::Operator(Op::MULTIPLY)); // add a * between if next is an open bracket
+                    // if push_unit == Unit::OpenBracket {
+                    //     self._push(Unit::Operator(Op::MULTIPLY)); // add a * between if next is an open bracket
+                    // }
+                    match push_unit {
+                        Unit::OpenBracket => {
+                            self._push(Unit::Operator(Op::MULTIPLY)); // add a * between if next is an open bracket
+                        }
+                        Unit::Operand(operand) => {
+                            self.scanned.pop(); // consecutive operands => replace the last one
+                        }
+                        _ => {}
                     }
                 }
                 Unit::OpenBracket => match push_unit {
@@ -523,7 +558,7 @@ impl CalcImpl {
                 Unit::Operator(last_op) => {
                     if let Unit::Operator(op) = push_unit {
                         if last_op.is_binary() && op.is_binary() {
-                            self.stack.pop(); // consecutive binary ops replace the last one
+                            self.stack.pop(); // consecutive binary ops => replace the last one
                         }
                     }
                 }
@@ -626,6 +661,10 @@ impl CalcImpl {
     }
 }
 
+/// calculation result, which can be one of three kinds
+/// * final: final calculation result
+/// * intermediate: intermediate result during "calculation units" being pushed
+/// * error: error like calculating 1 / 0
 #[derive(Debug)]
 pub enum CalcResult {
     Final(f64),

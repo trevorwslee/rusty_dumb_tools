@@ -1,15 +1,15 @@
 [package]
 name = "rusty_dumb_tools"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
-description = "A collection of simply tools."
+description = "A collection of simply tools Rust modules."
 repository = "https://github.com/trevorwslee/rusty_dumb_tools"
 license = "MIT"
+keywords = ["arg_parser", "calc_processor"]
+categories = ["command-line-utilities"]
+readme = "README.md"
 exclude = [".vscode", ".ignore"]
 
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-
-
 [dependencies]
+ 

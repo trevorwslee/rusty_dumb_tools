@@ -1,6 +1,6 @@
-use rusty_dumb_tools::{arg::DumbArgBuilder, arg::DumbArgParser, calc, sap_arg};
+use rusty_dumb_tools::demo;
 
-use crate::debug;
+use crate::{arg::DumbArgBuilder, arg::DumbArgParser, calc, sap_arg};
 
 pub fn debug_calc_processor() {
     println!("DumbCalc:");
@@ -62,47 +62,47 @@ pub fn debug_calc_processor() {
 }
 
 pub fn debug_dumb_arg_parser() {
-    let mut parser = debug::create_debug_arg_parser();
+    let mut parser = demo::demo_arg::create_debug_arg_parser();
     println!("parser: {:?}", parser);
     println!("^^^^^^^^^^^^^^^^^^^^^^^^^^");
     parser.parse_args();
     println!("==========================");
 }
 
-pub fn create_debug_arg_parser() -> DumbArgParser {
-    let mut parser = DumbArgParser::new();
-    parser.set_description("This is a simple argument parser.");
-    sap_arg!("i32")
-        .value(0)
-        .set_description("an integer")
-        .set_range(1, 10)
-        .add_to(&mut parser)
-        .unwrap();
-    sap_arg!("bool").default(true).add_to(&mut parser).unwrap();
-    sap_arg!("-f", "--float")
-        .value(0.1)
-        .add_to(&mut parser)
-        .unwrap();
-    sap_arg!("-v")
-        .fixed(true)
-        .set_description("turn on verbose mode")
-        .add_to(&mut parser)
-        .unwrap();
-    sap_arg!("-s", "--string")
-        .default("V1")
-        .set_with_desc_enums(vec!["V1:version 1", "V2:version 2", "V3:version 3"])
-        .add_to(&mut parser)
-        .unwrap();
-    sap_arg!("--string2")
-        .value("VAL2")
-        .set_description("this is the second string")
-        .set_enums(vec!["VAL1", "VAL2", "VAL3"])
-        .add_to(&mut parser)
-        .unwrap();
-    sap_arg!("multi")
-        .value(1)
-        .set_multi()
-        .add_to(&mut parser)
-        .unwrap();
-    parser
-}
+// pub fn create_debug_arg_parser() -> DumbArgParser {
+//     let mut parser = DumbArgParser::new();
+//     parser.set_description("This is a simple argument parser.");
+//     sap_arg!("i32")
+//         .value(0)
+//         .set_description("an integer")
+//         .set_range(1, 10)
+//         .add_to(&mut parser)
+//         .unwrap();
+//     sap_arg!("bool").default(true).add_to(&mut parser).unwrap();
+//     sap_arg!("-f", "--float")
+//         .value(0.1)
+//         .add_to(&mut parser)
+//         .unwrap();
+//     sap_arg!("-v")
+//         .fixed(true)
+//         .set_description("turn on verbose mode")
+//         .add_to(&mut parser)
+//         .unwrap();
+//     sap_arg!("-s", "--string")
+//         .default("V1")
+//         .set_with_desc_enums(vec!["V1:version 1", "V2:version 2", "V3:version 3"])
+//         .add_to(&mut parser)
+//         .unwrap();
+//     sap_arg!("--string2")
+//         .value("VAL2")
+//         .set_description("this is the second string")
+//         .set_enums(vec!["VAL1", "VAL2", "VAL3"])
+//         .add_to(&mut parser)
+//         .unwrap();
+//     sap_arg!("multi")
+//         .value(1)
+//         .set_multi()
+//         .add_to(&mut parser)
+//         .unwrap();
+//     parser
+// }
