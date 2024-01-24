@@ -168,13 +168,14 @@ pub fn test_calc_unary() {
         test_calc_prase_and_push!("1 exp", 1.0_f64.exp());
         test_calc_prase_and_push!("50%", 0.5);
     }
-    if true {
-        test_calc_prase_and_push!(" 0 cos ", 1.0);
-        test_calc_prase_and_push!(" ( 1 - 1 ) cos * ( 2 + 1)", 3.0);
-        test_calc_prase_and_push!(" 50% + 50 %", 1.0);
-        test_calc_prase_and_push!(" 2 * PI ", 2.0 * std::f64::consts::PI);
-        test_calc_prase_and_push!(" 3 * E ", 3.0 * std::f64::consts::E);
-    }
+}
+#[test]
+pub fn test_calc_const() {
+    test_calc_prase_and_push!(" 0 cos ", 1.0);
+    test_calc_prase_and_push!(" ( 1 - 1 ) cos * ( 2 + 1)", 3.0);
+    test_calc_prase_and_push!(" 50% + 50 %", 1.0);
+    test_calc_prase_and_push!(" 2 * PI ", 2.0 * std::f64::consts::PI);
+    test_calc_prase_and_push!(" 3 * E ", 3.0 * std::f64::consts::E);
 }
 
 /// For internal debugging use only.

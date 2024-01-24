@@ -7,8 +7,74 @@ A collection of simple tools in ***Rust*** as ***Rust*** modules:
   It can be used to implement a simple calculator in ***Rust***.
 
 
-You may also want to refer to [`crate.io` page about `RustyDumbTools`](https://crates.io/crates/rusty_dumb_tools).
+You may also want to refer to the [`crates.io` page about `RustyDumbTools`](https://crates.io/crates/rusty_dumb_tools).
 
+
+# Demo
+
+For a demo program of using the tools, you may want to run the included demo function `rusty_dumb_tools::demo::run_demo` like
+```
+use rusty_dumb_tools::demo;
+demo::run_demo(None);  // get arguments from command-line         
+````
+
+Assuming new ***Rust*** project with `main.rs` like
+```
+use rusty_dumb_tools::demo;
+fn main() {
+    demo::run_demo(None);
+}
+```
+the demo can be ***cargo*** run like
+* `cargo run -- -h`
+  <br>the input demonstrates using `DumbArgParser` for showing "help message"
+* `cargo run -- calc -h`
+  <br>`DumbArgParser` is set up to parse arguments for a sub-command (with another `DumbArgParser` object);
+  and the above input demonstrates showing of "help message" of the sub-command
+* `cargo run -- calc 1.1 + 2.2 * (4.3 - 2.4) + 5`
+  <br>the above demonstrate how to use a [sub-command] `DumbArgParser` to parse arguments for the sub-command `calc`
+* `cargo run -- calc-repl`
+  <br>the above demonstrate how to invoke the sub-command `calc-repl`
+* `cargo run -- arg -h`
+* `cargo run -- arg -f 0.2 5 --string2 VAL1 false 1 2 3`
+
+The output of running `cargo run -- -h`:
+```
+| USAGE: rusty_dumb_tools [-h] demo
+| : Demos of rusty_dumb_tools.
+| . -h, --help : HELP
+| . demo ... : REQUIRED; e.g. [calc]
+|   : a demo
+|   : . [calc] : DumbCalcProcessor command-line input demo
+|   : . [calc-repl] : DumbCalcProcessor REPL demo
+|   : . [arg] : DumbArgParser demo (more like debugging)
+```
+
+The output of running `cargo run -- calc -h`:
+```
+| USAGE: rusty_dumb_tools calc [-h] input
+| : DumbCalcProcessor command-line input demo.
+| . -h, --help : HELP
+| . input ... : REQUIRED; e.g. [123]
+|   : infix expression
+```
+
+The output of running `cargo run -- calc 1.1 + 2.2 * (4.3 - 2.4) + 5`:
+```
+|
+| = 10.28.
+|
+```
+
+After running `cargo run -- calc-repl`, the demo will get in a loop to get input from the prompt:
+```
+* enter an infix expression
+* can split the infix expression into multiple lines; e.g. a "unit" a line
+* finally, enter "=" (or an empty line) to evaluate it
+* can then continue to enter another infix expression ...
+
+>
+```
 
 # Thank You!
 

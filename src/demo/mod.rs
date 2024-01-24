@@ -33,14 +33,14 @@ pub fn run_demo(in_args: Option<Vec<&str>>) {
 
 pub fn create_demo_parser() -> DumbArgParser {
     let mut parser = DumbArgParser::new();
-    parser.set_description("A demos of rusty_dumb_tools.");
+    parser.set_description("Demos of rusty_dumb_tools.");
     sap_arg!("demo")
         .value("calc")
         .set_description("a demo")
         .set_with_desc_enums(vec![
             "calc:DumbCalcProcessor command-line input demo",
             "calc-repl:DumbCalcProcessor REPL demo",
-            "arg:DumbArgParser debug",
+            "arg:DumbArgParser demo (more like debugging)",
         ])
         .set_rest()
         .add_to(&mut parser)
