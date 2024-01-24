@@ -414,6 +414,8 @@ pub fn debug_arg() {
 /// * -h and --help are reserved for showing help message; after showing the help message, the program will exit
 /// * in case of invalid input argument, will show the error message as well as the help message, then the program will exit
 /// * also see [`sap_arg`] macro
+///
+/// You may want to refer to [`crate::demo::run_demo`] for a demo program that uses [`DumbArgParser`].
 #[derive(Debug)]
 pub struct DumbArgParser {
     args: Vec<Arg>,

@@ -310,6 +310,8 @@ pub fn debug_calc() {
 /// calc.eval().unwrap();  // evaluate the pushed "calculation units" and get the result
 /// assert_eq!(5.0, calc.get_result().unwrap());
 /// ```
+///
+/// You may want to refer to [`crate::demo::run_demo`] for a demo program that uses [`DumbCalcProcessor`].
 #[derive(Debug)]
 pub struct DumbCalcProcessor {
     calc_impl: CalcImpl,

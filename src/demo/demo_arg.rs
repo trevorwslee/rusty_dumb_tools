@@ -1,3 +1,5 @@
+#![deny(warnings)]
+
 use crate::{
     arg::{DumbArgBuilder, DumbArgParser},
     sap_arg,

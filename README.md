@@ -1,4 +1,4 @@
-# RustyDumbTools
+# RustyDumbTools (v0.1.1)
 
 A collection of simple tools in ***Rust*** as ***Rust*** modules:
 * `crate::arg::DumbArgParser`: A simple argument parser.
@@ -7,7 +7,7 @@ A collection of simple tools in ***Rust*** as ***Rust*** modules:
   It can be used to implement a simple calculator in ***Rust***.
 
 
-You may also want to refer to [`crate.io` page `RustyDumbTools`](https://crates.io/crates/rusty_dumb_tools).
+You may also want to refer to [`crate.io` page about `RustyDumbTools`](https://crates.io/crates/rusty_dumb_tools).
 
 
 # Thank You!
@@ -26,6 +26,10 @@ MIT
 
 
 # Change History:
+
+* v0.1.1
+  - added more documentations, and via `run_demo` function
+
 
 * v0.1.0
   - initial release
