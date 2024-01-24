@@ -1,6 +1,6 @@
 [package]
 name = "rusty_dumb_tools"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 description = "A collection of simply tools Rust modules."
 repository = "https://github.com/trevorwslee/rusty_dumb_tools"
@@ -12,4 +12,5 @@ exclude = [".vscode", ".ignore"]
 
 
 [dependencies]
- 
+iced = {version="0.10",features=["canvas", "tokio", "debug"]}
+time = { version = "0.3", features = ["local-offset"] }

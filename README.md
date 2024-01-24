@@ -1,4 +1,4 @@
-# RustyDumbTools (v0.1.1)
+# RustyDumbTools (v0.1.2)
 
 A collection of simple tools in ***Rust*** as ***Rust*** modules:
 * `crate::arg::DumbArgParser`: A simple argument parser.
@@ -9,10 +9,9 @@ A collection of simple tools in ***Rust*** as ***Rust*** modules:
 
 You may also want to refer to the [`crates.io` page about `RustyDumbTools`](https://crates.io/crates/rusty_dumb_tools).
 
-
 # Demo
 
-For a demo program of using the tools, you may want to run the included demo function `rusty_dumb_tools::demo::run_demo` like
+For a demo program of using the tools, you may want to run the included demo function [`rusty_dumb_tools::demo::run_demo`](https://docs.rs/rusty_dumb_tools/0.1.1/rusty_dumb_tools/demo/fn.run_demo.html) like
 ```
 use rusty_dumb_tools::demo;
 demo::run_demo(None);  // get arguments from command-line         
@@ -43,7 +42,7 @@ The output of running `cargo run -- -h`:
 | USAGE: rusty_dumb_tools [-h] demo
 | : Demos of rusty_dumb_tools.
 | . -h, --help : HELP
-| . demo ... : REQUIRED; e.g. [calc]
+| . demo ... : REQUIRED; e.g. calc ...
 |   : a demo
 |   : . [calc] : DumbCalcProcessor command-line input demo
 |   : . [calc-repl] : DumbCalcProcessor REPL demo
@@ -55,7 +54,7 @@ The output of running `cargo run -- calc -h`:
 | USAGE: rusty_dumb_tools calc [-h] input
 | : DumbCalcProcessor command-line input demo.
 | . -h, --help : HELP
-| . input ... : REQUIRED; e.g. [123]
+| . input ... : REQUIRED; e.g. 123 ...
 |   : infix expression
 ```
 

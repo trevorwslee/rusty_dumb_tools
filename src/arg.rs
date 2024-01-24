@@ -1058,7 +1058,11 @@ impl DumbArgParser {
         } else if arg.nature == ArgNature::Optional {
             println!(" : OPTIONAL; default [{}]", arg.value);
         } else {
-            println!(" : REQUIRED; e.g. [{}]", arg.value);
+            print!(" : REQUIRED; e.g. {}", arg.value);
+            if arg.multi_mode != ArgMultiMode::None {
+                print!(" ...");
+            }
+            println!();
         }
         match &arg.description {
             Some(description) => {

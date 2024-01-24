@@ -4,6 +4,7 @@
 
 pub mod demo_arg;
 pub mod demo_calc;
+pub mod demo_calc_gui;
 
 use crate::{
     arg::{DumbArgBuilder, DumbArgParser},
@@ -14,6 +15,8 @@ use crate::demo::{
     demo_arg::handle_demo_arg,
     demo_calc::{create_demo_parser_calc, handle_demo_calc, handle_demo_calc_repl},
 };
+
+use self::demo_calc_gui::handle_demo_calc_gui;
 
 ///
 /// run the demo.
@@ -40,6 +43,7 @@ pub fn create_demo_parser() -> DumbArgParser {
         .set_with_desc_enums(vec![
             "calc:DumbCalcProcessor command-line input demo",
             "calc-repl:DumbCalcProcessor REPL demo",
+            "calc-gui:DumbCalcProcessor GUI demo (a calculator)",
             "arg:DumbArgParser demo (more like debugging)",
         ])
         .set_rest()
@@ -62,6 +66,9 @@ pub fn handle_demo(parser: DumbArgParser) {
         }
         "calc-repl" => {
             handle_demo_calc_repl();
+        }
+        "calc-gui" => {
+            handle_demo_calc_gui();
         }
         "arg" => {
             let mut demo_parser = demo_arg::create_debug_arg_parser();
