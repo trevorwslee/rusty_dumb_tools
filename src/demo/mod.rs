@@ -6,6 +6,8 @@ pub mod demo_arg;
 pub mod demo_calc;
 pub mod demo_calc_gui;
 
+mod test;
+
 use crate::{
     arg::{DumbArgBuilder, DumbArgParser},
     sap_arg,

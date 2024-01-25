@@ -70,7 +70,7 @@ pub fn handle_demo_calc_repl() {
         }
 
         if unit == "=" {
-            calc.eval().unwrap();
+            calc.evaluate()
         } else {
             let push_res = calc.parse_and_push(unit);
             match push_res {
