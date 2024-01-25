@@ -110,6 +110,11 @@ fn test_arg_types() {
         let param: i32 = parser.get("f64").unwrap();
         std::process::exit(-1); // should not reach here
     });
+    assert_eq!("1", parser.get_string("i32").unwrap());
+    assert_eq!("2", parser.get_string("i64").unwrap());
+    assert_eq!("3", parser.get_string("f32").unwrap());
+    assert_eq!("4", parser.get_string("f64").unwrap());
+    assert_eq!("true", parser.get_string("bool").unwrap());
     assert!(result.is_err());
 }
 #[test]
@@ -261,6 +266,7 @@ fn test_multi_arg() {
         .add_to(&mut parser);
     parser.process_args(vec![]);
     assert_eq!(vec![20], parser.get_multi::<i32>("--F").unwrap());
+    assert_eq!(vec!["20"], parser.get_multi_strings("--F").unwrap());
     parser.process_args(vec!["-f", "20", "1", "300"]);
     assert_eq!(vec![20, 1, 300], parser.get_multi::<i32>("--F").unwrap());
     if true {
@@ -513,6 +519,8 @@ impl DumbArgParser {
     }
     /// get the parsed -- [`DumbArgParser::parse_args`] -- argument value (parameter) assigned to the given argument name
     /// * `arg_name` - the argument name of which the value is to be retrieved
+    /// 
+    /// note: except that all types can be implicitly converted to [`String`], no other implicit type conversion; if type does not agree, will panic
     pub fn get<T: ArgValueTrait>(&self, arg_name: &str) -> Option<T> {
         let arg_idx = match self.input_arg_index_map.get(arg_name) {
             Some(arg_idx) => arg_idx,
@@ -527,8 +535,14 @@ impl DumbArgParser {
             Err(err) => panic!("{}", err),
         }
     }
+    // like [`DumbArgParser::get`] but returns a [`String`]
+    pub fn get_string(&self, arg_name: &str) -> Option<String> {
+        self.get::<String>(arg_name)
+    }
     /// get the parsed -- [`DumbArgParser::parse_args`] -- multi-argument values -- see [`DumbArgBuilder::set_multi`] -- associated with the given argument name
     /// * `arg_name` - the argument name of which the values are to be retrieved
+    /// 
+    /// note: like [`DumbArgParser::get`], except when target type is [`String`], no implicit type conversion
     pub fn get_multi<T: ArgValueTrait>(&self, arg_name: &str) -> Option<Vec<T>> {
         match &self.input_multi_arg_data {
             Some(input_multi_arg_data) => {
@@ -550,6 +564,10 @@ impl DumbArgParser {
             }
             None => None,
         }
+    }
+    /// like [`DumbArgParser::get_multi`] but returns a [`Vec`] of [`String`]
+    pub fn get_multi_strings(&self, arg_name: &str) -> Option<Vec<String>> {
+        self.get_multi::<String>(arg_name)
     }
     /// get the parsed -- [`DumbArgParser::parse_args`] -- "rest" multi-argument values -- see [`DumbArgBuilder::set_rest`] -- associated with the given argument name
     /// * `arg_name` - the argument name of which the values are to be retrieved

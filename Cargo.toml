@@ -12,5 +12,6 @@ exclude = [".vscode", ".ignore"]
 
 
 [dependencies]
-iced = {version="0.10",features=["canvas", "tokio", "debug"]}
-time = { version = "0.3", features = ["local-offset"] }
+iced = "0.10"
+#iced = {version="0.10",features=["canvas", "tokio", "debug"]}
+#time = { version = "0.3", features = ["local-offset"] }
