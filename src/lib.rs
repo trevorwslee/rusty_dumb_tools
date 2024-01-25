@@ -35,4 +35,6 @@
 pub mod arg;
 pub mod calc;
 
+pub mod calculator;
+
 pub mod demo;

@@ -4,6 +4,7 @@
 use crate::{
   arg::{DumbArgBuilder, DumbArgParser},
   calc::{self, CalcResult, DumbCalcProcessor},
+  calculator::DumbCalculator,
   sap_arg,
 };
 
@@ -512,4 +513,47 @@ fn test_arg__() {
     );
 }
 
+#[test]
+fn test_calculator_general() {
+  let mut calculator = DumbCalculator::new();
+  assert_eq!(calculator.get_display(), "0");
+  calculator.push("1").unwrap();
+  assert_eq!(calculator.get_display(), "1");
+  calculator.push(".").unwrap();
+  assert_eq!(calculator.get_display(), "1.0");
+  calculator.push("2").unwrap();
+  assert_eq!(calculator.get_display(), "1.2");
+  calculator.push(".").unwrap();
+  assert_eq!(calculator.get_display(), "1.2");
+  calculator.push("+").unwrap();
+  assert_eq!(calculator.get_display(), "1.2");
+  calculator.push("1").unwrap();
+  calculator.push("0").unwrap();
+  assert_eq!(calculator.get_display(), "10");
+  calculator.push("=").unwrap();
+  assert_eq!(calculator.get_display(), "11.2");
+  calculator.push("*").unwrap();
+  assert_eq!(calculator.get_display(), "11.2");
+  calculator.push("4").unwrap();
+  assert_eq!(calculator.get_display(), "4");
+  calculator.push("=").unwrap();
+  assert_eq!(calculator.get_display(), "44.8");
+}
 
+fn test_calculator_sequence() {
+    let mut calculator = DumbCalculator::new();
+    assert_eq!(calculator.get_display(), "0");
+    let input = "2*(1+3)-4=-4=";
+    let check = "2221134844440";
+    let input: Vec<char> = input.chars().collect();
+    let check: Vec<char> = check.chars().collect();
+    let count = input.len();
+    assert_eq!(count, check.len());
+    for i in 0..count {
+      let input = input[i];
+      let check = check[i];
+      calculator.push(input.to_string().as_str()).unwrap();
+      assert_eq!(calculator.get_display(), check.to_string());
+    }
+  }
+  

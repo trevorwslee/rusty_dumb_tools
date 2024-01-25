@@ -4,7 +4,7 @@
 
 pub mod demo_arg;
 pub mod demo_calc;
-pub mod demo_calc_gui;
+pub mod demo_calculator_gui;
 
 mod test;
 
@@ -18,7 +18,7 @@ use crate::demo::{
     demo_calc::{create_demo_parser_calc, handle_demo_calc, handle_demo_calc_repl},
 };
 
-use self::demo_calc_gui::handle_demo_calc_gui;
+use self::demo_calculator_gui::handle_demo_calc_gui;
 
 ///
 /// run the demo.
