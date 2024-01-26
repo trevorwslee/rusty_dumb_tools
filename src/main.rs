@@ -63,10 +63,10 @@ fn released_main() {
 }
 
 fn debug_main() {
-    calc::debug_calc();
+    //calc::debug_calc();
     debug::debug_calc_processor();
 
-    arg::debug_arg();
+    //arg::debug_arg();
 
     debug::debug_dumb_arg_parser();
 }

@@ -1,3 +1,5 @@
+//! core [`crate::calc`] demo code
+
 #![deny(warnings)]
 
 use std::io;
@@ -101,4 +103,3 @@ pub fn handle_demo_calc_repl() {
         println!("| {} {}", sep, result);
     }
 }
-

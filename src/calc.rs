@@ -6,12 +6,11 @@
 use std::{fmt, num::ParseFloatError};
 
 #[test]
-pub fn test_calc() {
-}
-
+pub fn test_calc() {}
 
 /// For internal debugging use only.
-pub fn debug_calc() {
+#[test]
+fn debug_calc() {
     if true {
         println!("raw");
         let open: Unit = Unit::OpenBracket;
@@ -246,12 +245,17 @@ impl DumbCalcProcessor {
         } else if result.is_infinite() {
             CalcResult::Error("result is infinity".to_string())
         } else {
-            let scanned = &self.calc_impl.scanned;
-            if scanned.len() > 0 {
-                let intermediate_result = scanned.last().unwrap();
-                CalcResult::Intermediate(*intermediate_result)
+            let stack = &self.calc_impl.stack;
+            if let Some(Unit::OpenBracket) = stack.last() {
+                CalcResult::Intermediate(0.0)
             } else {
-                CalcResult::Final(result)
+                let scanned = &self.calc_impl.scanned;
+                if scanned.len() > 0 {
+                    let intermediate_result = scanned.last().unwrap();
+                    CalcResult::Intermediate(*intermediate_result)
+                } else {
+                    CalcResult::Final(result)
+                }
             }
         }
     }

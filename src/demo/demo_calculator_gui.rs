@@ -1,3 +1,7 @@
+//! core [`crate::calculator`] demo code
+//!
+//! ***work in progress***
+
 #![deny(warnings)]
 #![allow(unused)]
 
@@ -25,6 +29,7 @@ struct Counter {
     count: i32,
 }
 #[derive(Debug, Clone, Copy)]
+
 enum CounterMessage {
     Increment,
     Decrement,
@@ -84,4 +89,3 @@ impl Sandbox for Counter {
         }
     }
 }
-

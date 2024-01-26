@@ -6,7 +6,9 @@ pub mod demo_arg;
 pub mod demo_calc;
 pub mod demo_calculator_gui;
 
-mod test;
+mod test_arg;
+mod test_calc;
+mod test_calculator;
 
 use crate::{
     arg::{DumbArgBuilder, DumbArgParser},
@@ -21,10 +23,13 @@ use crate::demo::{
 use self::demo_calculator_gui::handle_demo_calc_gui;
 
 ///
-/// run the demo.
+/// run the demo, which is a command-line program that allows you to choose from a list of sub-demos
 /// * `in_args` - if None, parse arguments from command-line; otherwise, parse from `in_args`.
 ///
-/// note that the core implementations are actually in [`crate::demo::demo_arg`] and [`crate::demo::demo_calc`]
+/// sub-demos:
+/// * `calc`: see [`crate::demo::demo_calc::handle_demo_calc`]
+/// * `calc-repl`: see [`crate::demo::demo_calc::handle_demo_calc_repl`]
+/// * `arg`: see [`crate::demo::demo_arg::handle_demo_arg`]
 pub fn run_demo(in_args: Option<Vec<&str>>) {
     let mut parser = create_demo_parser();
     if in_args.is_some() {
@@ -33,9 +38,10 @@ pub fn run_demo(in_args: Option<Vec<&str>>) {
     } else {
         parser.parse_args();
     }
-    handle_demo(parser);
+    handle_sub_demo(parser);
 }
 
+/// create a [`DumbArgParser`] for the demo; it is supposed to be called by [`run_demo`]
 pub fn create_demo_parser() -> DumbArgParser {
     let mut parser = DumbArgParser::new();
     parser.set_description("Demos of rusty_dumb_tools.");
@@ -53,7 +59,9 @@ pub fn create_demo_parser() -> DumbArgParser {
         .unwrap();
     parser
 }
-pub fn handle_demo(parser: DumbArgParser) {
+
+/// handle running a sub-demo; to be called by [`run_demo`]
+pub fn handle_sub_demo(parser: DumbArgParser) {
     let demo = match parser.get::<String>("demo") {
         Some(t) => t,
         None => {
@@ -77,6 +85,6 @@ pub fn handle_demo(parser: DumbArgParser) {
             parser.process_rest_args("demo", &mut demo_parser);
             handle_demo_arg(demo_parser);
         }
-        _ => panic!("Unknown demo: {}", demo),
+        _ => panic!("Unknown sub-demo: {}", demo),
     };
 }

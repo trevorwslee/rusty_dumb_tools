@@ -36,13 +36,12 @@ macro_rules! sap_arg {
   };
 }
 
-
 #[test]
-fn test_arg() {
-}
+fn test_arg() {}
 
 /// For use by [`DumbArgParser`] internally for debugging.
-pub fn debug_arg() {
+#[test]
+fn debug_arg() {
     let mut parser = DumbArgParser::new();
     parser.set_description("This is a simple argument parser.");
     println!("description: {:?}", parser.description);
@@ -215,7 +214,7 @@ impl DumbArgParser {
     }
     /// get the parsed -- [`DumbArgParser::parse_args`] -- argument value (parameter) assigned to the given argument name
     /// * `arg_name` - the argument name of which the value is to be retrieved
-    /// 
+    ///
     /// note: except that all types can be implicitly converted to [`String`], no other implicit type conversion; if type does not agree, will panic
     pub fn get<T: ArgValueTrait>(&self, arg_name: &str) -> Option<T> {
         let arg_idx = match self.input_arg_index_map.get(arg_name) {
@@ -237,7 +236,7 @@ impl DumbArgParser {
     }
     /// get the parsed -- [`DumbArgParser::parse_args`] -- multi-argument values -- see [`DumbArgBuilder::set_multi`] -- associated with the given argument name
     /// * `arg_name` - the argument name of which the values are to be retrieved
-    /// 
+    ///
     /// note: like [`DumbArgParser::get`], except when target type is [`String`], no implicit type conversion
     pub fn get_multi<T: ArgValueTrait>(&self, arg_name: &str) -> Option<Vec<T>> {
         match &self.input_multi_arg_data {
@@ -1001,7 +1000,8 @@ enum ArgMultiMode {
 }
 
 #[derive(Debug)]
-struct ArgParserSettings {  // not yet use; not very useful .. when pub, call it DumbArgParserSettings
+struct ArgParserSettings {
+    // not yet use; not very useful .. when pub, call it DumbArgParserSettings
     pub program_name: Option<String>,
     pub description: Option<String>,
     pub allow_none: bool,

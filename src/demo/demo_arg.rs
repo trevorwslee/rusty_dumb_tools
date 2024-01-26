@@ -1,3 +1,5 @@
+//! core [`crate::arg`] demo code
+
 #![deny(warnings)]
 
 use crate::{
