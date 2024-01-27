@@ -13,6 +13,7 @@ use std::{
 
 use crate::arg;
 
+/// *please consider using `dap_arg!` macro instead, since `sap_arg!` will be deprecated*<br>
 /// use this macro to create a [`DumbArgBuilder`] instance to build argument object (argument specification) to be added to [`DumbArgParser`] with [`DumbArgBuilder::add_to`]
 /// the macro accepts one for more strings (positional argument name or flags) like
 /// ```
@@ -36,12 +37,93 @@ macro_rules! sap_arg {
   };
 }
 
+/// use this macro to create a [`DumbArgBuilder`] instance to build argument object (argument specification) to be added to [`DumbArgParser`] with [`DumbArgBuilder::add_to`]
+/// the macro accepts one for more strings (positional argument name or flags) like
+/// ```
+/// use rusty_dumb_tools::{arg::{DumbArgParser, DumbArgBuilder}, dap_arg};
+/// let mut parser = DumbArgParser::new();
+/// dap_arg!("-f", flag2="--flag").add_to(&mut parser); // e.g. ... -f flag-value ...
+/// dap_arg!("-v", flag2="--verbose", fixed=true).add_to(&mut parser); // e.g. ... -v ... -- this will turn "on" -v with value true
+/// dap_arg!("position1").add_to(&mut parser); // e.g. ... -f flag-value positional-1-value
+/// dap_arg!("position2", default="def").add_to(&mut parser); // e.g. ... -f flag-value positional-1-value positional-2-value
+/// assert_eq!("<program> [-h] -f flag [-v] position1 [position2]", parser.compose_usage());
+/// ```
+/// also see [`DumbArgParser`]
+#[macro_export]
+macro_rules! dap_arg {
+    // for case like "name, flag2=flag2, value=value, default=default, fixed=fixed"
+    ($name:expr $(, flag2=$flag2:expr)? $(, value=$value:expr)? $(, default=$default:expr)? $(, fixed=$fixed:expr)?) => {
+          {
+              let mut name_or_flags = Vec::new();
+              name_or_flags.push($name.to_string());
+              $(name_or_flags.push($flag2.to_string());)?
+              let mut builder = DumbArgBuilder::new(name_or_flags);
+              $(builder.value($value);)?
+              $(builder.default($default);)?
+              $(builder.fixed($fixed);)?
+              builder
+          }
+      };
+    // for case like "-v", "--verbose"
+    ($name:expr, $name2:expr) => {
+        {
+            let mut name_or_flags = Vec::new();
+            name_or_flags.push($name.to_string());
+            name_or_flags.push($name2.to_string());
+            DumbArgBuilder::new(name_or_flags)
+        }
+    };
+    // for case like "pos"
+    ($name:expr) => {{
+        let mut name_or_flags = Vec::new();
+        name_or_flags.push($name.to_string());
+        DumbArgBuilder::new(name_or_flags)
+    }};
+    ($($x:expr),*) => {
+        {
+            let mut name_or_flags = Vec::new();
+            $(name_or_flags.push($x.to_string());)*
+            DumbArgBuilder::new(name_or_flags)
+        }
+    };
+  }
+
 #[test]
 fn test_arg() {}
 
 /// For use by [`DumbArgParser`] internally for debugging.
 #[test]
 fn debug_arg() {
+    let mut parser = DumbArgParser::new();
+    parser.set_description("This is a simple argument parser.");
+    println!("description: {:?}", parser.description);
+
+    dap_arg!("-d", flag2 = "--def", default = "default").add_to(&mut parser);
+    dap_arg!("-v", flag2 = "--verbose", fixed = false).add_to(&mut parser);
+    dap_arg!("i32", value = 0).add_to(&mut parser);
+    dap_arg!("string", value = "string").add_to(&mut parser);
+    dap_arg!("bool", value = false).add_to(&mut parser);
+    println!("parser: {:?}", parser);
+
+    println!("^^^^^^^^^^^^^^^^^^^^^^^^^^");
+
+    let in_args = vec!["-v", "123", "string", "true"];
+    parser.process_args(in_args);
+
+    println!("==========================");
+    println!(". -d: {:?}", parser.get::<String>("-d"));
+    //println!(". -d: {:?}", parser.get::<&str>("-d"));
+    println!(". -d: {:?}", parser.get::<String>("-d"));
+    //println!(". -d: {:?}", parser.get::<&str>("-d"));
+    println!(". string: {:?}", parser.get::<String>("string"));
+    //println!(". string: {:?}", parser.get::<&str>("string"));
+    println!(". i32: {:?}", parser.get::<i32>("i32"));
+    println!(". i32 as string: {:?}", parser.get::<String>("i32"));
+    println!(". -d as string: {:?}", parser.get::<String>("-d"));
+}
+
+#[test]
+fn debug_arg_sap() {
     let mut parser = DumbArgParser::new();
     parser.set_description("This is a simple argument parser.");
     println!("description: {:?}", parser.description);
@@ -78,15 +160,15 @@ fn debug_arg() {
 ///
 /// example usage:
 /// ```
-/// use rusty_dumb_tools::{arg::{DumbArgParser, DumbArgBuilder}, sap_arg};
+/// use rusty_dumb_tools::{arg::{DumbArgParser, DumbArgBuilder}, dap_arg};
 /// let mut parser = DumbArgParser::new();
 /// parser.set_description("This is a simple argument parser.");
 /// parser.set_allow_missing_arguments();  // normal should not do this
-/// sap_arg!("-v", "--verbose").fixed(true).add_to(&mut parser);  // argument flag "-v" / "--verbose" with fixed value (true) when the flag is present
-/// sap_arg!("-n", "--name").default("nobody").add_to(&mut parser);  // argument "-n" / "--name" requiring input value, with default "nobody"
-/// sap_arg!("str-arg").add_to(&mut parser);  // positional argument "str-arg" (of type String)
-/// sap_arg!("i32-arg").value(123).add_to(&mut parser);  // positional argument "i32-arg" of type i32 (inferred from the value 123)
-/// sap_arg!("multi-arg").set_multi().add_to(&mut parser);  // positional multi-argument "multi-arg" that will accept multiple values (one + rest)
+/// dap_arg!("-v", flag2="--verbose", fixed=true).add_to(&mut parser);  // argument flag "-v" / "--verbose" with fixed value (true) when the flag is present
+/// dap_arg!("-n", flag2="--name", default="nobody").add_to(&mut parser);  // argument "-n" / "--name" requiring input value, with default "nobody"
+/// dap_arg!("str-arg").add_to(&mut parser);  // positional argument "str-arg" (of type String)
+/// dap_arg!("i32-arg", value=123).add_to(&mut parser);  // positional argument "i32-arg" of type i32 (inferred from the value 123)
+/// dap_arg!("multi-arg").set_multi().add_to(&mut parser);  // positional multi-argument "multi-arg" that will accept multiple values (one + rest)
 /// // parser.show_help(None, false);
 /// // assert_eq!("<program> [-h] [-v] [-n name] str-arg i32-arg multi-arg", parser.compose_usage());
 /// parser.parse_args();
@@ -100,7 +182,7 @@ fn debug_arg() {
 /// notes:
 /// * -h and --help are reserved for showing help message; after showing the help message, the program will exit
 /// * in case of invalid input argument, will show the error message as well as the help message, then the program will exit
-/// * also see [`sap_arg`] macro
+/// * also see [`dap_arg`] macro
 ///
 /// You may want to refer to [`crate::demo::run_demo`] for a demo program that uses [`DumbArgParser`].
 #[derive(Debug)]

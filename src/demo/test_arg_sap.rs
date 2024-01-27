@@ -10,8 +10,8 @@ use crate::{
 fn test_missing_args() {
     println!("*** MISSING ARGUMENTS ***");
     let mut parser = DumbArgParser::new();
-    dap_arg!("i32", value = 0).add_to(&mut parser).unwrap();
-    dap_arg!("miss", value = 0).add_to(&mut parser).unwrap();
+    sap_arg!("i32").value(0).add_to(&mut parser).unwrap();
+    sap_arg!("miss").value(0).add_to(&mut parser).unwrap();
     let process_res = parser.check_process_args(vec!["123"], true);
     assert_eq!("argument [miss] not provided", process_res.unwrap_err());
 }
@@ -19,8 +19,8 @@ fn test_missing_args() {
 fn test_missing_arg_flags() {
     println!("*** MISSING ARGUMENTS (FLAG) ***");
     let mut parser = DumbArgParser::new();
-    dap_arg!("-miss", value = 0).add_to(&mut parser);
-    dap_arg!("i32", value = 0).add_to(&mut parser);
+    sap_arg!("-miss").value(0).add_to(&mut parser);
+    sap_arg!("i32").value(0).add_to(&mut parser);
     let process_res = parser.check_process_args(vec!["123"], true);
     assert_eq!("argument [-miss] not provided", process_res.unwrap_err());
 }
@@ -29,9 +29,9 @@ fn test_allow_missing_arg_flags() {
     println!("*** ALLOW MISSING ARGUMENTS ***");
     let mut parser = DumbArgParser::new();
     parser.set_allow_missing_arguments();
-    dap_arg!("-miss1", value = 0).add_to(&mut parser);
-    dap_arg!("-miss2", value = "").add_to(&mut parser);
-    dap_arg!("i32", value = 0).add_to(&mut parser);
+    sap_arg!("-miss1").value(0).add_to(&mut parser);
+    sap_arg!("-miss2").value("").add_to(&mut parser);
+    sap_arg!("i32").value(0).add_to(&mut parser);
     parser.process_args(vec!["123"]);
     assert!(parser.get::<i32>("-miss1").is_none());
     assert!(parser.get::<String>("-miss2").is_none());
@@ -41,7 +41,7 @@ fn test_invalid_arg() {
     if true {
         println!("*** INVALID ARGUMENT ***");
         let mut parser = DumbArgParser::new();
-        dap_arg!("i32", value = 0).add_to(&mut parser);
+        sap_arg!("i32").value(0).add_to(&mut parser);
         let process_res = parser.check_process_args(vec!["abc"], true);
         assert_eq!("failed to parse \"abc\" as i32", process_res.unwrap_err());
         let process_res = parser.check_process_args(vec!["123", "456"], true);
@@ -55,13 +55,13 @@ fn test_invalid_arg() {
 fn test_arg_types() {
     println!("*** ARGUMENT TYPES ***");
     let mut parser = DumbArgParser::new();
-    dap_arg!("i32", value = 0 as i32).add_to(&mut parser);
-    dap_arg!("i64", value = 0 as i64).add_to(&mut parser);
-    dap_arg!("f32", value = 0 as f32).add_to(&mut parser);
-    dap_arg!("f64", value = 0 as f64).add_to(&mut parser);
-    dap_arg!("bool", value = false).add_to(&mut parser);
-    dap_arg!("string", value = "".to_string()).add_to(&mut parser);
-    dap_arg!("string2", value = "STR2").add_to(&mut parser);
+    sap_arg!("i32").value(0 as i32).add_to(&mut parser);
+    sap_arg!("i64").value(0 as i64).add_to(&mut parser);
+    sap_arg!("f32").value(0 as f32).add_to(&mut parser);
+    sap_arg!("f64").value(0 as f64).add_to(&mut parser);
+    sap_arg!("bool").value(false).add_to(&mut parser);
+    sap_arg!("string").value("".to_string()).add_to(&mut parser);
+    sap_arg!("string2").value("STR2").add_to(&mut parser);
     let in_args = vec!["1", "2", "3", "4", "true", "in-string", "in-string2"];
     parser.process_args(in_args);
     assert_eq!(1, parser.get::<i32>("i32").unwrap());
@@ -91,10 +91,10 @@ fn test_arg_types() {
 fn test_positional_args() {
     println!("*** POSITIONAL ARGUMENTS ***");
     let mut parser = DumbArgParser::new();
-    dap_arg!("i32", value = 0).add_to(&mut parser);
-    dap_arg!("string", value = "").add_to(&mut parser);
-    dap_arg!("bool", value = false).add_to(&mut parser);
-    dap_arg!("i64", default = 888 as i64).add_to(&mut parser);
+    sap_arg!("i32").value(0).add_to(&mut parser);
+    sap_arg!("string").value("").add_to(&mut parser);
+    sap_arg!("bool").value(false).add_to(&mut parser);
+    sap_arg!("i64").default(888 as i64).add_to(&mut parser);
     let in_args = vec!["123", "string", "true"];
     parser.process_args(in_args);
     let i32_param: i32 = parser.get("i32").unwrap();
@@ -114,12 +114,12 @@ fn test_positional_args() {
 fn test_flag_args() {
     println!("*** FLAG ARGUMENTS ***");
     let mut parser = DumbArgParser::new();
-    dap_arg!("-a", flag2 = "--A", value = 0).add_to(&mut parser);
-    dap_arg!("-b", flag2 = "--B", fixed = 0).add_to(&mut parser);
-    dap_arg!("-c", flag2 = "--C", fixed = 999).add_to(&mut parser);
-    dap_arg!("string", value = "").add_to(&mut parser);
-    dap_arg!("string2", value = "").add_to(&mut parser);
-    dap_arg!("i32", default = 888).add_to(&mut parser);
+    sap_arg!("-a", "--A").value(0).add_to(&mut parser);
+    sap_arg!("-b", "--B").fixed(0).add_to(&mut parser);
+    sap_arg!("-c", "--C").fixed(999).add_to(&mut parser);
+    sap_arg!("string").value("").add_to(&mut parser);
+    sap_arg!("string2").value("").add_to(&mut parser);
+    sap_arg!("i32").default(888).add_to(&mut parser);
     let in_args: Vec<&str> = vec!["--C", "ABC", "-a", "123", "DEF"]; // flags can be before or after positional
     parser.process_args(in_args);
     assert_eq!(123, parser.get::<i32>("-a").unwrap());
@@ -135,7 +135,8 @@ fn test_flag_args() {
 fn test_arg_range() {
     println!("*** ARGUMENT RANGE ***");
     let mut parser = DumbArgParser::new();
-    dap_arg!("-f", value = 0)
+    sap_arg!("-f")
+        .value(0)
         .set_range(100, 200)
         .add_to(&mut parser);
     parser.process_args(vec!["-f", "123"]);
@@ -154,7 +155,10 @@ fn test_arg_range() {
 fn test_arg_string_range() {
     println!("*** ARGUMENT [STRING] RANGE ***");
     let mut parser = DumbArgParser::new();
-    dap_arg!("-f").set_range("bbb", "ddd").add_to(&mut parser);
+    sap_arg!("-f")
+        .value("")
+        .set_range("bbb", "ddd")
+        .add_to(&mut parser);
     parser.process_args(vec!["-f", "ccc"]);
     assert_eq!("ccc", parser.get::<String>("-f").unwrap());
     if true {
@@ -168,7 +172,8 @@ fn test_arg_string_range() {
 fn test_arg_enum() {
     println!("*** ARGUMENT ENUM ***");
     let mut parser = DumbArgParser::new();
-    dap_arg!("-f", value = 0)
+    sap_arg!("-f")
+        .value(0)
         .set_enums(vec![100, 200])
         .add_to(&mut parser);
     parser.process_args(vec!["-f", "200"]);
@@ -185,7 +190,10 @@ fn test_arg_enum() {
 fn test_arg_string_enum() {
     println!("*** ARGUMENT [STRING] ENUM ***");
     let mut parser = DumbArgParser::new();
-    dap_arg!("-f").set_enums(vec!["A", "B"]).add_to(&mut parser);
+    sap_arg!("-f")
+        .value("")
+        .set_enums(vec!["A", "B"])
+        .add_to(&mut parser);
     parser.process_args(vec!["-f", "A"]);
     assert_eq!("A", parser.get::<String>("-f").unwrap());
     if true {
@@ -200,11 +208,11 @@ fn test_arg_string_enum() {
 fn test_args() {
     println!("*** ARGUMENTS ***");
     let mut parser = DumbArgParser::new_with_name("pgm");
-    dap_arg!("str-arg").add_to(&mut parser); // positional argument "str-arg" (of type String)
-    dap_arg!("-v", flag2 = "--v", fixed = true).add_to(&mut parser); // argument flag "-v" / "--v" with fixed value (false)
-    dap_arg!("-v2", flag2 = "--v2", fixed = true).add_to(&mut parser); // argument flag "-v" / "--v" with fixed value (false)
-    dap_arg!("-name", default = "nobody").add_to(&mut parser); // argument "-name" requiring value, with default "unknown"
-    dap_arg!("i32-arg").value(123).add_to(&mut parser); // positional argument "i32-arg" of type i32 (inferred from the value 123)
+    sap_arg!("str-arg").add_to(&mut parser); // positional argument "str-arg" (of type String)
+    sap_arg!("-v", "--v").fixed(true).add_to(&mut parser); // argument flag "-v" / "--v" with fixed value (false)
+    sap_arg!("-v2", "--v2").fixed(true).add_to(&mut parser); // argument flag "-v" / "--v" with fixed value (false)
+    sap_arg!("-name").default("nobody").add_to(&mut parser); // argument "-name" requiring value, with default "unknown"
+    sap_arg!("i32-arg").value(123).add_to(&mut parser); // positional argument "i32-arg" of type i32 (inferred from the value 123)
     let process_res = parser.check_process_args(vec!["--v2", "STR-ARG", "999"], true);
     assert!(process_res.is_ok() && process_res.unwrap());
     println!(". str-arg: {:?}", parser.get::<String>("str-arg"));
@@ -221,7 +229,8 @@ fn test_args() {
 fn test_multi_arg() {
     println!("*** MULTI-ARGUMENT ***");
     let mut parser = DumbArgParser::new();
-    dap_arg!("-f", flag2 = "--F", default = 20)
+    sap_arg!("-f", "--F")
+        .default(20)
         .set_enums(vec![1, 20, 300])
         .set_multi()
         .add_to(&mut parser);
@@ -242,8 +251,8 @@ fn test_multi_arg() {
 fn test_multi_arg_string() {
     println!("*** MULTI-ARGUMENT (STRING) ***");
     let mut parser = DumbArgParser::new();
-    dap_arg!("-f", flag2 = "--F", default = 777).add_to(&mut parser);
-    dap_arg!("str", value = "S").set_multi().add_to(&mut parser);
+    sap_arg!("-f", "--F").default(777).add_to(&mut parser);
+    sap_arg!("str").value("S").set_multi().add_to(&mut parser);
     parser.process_args(vec!["A", "B", "C"]);
     assert_eq!(777, parser.get::<i32>("--F").unwrap());
     assert_eq!(
@@ -255,8 +264,8 @@ fn test_multi_arg_string() {
 fn test_rest_multi_arg() {
     println!("*** REST MULTI-ARGUMENT ***");
     let mut parser = DumbArgParser::new();
-    dap_arg!("-f", flag2 = "--F", default = 777).add_to(&mut parser);
-    dap_arg!("str", value = 888).set_rest().add_to(&mut parser);
+    sap_arg!("-f", "--F").default(777).add_to(&mut parser);
+    sap_arg!("str").value(888).set_rest().add_to(&mut parser);
     parser.process_args(vec!["888", "A", "B", "C"]);
     assert_eq!(777, parser.get::<i32>("--F").unwrap());
     assert_eq!(888, parser.get::<i32>("str").unwrap());
@@ -266,8 +275,8 @@ fn test_rest_multi_arg() {
 fn test_rest_parsed() {
     println!("*** REST PARSED ***");
     let mut parser = DumbArgParser::new();
-    dap_arg!("-f", flag2 = "--F", default = 777).add_to(&mut parser);
-    dap_arg!("a", value = 888).set_rest().add_to(&mut parser);
+    sap_arg!("-f", "--F").default(777).add_to(&mut parser);
+    sap_arg!("a").value(888).set_rest().add_to(&mut parser);
     parser.process_args(vec!["888", "--name", "trevor"]);
     assert_eq!(777, parser.get::<i32>("--F").unwrap());
     assert_eq!(888, parser.get::<i32>("a").unwrap());
@@ -282,9 +291,9 @@ fn test_rest_parsed() {
 fn test_overall() {
     println!("*** -- OVERALL ***");
     let mut parser = DumbArgParser::new_with_name("pgm");
-    dap_arg!("-f", flag2 = "--F", default = 777).add_to(&mut parser);
-    dap_arg!("-v", flag2 = "--V", fixed = true).add_to(&mut parser);
-    dap_arg!("--").set_multi().add_to(&mut parser); // multi-argument "--" that capture the rest of the arguments after "--"
+    sap_arg!("-f", "--F").default(777).add_to(&mut parser);
+    sap_arg!("-v", "--V").fixed(true).add_to(&mut parser);
+    sap_arg!("--").set_multi().add_to(&mut parser); // multi-argument "--" that capture the rest of the arguments after "--"
     parser.process_args(vec!["-v", "--", "-v", "--", "ABC"]);
     assert_eq!(777, parser.get::<i32>("--F").unwrap());
     assert_eq!(true, parser.get::<bool>("--V").unwrap());
@@ -299,9 +308,10 @@ fn test_overall() {
 fn test_arg__() {
     println!("*** -- ARGUMENT ***");
     let mut parser = DumbArgParser::new();
-    dap_arg!("-f", flag2 = "--F", default = 777).add_to(&mut parser);
-    dap_arg!("-v", flag2 = "--V", fixed = true).add_to(&mut parser);
-    dap_arg!("str", default = "DEF")
+    sap_arg!("-f", "--F").default(777).add_to(&mut parser);
+    sap_arg!("-v", "--V").fixed(true).add_to(&mut parser);
+    sap_arg!("str")
+        .default("DEF")
         .set_multi()
         .add_to(&mut parser);
     parser.process_args(vec![]);
