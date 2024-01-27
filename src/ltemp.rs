@@ -2,7 +2,7 @@
 #![allow(unused)]
 
 use core::fmt;
-use std::collections::HashMap;
+use std::{cmp, collections::HashMap};
 
 use crate::arg::DumbArgBuilder;
 
@@ -52,7 +52,7 @@ fn debug_ltemp() {
     // ];
     // println!("lt_comps: {:?}", lt_comps);
 
-    let ltemp = DumbLineTemplate::new(0, 100, lt_comps);
+    let ltemp = DumbLineTemplate::new(0, 100, &lt_comps);
     println!("ltemp: {:?}", ltemp);
 
     let mut map = HashMap::new();
@@ -69,11 +69,11 @@ pub struct DumbLineTemplate {
     components: Vec<LineTempComp>,
 }
 impl DumbLineTemplate {
-    pub fn new(min_width: u32, max_width: u32, components: Vec<LineTempComp>) -> DumbLineTemplate {
+    pub fn new(min_width: u32, max_width: u32, components: &Vec<LineTempComp>) -> DumbLineTemplate {
         DumbLineTemplate {
             min_width,
             max_width,
-            components,
+            components: components.clone(),
         }
     }
     pub fn format<T: fmt::Display>(&self, map: &HashMap<String, T>) -> Result<String, String> {
@@ -96,7 +96,10 @@ impl DumbLineTemplate {
                             if mapped_comp.is_optional() {
                                 continue;
                             } else {
-                                return Err(format!("missing required key: {}", mapped_comp.get_map_key()));
+                                return Err(format!(
+                                    "missing required key: {}",
+                                    mapped_comp.get_map_key()
+                                ));
                             }
                         }
                     };
@@ -115,38 +118,46 @@ impl DumbLineTemplate {
         loop {
             let total_need_width = total_fixed_width + total_mapped_needed_width;
             if total_need_width < self.min_width {
-                let total_width_to_add = self.min_width - total_need_width;
+                let mut total_width_to_add = self.min_width - total_need_width;
                 for (index, mapped_comp) in mapped_comps.iter().enumerate() {
-                  if total_width_to_add == 0 {
-                    break;
-                  }
-                  let max_width = mapped_comp.get_max_width();
-                  let assigned_width = mapped_needed_widths[index];
-                  let width_add = max_width - assigned_width;
-                  if width_add > 0 {
-                    mapped_needed_widths[index] = assigned_width + width_add;
-                  }
+                    if total_width_to_add == 0 {
+                        break;
+                    }
+                    let max_width = mapped_comp.get_max_width();
+                    let assigned_width = mapped_needed_widths[index];
+                    let width_add = cmp::min(max_width - assigned_width, total_width_to_add);
+                    if width_add > 0 {
+                        mapped_needed_widths[index] = assigned_width + width_add;
+                        total_width_to_add -= width_add;
+                    }
                 }
                 if total_width_to_add > 0 {
-                  return Err(format!("too big a line ... {} extra", total_width_to_add))
+                    return Err(format!(
+                        "too big a line ... {} extra, on top of min {}",
+                        total_width_to_add, self.min_width
+                    ));
                 }
             } else if total_need_width > self.max_width {
-              let total_width_to_reduce = total_need_width - self.max_width;
-              for (index, mapped_comp) in mapped_comps.iter().enumerate() {
-                if total_width_to_reduce == 0 {
-                  break;
+                let mut total_width_to_reduce = total_need_width - self.max_width;
+                for (index, mapped_comp) in mapped_comps.iter().enumerate() {
+                    if total_width_to_reduce == 0 {
+                        break;
+                    }
+                    let min_width = mapped_comp.get_min_width();
+                    let assigned_width = mapped_needed_widths[index];
+                    let width_reduce = cmp::min(assigned_width - min_width, total_width_to_reduce);
+                    if width_reduce > 0 {
+                        mapped_needed_widths[index] = assigned_width - width_reduce;
+                        total_width_to_reduce -= width_reduce;
+                    }
                 }
-                let min_width = mapped_comp.get_min_width();
-                let assigned_width = mapped_needed_widths[index];
-                let width_reduce = assigned_width - min_width;
-                if width_reduce > 0 {
-                  mapped_needed_widths[index] = assigned_width - width_reduce;
+                if total_width_to_reduce > 0 {
+                    return Err(format!(
+                        "too small a line ... still need {}, on top of max {}",
+                        total_width_to_reduce, self.max_width
+                    ));
                 }
-              }
-              if total_width_to_reduce > 0 {
-                return Err(format!("too small a line ... still need {}", total_width_to_reduce))
-              }
-          }
+            }
             let mut changed = false;
             for (index, mapped_comp) in mapped_comps.iter().enumerate() {
                 let assigned_width = mapped_needed_widths[index];
@@ -169,10 +180,10 @@ impl DumbLineTemplate {
             match comp {
                 LineTempComp::Mapped(mapped_comp) => {
                     if let Some(map_value) = map.get(mapped_comp.get_map_key()) {
-                      let mapped_comp_index = mapped_comp_indexes[index].unwrap();
-                      let assigned_width = mapped_needed_widths[mapped_comp_index];
-                      let formatted_comp = mapped_comp.format(map_value, assigned_width);
-                      formatted.push_str(&formatted_comp);
+                        let mapped_comp_index = mapped_comp_indexes[index].unwrap();
+                        let assigned_width = mapped_needed_widths[mapped_comp_index];
+                        let formatted_comp = mapped_comp.format(map_value, assigned_width);
+                        formatted.push_str(&formatted_comp);
                     }
                 }
                 LineTempComp::Fixed(fixed_comp) => {
@@ -228,7 +239,7 @@ impl DumbLineTempCompBuilder {
     pub fn new(key: &str) -> Self {
         Self {
             optional: false,
-            min_width: 0,
+            min_width: 1,
             max_width: u32::MAX,
             key: key.to_string(),
         }
@@ -255,13 +266,13 @@ impl DumbLineTempCompBuilder {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum LineTempComp {
     Mapped(MappedLineTempComp),
     Fixed(String),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct MappedLineTempComp {
     optional: bool,
     min_width: u32, // can be 0
@@ -310,6 +321,10 @@ impl MappedLineTempComp {
             panic!("not expected")
         } else if assigned_width < needed_width {
             map_value[..assigned_width as usize].to_string()
+        } else if assigned_width > needed_width {
+            let mut formatted = map_value.to_string();
+            formatted.push_str(&" ".repeat((assigned_width - needed_width) as usize));
+            formatted
         } else {
             map_value.to_string()
         };

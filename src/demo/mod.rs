@@ -8,8 +8,8 @@ pub mod demo_calculator_gui;
 
 mod test_arg;
 mod test_calc;
-mod test_ltemp;
 mod test_calculator;
+mod test_ltemp;
 
 use crate::{
     arg::{DumbArgBuilder, DumbArgParser},
