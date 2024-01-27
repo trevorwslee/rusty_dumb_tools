@@ -5,11 +5,12 @@
 pub mod demo_arg;
 pub mod demo_calc;
 pub mod demo_calculator_gui;
+pub mod demo_ltemp;
 
-mod test_arg;
-mod test_calc;
-mod test_calculator;
-mod test_ltemp;
+pub mod test_arg;
+pub mod test_calc;
+pub mod test_calculator;
+pub mod test_ltemp;
 
 use crate::{
     arg::{DumbArgBuilder, DumbArgParser},
@@ -21,7 +22,7 @@ use crate::demo::{
     demo_calc::{create_demo_parser_calc, handle_demo_calc, handle_demo_calc_repl},
 };
 
-use self::demo_calculator_gui::handle_demo_calc_gui;
+use self::{demo_calculator_gui::handle_demo_calc_gui, demo_ltemp::handle_demo_ltemp};
 
 ///
 /// run the demo, which is a command-line program that allows you to choose from a list of sub-demos
@@ -53,6 +54,7 @@ pub fn create_demo_parser() -> DumbArgParser {
             "calc:DumbCalcProcessor command-line input demo",
             "calc-repl:DumbCalcProcessor REPL demo",
             "calc-gui:DumbCalcProcessor GUI demo (a calculator)",
+            "ltemp:DumbLineTemplate demo",
             "arg:DumbArgParser demo (more like debugging)",
         ])
         .set_rest()
@@ -81,10 +83,15 @@ pub fn handle_sub_demo(parser: DumbArgParser) {
         "calc-gui" => {
             handle_demo_calc_gui();
         }
+        "ltemp" => {
+            let mut sub_demo_parser = demo_ltemp::create_demo_ltemp_parser();
+            parser.process_rest_args("demo", &mut sub_demo_parser);
+            handle_demo_ltemp(sub_demo_parser);
+        }
         "arg" => {
-            let mut demo_parser = demo_arg::create_debug_arg_parser();
-            parser.process_rest_args("demo", &mut demo_parser);
-            handle_demo_arg(demo_parser);
+            let mut sub_demo_parser = demo_arg::create_debug_arg_parser();
+            parser.process_rest_args("demo", &mut sub_demo_parser);
+            handle_demo_arg(sub_demo_parser);
         }
         _ => panic!("Unknown sub-demo: {}", demo),
     };

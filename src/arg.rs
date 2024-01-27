@@ -91,7 +91,7 @@ macro_rules! dap_arg {
 #[test]
 fn test_arg() {}
 
-/// For use by [`DumbArgParser`] internally for debugging.
+/// for use by [`DumbArgParser`] internally for debugging.
 #[test]
 fn debug_arg() {
     let mut parser = DumbArgParser::new();
@@ -184,7 +184,7 @@ fn debug_arg_sap() {
 /// * in case of invalid input argument, will show the error message as well as the help message, then the program will exit
 /// * also see [`dap_arg`] macro
 ///
-/// You may want to refer to [`crate::demo::run_demo`] for a demo program that uses [`DumbArgParser`].
+/// you may want to refer to [`crate::demo::run_demo`] for a demo program that uses [`DumbArgParser`].
 #[derive(Debug)]
 pub struct DumbArgParser {
     args: Vec<Arg>,
@@ -1245,7 +1245,7 @@ impl DumbArgBuilder {
     }
 }
 
-/// For use by [`DumbArgParser`] internally.
+/// for use by [`DumbArgParser`] internally.
 #[derive(Debug, Clone)]
 pub enum ArgValue {
     I32(i32),
@@ -1334,7 +1334,7 @@ impl fmt::Display for ArgValue {
         }
     }
 }
-/// For use by [`DumbArgParser`] internally.
+/// for use by [`DumbArgParser`] internally.
 pub trait ArgValueTrait {
     fn as_arg_value(&self) -> ArgValue;
     fn from_arg_value(arg_value: ArgValue) -> Result<Box<Self>, String>;
