@@ -10,7 +10,7 @@ use crate::{
 
 use crate::{
     dlt_comps, dltc,
-    ltemp::{DumbLineTempCompBuilder, DumbLineTemplate, LineTempComp, LineTempCompTrait},
+    ltemp::{DumbLineTemplate, LineTempComp, LineTempCompTrait, MappedLineTempCompBuilder},
 };
 
 pub fn handle_demo_ltemp(parser: DumbArgParser) {

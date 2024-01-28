@@ -6,8 +6,8 @@ use std::collections::HashMap;
 use crate::{
     dlt_comps, dltc,
     ltemp::{
-        DumbLineTempCompBuilder, DumbLineTemplate, EscapedLineTempComp, LineTempComp,
-        LineTempCompTrait, FLEXIBLE_WIDTH_EX,
+        DumbLineTemplate, EscapedLineTempComp, LineTempComp, LineTempCompTrait,
+        MappedLineTempCompBuilder, FLEXIBLE_WIDTH_EX,
     },
 };
 

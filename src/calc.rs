@@ -418,7 +418,7 @@ impl CalcImpl {
             }
             Unit::CloseBracket => {
                 // if the scanned character is a right parenthesis, pop operators from the stack and append them to the postfix expression until a left parenthesis is found
-                self._push_all_to_scalled(true);
+                self._push_all_to_scanned(true);
                 // while self.stack.len() > 0 {
                 //     let stack_unit = self.stack.pop().unwrap();
                 //     if stack_unit == Unit::OpenBracket {
@@ -452,7 +452,7 @@ impl CalcImpl {
     }
     fn eval(&mut self) {
         self.last_pushed = None;
-        self._push_all_to_scalled(false);
+        self._push_all_to_scanned(false);
         self.result = if self.scanned.len() > 0 {
             if self.scanned.len() != 1 {
                 panic!("'scanned' should have a single element ... self={:?}", self);
@@ -469,7 +469,7 @@ impl CalcImpl {
     }
 }
 impl CalcImpl {
-    fn _push_all_to_scalled(&mut self, until_open_bracket: bool) {
+    fn _push_all_to_scanned(&mut self, until_open_bracket: bool) {
         while self.stack.len() > 0 {
             let stack_unit = self.stack.pop().unwrap();
             if until_open_bracket && stack_unit == Unit::OpenBracket {
@@ -482,7 +482,10 @@ impl CalcImpl {
         match unit {
             Unit::Operator(op) => {
                 let result = if op.is_unary() {
-                    let operand = self.scanned.pop().unwrap();
+                    let operand = match self.scanned.pop() {
+                        Some(o) => o,
+                        None => self.result,
+                    };
                     op.evaluate_unary(operand)
                 } else {
                     let right = match self.scanned.pop() {

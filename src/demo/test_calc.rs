@@ -72,7 +72,7 @@ macro_rules! assert_calc_result_error {
 pub fn test_calc_empty() {
     let mut calc = DumbCalcProcessor::new();
     assert_calc_eq_result!(&calc, 0.0);
-    calc.parse_and_push("123");
+    calc.push("123");
     calc.eval().unwrap();
     assert_eq!(123.0, calc.get_result().unwrap());
     calc.eval().unwrap();
@@ -80,6 +80,12 @@ pub fn test_calc_empty() {
     calc.reset();
     println!(". calc={:?}", calc);
     assert_eq!(0.0, calc.get_result().unwrap());
+    calc.push("777");
+    calc.eval().unwrap();
+    assert_eq!(777.0, calc.get_result().unwrap());
+    calc.push("neg");
+    calc.eval().unwrap();
+    assert_eq!(-777.0, calc.get_result().unwrap());
 }
 #[test]
 pub fn test_calc_general() {

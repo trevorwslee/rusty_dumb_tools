@@ -21,7 +21,7 @@ use iced::Length;
 use iced::Sandbox;
 use iced::Settings;
 
-pub fn handle_demo_calc_gui() {
+pub fn handle_demo_calculator_gui() {
     Counter::run(Settings::default());
 }
 

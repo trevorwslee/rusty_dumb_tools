@@ -13,11 +13,12 @@ use std::{
 
 use crate::arg;
 
-/// *please consider using `dap_arg!` macro instead, since `sap_arg!` will be deprecated*<br>
+/// ***please consider using [`crate::dap_arg!`] macro instead, since this macro will be deprecated***
+///
 /// use this macro to create a [`DumbArgBuilder`] instance to build argument object (argument specification) to be added to [`DumbArgParser`] with [`DumbArgBuilder::add_to`]
 /// the macro accepts one for more strings (positional argument name or flags) like
 /// ```
-/// use rusty_dumb_tools::{arg::{DumbArgParser, DumbArgBuilder}, sap_arg};
+/// use rusty_dumb_tools::{arg::*, sap_arg};
 /// let mut parser = DumbArgParser::new();
 /// sap_arg!("-f", "--flag").add_to(&mut parser); // e.g. ... -f flag-value ...
 /// sap_arg!("-v", "--verbose").fixed(true).add_to(&mut parser); // e.g. ... -v ... -- this will turn "on" -v with value true
@@ -1127,7 +1128,7 @@ impl DumbArgBuilder {
     /// For argument that requires an argument value passed in.
     /// `value` - used to infer the type of the argument, as well as sample value to shown in help message
     pub fn value<T: ArgValueTrait>(&mut self, value: T) -> &mut DumbArgBuilder {
-        self.value = value.as_arg_value();
+        self.value = value.to_arg_value();
         self.nature = ArgNature::Regular;
         //self.multi = false;
         self
@@ -1135,7 +1136,7 @@ impl DumbArgBuilder {
     /// For argument that has default argument value passed in.
     /// * `value` - the default argument value when it the argument is not provided
     pub fn default<T: ArgValueTrait>(&mut self, value: T) -> &mut DumbArgBuilder {
-        self.value = value.as_arg_value();
+        self.value = value.to_arg_value();
         self.nature = ArgNature::Optional;
         //self.multi = false;
         self
@@ -1143,21 +1144,21 @@ impl DumbArgBuilder {
     /// For argument that has a fixed argument value based simply whether the flag is present or not. E.g. "-v" for turning on verbose mode.
     /// * `value` - the fixed value when the argument flag is provided
     pub fn fixed<T: ArgValueTrait>(&mut self, value: T) -> &mut DumbArgBuilder {
-        self.value = value.as_arg_value();
+        self.value = value.to_arg_value();
         self.nature = ArgNature::Fixed;
         //self.multi = false;
         self
     }
     /// set the acceptable value range (inclusive) of the argument
     pub fn set_range<T: ArgValueTrait>(&mut self, min: T, max: T) -> &mut DumbArgBuilder {
-        self.constraint = ArgConstraint::Range(min.as_arg_value(), max.as_arg_value());
+        self.constraint = ArgConstraint::Range(min.to_arg_value(), max.to_arg_value());
         self
     }
     /// set the acceptable values for the argument; if there are descriptions for the values, use [`DumbArgBuilder::set_with_desc_enums`] instead
     pub fn set_enums<T: ArgValueTrait>(&mut self, values: Vec<T>) -> &mut DumbArgBuilder {
         let mut arg_enums = Vec::new();
         for value in values.iter() {
-            let arg_value = value.as_arg_value();
+            let arg_value = value.to_arg_value();
             arg_enums.push(ArgEnum::new(arg_value, None));
         }
         self.constraint = ArgConstraint::Enums(arg_enums);
@@ -1168,13 +1169,13 @@ impl DumbArgBuilder {
     pub fn set_with_desc_enums<T: ArgValueTrait>(&mut self, values: Vec<T>) -> &mut DumbArgBuilder {
         let mut arg_enums = Vec::new();
         for value in values.iter() {
-            let arg_value = value.as_arg_value();
+            let arg_value = value.to_arg_value();
             let value_str = arg_value.to_string();
             let mut parts = value_str.split(":");
             let value = parts.next().unwrap();
             let description = parts.next().map(|s| s.to_string()).unwrap();
             arg_enums.push(ArgEnum::new(
-                String::as_arg_value(&value.to_string()),
+                String::to_arg_value(&value.to_string()),
                 Some(description),
             ));
         }
@@ -1340,11 +1341,11 @@ impl fmt::Display for ArgValue {
 }
 /// for use by [`DumbArgParser`] internally.
 pub trait ArgValueTrait {
-    fn as_arg_value(&self) -> ArgValue;
+    fn to_arg_value(&self) -> ArgValue;
     fn from_arg_value(arg_value: ArgValue) -> Result<Box<Self>, String>;
 }
 impl ArgValueTrait for i32 {
-    fn as_arg_value(&self) -> ArgValue {
+    fn to_arg_value(&self) -> ArgValue {
         ArgValue::I32(*self)
     }
     fn from_arg_value(arg_value: ArgValue) -> Result<Box<i32>, String> {
@@ -1355,7 +1356,7 @@ impl ArgValueTrait for i32 {
     }
 }
 impl ArgValueTrait for i64 {
-    fn as_arg_value(&self) -> ArgValue {
+    fn to_arg_value(&self) -> ArgValue {
         ArgValue::I64(*self)
     }
     fn from_arg_value(arg_value: ArgValue) -> Result<Box<i64>, String> {
@@ -1366,7 +1367,7 @@ impl ArgValueTrait for i64 {
     }
 }
 impl ArgValueTrait for f32 {
-    fn as_arg_value(&self) -> ArgValue {
+    fn to_arg_value(&self) -> ArgValue {
         ArgValue::F32(*self)
     }
     fn from_arg_value(arg_value: ArgValue) -> Result<Box<f32>, String> {
@@ -1377,7 +1378,7 @@ impl ArgValueTrait for f32 {
     }
 }
 impl ArgValueTrait for f64 {
-    fn as_arg_value(&self) -> ArgValue {
+    fn to_arg_value(&self) -> ArgValue {
         ArgValue::F64(*self)
     }
     fn from_arg_value(arg_value: ArgValue) -> Result<Box<f64>, String> {
@@ -1388,7 +1389,7 @@ impl ArgValueTrait for f64 {
     }
 }
 impl ArgValueTrait for bool {
-    fn as_arg_value(&self) -> ArgValue {
+    fn to_arg_value(&self) -> ArgValue {
         ArgValue::Bool(*self)
     }
     fn from_arg_value(arg_value: ArgValue) -> Result<Box<bool>, String> {
@@ -1399,7 +1400,7 @@ impl ArgValueTrait for bool {
     }
 }
 impl ArgValueTrait for String {
-    fn as_arg_value(&self) -> ArgValue {
+    fn to_arg_value(&self) -> ArgValue {
         ArgValue::String(self.to_string())
     }
     fn from_arg_value(arg_value: ArgValue) -> Result<Box<String>, String> {
@@ -1415,7 +1416,7 @@ impl ArgValueTrait for String {
     }
 }
 impl ArgValueTrait for &'static str {
-    fn as_arg_value(&self) -> ArgValue {
+    fn to_arg_value(&self) -> ArgValue {
         ArgValue::String(self.to_string())
     }
     fn from_arg_value(arg_value: ArgValue) -> Result<Box<&'static str>, String> {

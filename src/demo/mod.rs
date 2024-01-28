@@ -4,6 +4,7 @@
 
 pub mod demo_arg;
 pub mod demo_calc;
+pub mod demo_calculator;
 pub mod demo_calculator_gui;
 pub mod demo_ltemp;
 
@@ -22,7 +23,10 @@ use crate::demo::{
     demo_calc::{create_demo_parser_calc, handle_demo_calc, handle_demo_calc_repl},
 };
 
-use self::{demo_calculator_gui::handle_demo_calc_gui, demo_ltemp::handle_demo_ltemp};
+use self::{
+    demo_calculator::handle_demo_calculator, demo_calculator_gui::handle_demo_calculator_gui,
+    demo_ltemp::handle_demo_ltemp,
+};
 
 ///
 /// run the demo, which is a command-line program that allows you to choose from a list of sub-demos
@@ -52,7 +56,8 @@ pub fn create_demo_parser() -> DumbArgParser {
         .set_with_desc_enums(vec![
             "calc:DumbCalcProcessor command-line input demo",
             "calc-repl:DumbCalcProcessor REPL demo",
-            "calc-gui:DumbCalcProcessor GUI demo (a calculator)",
+            "calculator:DumbCalculator text-based UI demo",
+            "calculator-gui:DumbCalculator GUI demo",
             "ltemp:DumbLineTemplate demo",
             "arg:DumbArgParser demo (more like debugging)",
         ])
@@ -79,8 +84,11 @@ pub fn handle_sub_demo(parser: DumbArgParser) {
         "calc-repl" => {
             handle_demo_calc_repl();
         }
-        "calc-gui" => {
-            handle_demo_calc_gui();
+        "calculator" => {
+            handle_demo_calculator();
+        }
+        "calculator-gui" => {
+            handle_demo_calculator_gui();
         }
         "ltemp" => {
             let mut sub_demo_parser = demo_ltemp::create_demo_ltemp_parser();

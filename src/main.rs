@@ -12,7 +12,7 @@ use rusty_dumb_tools::{
     arg::{self, DumbArgBuilder, DumbArgParser},
     calc::{self, DumbCalcProcessor},
     demo, dlt_comps, dltc,
-    ltemp::{DumbLineTempCompBuilder, DumbLineTemplate, LineTempComp, LineTempCompTrait},
+    ltemp::{LineTempComp, LineTempCompTrait, MappedLineTempCompBuilder},
     sap_arg,
 };
 
@@ -38,6 +38,10 @@ use rusty_dumb_tools::{
 // }
 
 fn main() {
+    if true {
+        demo::demo_calculator::handle_demo_calculator();
+        return;
+    }
     if false {
         demo::demo_ltemp::show_table("012345678901234567890");
         return;

@@ -20,7 +20,7 @@ type WIDTH = u16;
 /// ```
 /// use rusty_dumb_tools::{
 ///    dlt_comps, dltc,
-///    ltemp::{DumbLineTempCompBuilder, DumbLineTemplate, LineTempComp, LineTempCompTrait},
+///    ltemp::*,
 /// };
 /// use std::collections::HashMap;
 /// let name = "Trevor Lee";
@@ -43,19 +43,20 @@ type WIDTH = u16;
 /// * `dltc!("key", align='C')`:
 ///   - a value-mapped component
 ///   - require a value mapped for key `key` when calling [`DumbLineTemplate::format`]
+///   - also see [`crate::dltc!`]
 #[macro_export]
 macro_rules! dlt_comps {
   ($($x:expr),*) => {{
     let mut comps: Vec<LineTempComp> = Vec::new();
     $(
-      let comp = $x.as_line_temp_comp();
+      let comp = $x.to_line_temp_comp();
       comps.push(comp);
     )*
     comps
   }};
 }
 
-/// use this macro to construct a [`DumbLineTemplate`] component, and it is expected to be use together with [`dlt_comps!`]
+/// use this macro to construct a value-mapped [`DumbLineTemplate`] component, and it is expected to be use together with [`crate::dlt_comps!`]
 #[macro_export]
 macro_rules! dltc {
     ($x:expr
@@ -65,7 +66,7 @@ macro_rules! dltc {
         $(, align=$align:expr)?
         $(, optional=$optional:expr)?
         ) => {{
-      let mut builder = DumbLineTempCompBuilder::new($x);
+      let mut builder = MappedLineTempCompBuilder::new($x);
       $(builder.optional($optional);)?
       $(builder.fixed_width($fixed_width);)?
       $(builder.min_width($min_width);)?
@@ -87,7 +88,7 @@ macro_rules! dltc {
 
 #[test]
 fn debug_ltemp() {
-    let key1_temp = DumbLineTempCompBuilder::new("key1")
+    let key1_temp = MappedLineTempCompBuilder::new("key1")
         .optional(true)
         .min_width(3)
         .max_width(5)
@@ -123,7 +124,7 @@ fn debug_ltemp() {
 /// ```
 /// use rusty_dumb_tools::{
 ///    dlt_comps, dltc,
-///    ltemp::{DumbLineTempCompBuilder, DumbLineTemplate, LineTempComp, LineTempCompTrait},
+///    ltemp::*,
 /// };
 /// use std::collections::HashMap;
 ///
@@ -162,6 +163,7 @@ fn debug_ltemp() {
 /// * `dltc!("label", fixed_width = 6, align = 'L')`:
 ///   - a value-mapped component
 ///   - require a value mapped for key `label` when calling [`DumbLineTemplate::format`]
+///   - also see [`dlt_comps!`] and [`dltc!`]
 #[derive(Debug)]
 pub struct DumbLineTemplate {
     min_width: WIDTH,
@@ -173,6 +175,8 @@ impl DumbLineTemplate {
     /// * `min_width` - the minimum width of the line
     /// * `max_width` - the maximum width of the line
     /// * `components` - the template components of the line, which can be created using the macro [`dlt_comps!`]
+    ///
+    /// also see [`DumbLineTemplate::new_fixed`]
     pub fn new(
         min_width: WIDTH,
         max_width: WIDTH,
@@ -184,7 +188,7 @@ impl DumbLineTemplate {
             components: components.clone(),
         }
     }
-    // the same as [`new`] but with fixed width
+    /// the same as [`DumbLineTemplate::new`] but with fixed width
     pub fn new_fixed(fixed_width: WIDTH, components: &Vec<LineTempComp>) -> DumbLineTemplate {
         DumbLineTemplate {
             min_width: fixed_width,
@@ -198,7 +202,8 @@ impl DumbLineTemplate {
     pub fn max_width(&self) -> WIDTH {
         self.max_width
     }
-    /// based on the template and the input map of values, format and return a line
+    /// based on the template and the input map of values, format and return a line;
+    /// for a more flexible way of formatting, try [`DumbLineTemplate::format_ex`]
     pub fn format<T: fmt::Display>(&self, map: &HashMap<&str, T>) -> Result<String, String> {
         let map = map
             .iter()
@@ -214,7 +219,7 @@ impl DumbLineTemplate {
     }
     /// like [`format`] but accept function that returns the mapped values; each mapped value is supposed to be a tuple of the value and its width
     /// (note that for ASCII escaped string, the "visual" length can be different from the length of the string)
-    pub fn format_ex<'a, F: Fn(&str) -> Option<(&'a str, WIDTH)>>(
+    pub fn format_ex<T: fmt::Display, F: Fn(&str) -> Option<(T, WIDTH)>>(
         &self,
         map_value_provide_fn: F,
     ) -> Result<String, String> {
@@ -454,7 +459,7 @@ impl DumbLineTemplate {
                         let mapped_comp_index = mapped_comp_indexes[index].unwrap();
                         let assigned_width = mapped_needed_widths[mapped_comp_index];
                         let formatted_comp =
-                            mapped_comp.format(&map_value.0, map_value.1, assigned_width);
+                            mapped_comp.format(&map_value.0.to_string(), map_value.1, assigned_width);
                         formatted.push_str(&formatted_comp);
                     }
                 }
@@ -513,59 +518,59 @@ impl DumbLineTemplate {
 //     }
 // }
 
-pub struct DumbLineTempCompBuilder {
-    optional: bool,
+pub struct MappedLineTempCompBuilder {
+    key: String,
     min_width: WIDTH,
     max_width: WIDTH,
     align: char,
-    key: String,
+    optional: bool,
 }
 /// a builder for a component to be a component of [`DumbLineTemplate`]
-impl DumbLineTempCompBuilder {
+impl MappedLineTempCompBuilder {
     /// use the macro [`dltc!`] instead
     pub fn new(key: &str) -> Self {
         Self {
-            optional: false,
+            key: key.to_string(),
             min_width: 1,
             max_width: WIDTH::MAX,
             align: 'L',
-            key: key.to_string(),
+            optional: false,
         }
     }
     /// set the component to be optional
-    pub fn optional(&mut self, optional: bool) -> &mut DumbLineTempCompBuilder {
+    pub fn optional(&mut self, optional: bool) -> &mut MappedLineTempCompBuilder {
         self.optional = optional;
         self
     }
     /// set the min and max widths of the component to be the same fixed width
-    pub fn fixed_width(&mut self, fixed_width: WIDTH) -> &mut DumbLineTempCompBuilder {
+    pub fn fixed_width(&mut self, fixed_width: WIDTH) -> &mut MappedLineTempCompBuilder {
         self.min_width = fixed_width;
         self.max_width = fixed_width;
         self
     }
     // set the min width of the component, keeping the max width unchanged
-    pub fn min_width(&mut self, min_width: WIDTH) -> &mut DumbLineTempCompBuilder {
+    pub fn min_width(&mut self, min_width: WIDTH) -> &mut MappedLineTempCompBuilder {
         self.min_width = min_width;
         self
     }
     /// set the max width of the component, keeping the min width unchanged
-    pub fn max_width(&mut self, max_width: WIDTH) -> &mut DumbLineTempCompBuilder {
+    pub fn max_width(&mut self, max_width: WIDTH) -> &mut MappedLineTempCompBuilder {
         self.max_width = max_width;
         self
     }
     /// set the alignment of the component
     /// * align - 'L' for left, 'R' for right, 'C' for center
-    pub fn align(&mut self, align: char) -> &mut DumbLineTempCompBuilder {
+    pub fn align(&mut self, align: char) -> &mut MappedLineTempCompBuilder {
         self.align = align;
         self
     }
     pub fn build(&self) -> MappedLineTempComp {
         MappedLineTempComp {
-            optional: self.optional,
+            key: self.key.clone(),
             min_width: self.min_width,
             max_width: self.max_width,
             align: self.align,
-            key: self.key.clone(),
+            optional: self.optional,
         }
     }
 }
@@ -575,6 +580,23 @@ pub enum LineTempComp {
     Mapped(MappedLineTempComp),
     Fixed(String, WIDTH),
 }
+// impl From<String> for LineTempComp {
+//     fn from(value: String) -> Self {
+//         LineTempComp::Fixed(value.clone(), value.len() as WIDTH)
+//     }
+// }
+// impl From<&'static str> for LineTempComp {
+//     fn from(value: &'static str) -> Self {
+//         LineTempComp::Fixed(value.to_string(), value.len() as WIDTH)
+//     }
+// }
+
+const DEF_MAPPED_LINE_TEMP_COMP_SETTINGS: MappedLineTempCompSettings = MappedLineTempCompSettings {
+    min_width: 1,
+    max_width: WIDTH::MAX,
+    align: 'L',
+    optional: false,
+};
 
 //#[derive(Debug, Copy, Clone)]
 // pub enum LineTempCompAlign {
@@ -593,20 +615,42 @@ impl EscapedLineTempComp {
     }
 }
 impl LineTempCompTrait for EscapedLineTempComp {
-    fn as_line_temp_comp(&self) -> LineTempComp {
+    fn to_line_temp_comp(&self) -> LineTempComp {
         LineTempComp::Fixed(self.value.clone(), self.width)
     }
 }
 
 #[derive(Debug, Clone)]
+pub struct MappedLineTempCompSettings {
+    pub min_width: WIDTH,
+    pub max_width: WIDTH,
+    pub align: char,
+    pub optional: bool,
+}
+impl Default for MappedLineTempCompSettings {
+    fn default() -> Self {
+        DEF_MAPPED_LINE_TEMP_COMP_SETTINGS
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct MappedLineTempComp {
-    optional: bool,
+    key: String,
     min_width: WIDTH,
     max_width: WIDTH,
     align: char,
-    key: String,
+    optional: bool,
 }
 impl MappedLineTempComp {
+    pub fn new(key: &str, settings: &MappedLineTempCompSettings) -> Self {
+        Self {
+            key: key.to_string(),
+            min_width: settings.min_width,
+            max_width: settings.max_width,
+            align: settings.align,
+            optional: settings.optional,
+        }
+    }
     fn get_min_width(&self) -> WIDTH {
         self.min_width
     }
@@ -749,31 +793,44 @@ impl MappedLineTempComp {
 
 /// for use by DumbLineTemplate internally.
 pub trait LineTempCompTrait {
-    fn as_line_temp_comp(&self) -> LineTempComp;
+    fn to_line_temp_comp(&self) -> LineTempComp;
 }
-impl LineTempCompTrait for DumbLineTempCompBuilder {
-    fn as_line_temp_comp(&self) -> LineTempComp {
+// impl LineTempCompTrait for Option<LineTempComp> {
+//     fn to_line_temp_comp(&self) -> LineTempComp {
+//         let temp_line_comp = self.take();
+//         temp_line_comp.unwrap()
+//     }
+// }
+// impl LineTempCompTrait for Box<LineTempComp> {
+//     fn to_line_temp_comp(&self) -> LineTempComp {
+//         let temp_line_comp = **self;
+//         temp_line_comp
+//     }
+// }
+impl LineTempCompTrait for MappedLineTempCompBuilder {
+    fn to_line_temp_comp(&self) -> LineTempComp {
         let mapped_line_temp_comp = self.build();
         LineTempComp::Mapped(mapped_line_temp_comp)
     }
 }
 impl LineTempCompTrait for String {
-    fn as_line_temp_comp(&self) -> LineTempComp {
+    fn to_line_temp_comp(&self) -> LineTempComp {
         LineTempComp::Fixed(self.clone(), self.len() as WIDTH)
     }
 }
+
 impl LineTempCompTrait for &'static str {
-    fn as_line_temp_comp(&self) -> LineTempComp {
+    fn to_line_temp_comp(&self) -> LineTempComp {
         LineTempComp::Fixed(self.to_string(), self.len() as WIDTH)
     }
 }
 impl LineTempCompTrait for (String, usize) {
-    fn as_line_temp_comp(&self) -> LineTempComp {
+    fn to_line_temp_comp(&self) -> LineTempComp {
         LineTempComp::Fixed(self.0.clone(), self.1 as WIDTH)
     }
 }
 impl LineTempCompTrait for (&'static str, usize) {
-    fn as_line_temp_comp(&self) -> LineTempComp {
+    fn to_line_temp_comp(&self) -> LineTempComp {
         LineTempComp::Fixed(self.0.to_string(), self.1 as WIDTH)
     }
 }
