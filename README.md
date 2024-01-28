@@ -5,6 +5,9 @@ A collection of simple tools in ***Rust*** as ***Rust*** modules:
   It can be useful for handling command line argument parsing for a ***Rust*** program.
 * `crate::calc::DumbCalcProcessor`: A simple infix calculation processor 
   It can be used to implement a simple calculator in ***Rust***.
+* `crate::ltemp::DumbLineTemplate`: A simple line template for formatting a line.
+  It might be helpful in creating a terminal-oriented UI
+
 
 
 You may also want to refer to the [`crates.io` page about `RustyDumbTools`](https://crates.io/crates/rusty_dumb_tools).
@@ -31,10 +34,20 @@ the demo can be ***cargo*** run like
   <br>`DumbArgParser` is set up to parse arguments for a sub-command (with another `DumbArgParser` object);
   and the above input demonstrates showing of "help message" of the sub-command
 * `cargo run -- calc 1.1 + 2.2 * (4.3 - 2.4) + 5`
-  <br>the above demonstrate how to use a [sub-command] `DumbArgParser` to parse arguments for the sub-command `calc`
+  <br>the above demonstrates how to use a [sub-command] `DumbArgParser` to parse arguments for the sub-command `calc`,
+  which in turn will show how to use `DumbCalcProcessor` for performing calculation of the sub-command arguments
 * `cargo run -- calc-repl`
-  <br>the above demonstrate how to invoke the sub-command `calc-repl`
-* `cargo run -- arg -h`
+  <br>the above demonstrates how to invoke the sub-command `calc-repl`, which in turn show how `DumbCalcProcessor` like a REPL
+* `cargo run -- ltemp Trevor`
+  <br>the above demonstrates how to use `DumbLineTemplate` to format lines to show data like
+  ```
+  ===============================
+  | NAME :               Trevor |
+  | AGE  :        <undisclosed> |
+  |      :     and counting ... |
+  | + 20 | #################### |
+  ===============================
+  ```
 * `cargo run -- arg -f 0.2 5 --string2 VAL1 false 1 2 3`
 
 The output of running `cargo run -- -h`:

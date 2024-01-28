@@ -1,4 +1,4 @@
-//! A simple line template for formatting a line, say for use of terminal-oriented UI -- [`crate::ltemp::DumbLineTemplate``]
+//! A simple line template for formatting a line, which might be helpful in creating a terminal-oriented UI -- [`crate::ltemp::DumbLineTemplate``]
 
 #![deny(warnings)]
 #![allow(unused)]
@@ -8,7 +8,8 @@ use std::{cmp, collections::HashMap, path::Display};
 
 use crate::arg::DumbArgBuilder;
 
-pub const FLEXIBLE_WIDTH: bool = false; // TODO: debug and make it works
+pub const FLEXIBLE_WIDTH_EX: bool = true;
+//pub const FLEXIBLE_WIDTH: bool = false;
 
 #[macro_export]
 macro_rules! dlt_comps {
@@ -109,7 +110,7 @@ impl DumbLineTemplate {
     /// please use the macro [`dlt_comps!`] for construction of the components
     /// * `min_width` - the minimum width of the line
     /// * `max_width` - the maximum width of the line
-    /// * `components` - the components of the line
+    /// * `components` - the template components of the line, which can be created using the macro [`dlt_comps!`]
     pub fn new(min_width: u32, max_width: u32, components: &Vec<LineTempComp>) -> DumbLineTemplate {
         DumbLineTemplate {
             min_width,
@@ -187,77 +188,146 @@ impl DumbLineTemplate {
         loop {
             let total_need_width = total_fixed_width + total_mapped_needed_width;
             if total_need_width < self.min_width {
-                let total_width_to_add = self.min_width - total_need_width;
-                let mut remain_width_to_add = total_width_to_add;
-                for (index, mapped_comp) in mapped_comps.iter().enumerate() {
-                    if remain_width_to_add == 0 {
-                        break;
+                if FLEXIBLE_WIDTH_EX {
+                    let mut remain_width_to_add = self.min_width - total_need_width;
+                    let mut loop_total_mapped_max_width = total_mapped_max_width;
+                    loop {
+                        let loop_total_width_to_add = remain_width_to_add;
+                        for (index, mapped_comp) in mapped_comps.iter().enumerate() {
+                            let max_width = mapped_comp.get_max_width();
+                            let assigned_width = mapped_needed_widths[index];
+                            let proportion = max_width as f64 / loop_total_mapped_max_width as f64;
+                            let width_to_add =
+                                (proportion * loop_total_width_to_add as f64).ceil() as u32;
+                            let width_to_add: u32 = cmp::min(width_to_add, remain_width_to_add);
+                            let new_assigned_width =
+                                cmp::min(assigned_width + width_to_add, max_width);
+                            if new_assigned_width != assigned_width {
+                                mapped_needed_widths[index] = new_assigned_width;
+                                remain_width_to_add -= new_assigned_width - assigned_width;
+                            }
+                            if remain_width_to_add == 0 {
+                                break;
+                            }
+                        }
+                        if remain_width_to_add == 0 {
+                            break;
+                        }
+                        if loop_total_width_to_add == remain_width_to_add {
+                            return Err(format!(
+                                "too big a line ... {} extra, on top of min {}",
+                                remain_width_to_add, self.min_width
+                            ));
+                        }
+                        loop_total_mapped_max_width -=
+                            (loop_total_width_to_add - remain_width_to_add) as u64;
                     }
-                    let max_width = mapped_comp.get_max_width();
-                    let assigned_width = mapped_needed_widths[index];
-                    let max_width_to_add = if FLEXIBLE_WIDTH {
-                        let proportion = max_width as f64 / total_mapped_max_width as f64;
-                        let max_width_to_add =
-                            (proportion * total_width_to_add as f64).ceil() as u32; //remain_width_to_add;
-                        let max_width_to_add: u32 = cmp::min(max_width_to_add, remain_width_to_add);
-                        max_width_to_add
-                    } else {
-                        remain_width_to_add
-                    };
-                    let width_add = cmp::min(max_width - assigned_width, max_width_to_add);
-                    // println!(
-                    //     "***** remain_width_to_add={}; max_width_to_add={}; width_add={}; assigned_width={}",
-                    //     remain_width_to_add, max_width_to_add, width_add, assigned_width
-                    // );
-                    if width_add > 0 {
-                        mapped_needed_widths[index] = assigned_width + width_add;
-                        remain_width_to_add -= width_add;
+                } else {
+                    let total_width_to_add = self.min_width - total_need_width;
+                    let mut remain_width_to_add = total_width_to_add;
+                    for (index, mapped_comp) in mapped_comps.iter().enumerate() {
+                        if remain_width_to_add == 0 {
+                            break;
+                        }
+                        let max_width = mapped_comp.get_max_width();
+                        let assigned_width = mapped_needed_widths[index];
+                        let max_width_to_add = remain_width_to_add;
+                        let width_add = cmp::min(max_width - assigned_width, max_width_to_add);
+                        // println!(
+                        //     "***** remain_width_to_add={}; max_width_to_add={}; width_add={}; assigned_width={}",
+                        //     remain_width_to_add, max_width_to_add, width_add, assigned_width
+                        // );
+                        if width_add > 0 {
+                            mapped_needed_widths[index] = assigned_width + width_add;
+                            remain_width_to_add -= width_add;
+                        }
                     }
-                }
-                if remain_width_to_add > 0 {
-                    return Err(format!(
-                        "too big a line ... {} extra, on top of min {}",
-                        remain_width_to_add, self.min_width
-                    ));
+                    if remain_width_to_add > 0 {
+                        return Err(format!(
+                            "too big a line ... {} extra, on top of min {}",
+                            remain_width_to_add, self.min_width
+                        ));
+                    }
                 }
             } else if total_need_width > self.max_width {
-                let total_width_to_reduce = total_need_width - self.max_width;
-                let mut remain_width_to_reduce = total_width_to_reduce;
-                for (index, mapped_comp) in mapped_comps.iter().enumerate() {
-                    if remain_width_to_reduce == 0 {
-                        break;
+                if FLEXIBLE_WIDTH_EX {
+                    let mut remain_width_to_reduce = total_need_width - self.max_width;
+                    let mut loop_total_mapped_min_width = total_mapped_min_width;
+                    loop {
+                        let loop_total_width_to_reduce = remain_width_to_reduce;
+                        for (index, mapped_comp) in mapped_comps.iter().enumerate() {
+                            let min_width = mapped_comp.get_min_width();
+                            let assigned_width = mapped_needed_widths[index];
+                            let width_to_reduce = if loop_total_mapped_min_width == 0 {
+                                remain_width_to_reduce
+                            } else {
+                                let proportion =
+                                    min_width as f64 / loop_total_mapped_min_width as f64;
+                                let width_to_reduce =
+                                    (proportion * loop_total_width_to_reduce as f64).ceil() as u32;
+                                width_to_reduce
+                            };
+                            let width_to_reduce: u32 =
+                                cmp::min(width_to_reduce, remain_width_to_reduce);
+                            let width_to_reduce: u32 = cmp::min(width_to_reduce, assigned_width);
+                            let new_assigned_width =
+                                cmp::max(assigned_width - width_to_reduce, min_width);
+                            // println!(
+                            //     "***** width_to_reduce={}; min_width={}",
+                            //     width_to_reduce, min_width
+                            // );
+                            // println!(
+                            //     "***** new_assigned_width={}; assigned_width={}",
+                            //     new_assigned_width, assigned_width
+                            // );
+                            if new_assigned_width != assigned_width {
+                                mapped_needed_widths[index] = new_assigned_width;
+                                remain_width_to_reduce -= assigned_width - new_assigned_width;
+                            }
+                            if remain_width_to_reduce == 0 {
+                                break;
+                            }
+                        }
+                        if remain_width_to_reduce == 0 {
+                            break;
+                        }
+                        if loop_total_width_to_reduce == remain_width_to_reduce {
+                            return Err(format!(
+                                "too small a line ... still need {}, on top of max {}",
+                                remain_width_to_reduce, self.max_width
+                            ));
+                        }
+                        loop_total_mapped_min_width -=
+                            loop_total_width_to_reduce - remain_width_to_reduce;
                     }
-                    let min_width = mapped_comp.get_min_width();
-                    let assigned_width = mapped_needed_widths[index];
-                    let max_width_to_reduce = if FLEXIBLE_WIDTH {
-                        let max_width_to_reduce = if total_mapped_min_width == 0 {
-                            remain_width_to_reduce
-                        } else {
-                            let proportion = min_width as f64 / total_mapped_min_width as f64;
-                            (proportion * total_width_to_reduce as f64).ceil() as u32
-                            //remain_width_to_reduce
-                        };
-                        let max_width_to_reduce: u32 =
-                            cmp::min(max_width_to_reduce, remain_width_to_reduce);
-                        max_width_to_reduce
-                    } else {
-                        remain_width_to_reduce
-                    };
-                    let width_reduce = cmp::min(assigned_width - min_width, max_width_to_reduce);
-                    // println!(
-                    //     "***** remain_width_to_reduce={}; max_width_to_reduce={}; width_reduce={}; assigned_width={}",
-                    //     remain_width_to_reduce, max_width_to_reduce, width_reduce, assigned_width
-                    // );
-                    if width_reduce > 0 {
-                        mapped_needed_widths[index] = assigned_width - width_reduce;
-                        remain_width_to_reduce -= width_reduce;
+                } else {
+                    let total_width_to_reduce = total_need_width - self.max_width;
+                    let mut remain_width_to_reduce = total_width_to_reduce;
+                    for (index, mapped_comp) in mapped_comps.iter().enumerate() {
+                        if remain_width_to_reduce == 0 {
+                            break;
+                        }
+                        let min_width = mapped_comp.get_min_width();
+                        let assigned_width = mapped_needed_widths[index];
+                        let max_width_to_reduce = 
+                            remain_width_to_reduce;
+                        let width_reduce =
+                            cmp::min(assigned_width - min_width, max_width_to_reduce);
+                        // println!(
+                        //     "***** remain_width_to_reduce={}; max_width_to_reduce={}; width_reduce={}; assigned_width={}",
+                        //     remain_width_to_reduce, max_width_to_reduce, width_reduce, assigned_width
+                        // );
+                        if width_reduce > 0 {
+                            mapped_needed_widths[index] = assigned_width - width_reduce;
+                            remain_width_to_reduce -= width_reduce;
+                        }
                     }
-                }
-                if remain_width_to_reduce > 0 {
-                    return Err(format!(
-                        "too small a line ... still need {}, on top of max {}",
-                        remain_width_to_reduce, self.max_width
-                    ));
+                    if remain_width_to_reduce > 0 {
+                        return Err(format!(
+                            "too small a line ... still need {}, on top of max {}",
+                            remain_width_to_reduce, self.max_width
+                        ));
+                    }
                 }
             }
             let mut changed = false;
@@ -444,6 +514,11 @@ impl MappedLineTempComp {
         };
         needed_width
     }
+    // fn try_add_width(&self, assigned_width: u32, width_to_add: u32) -> u32 {
+    //     let max_width = self.get_max_width();
+    //     let new_assigned_width = cmp::min(assigned_width + width_to_add, max_width);
+    //     new_assigned_width
+    // }
     fn veto_assigned_width(&self, map_value: &str, assigned_width: u32) -> i32 {
         let needed_width = self.get_needed_width(map_value);
         let mut needed_width_delta: i32 = if assigned_width > self.max_width {

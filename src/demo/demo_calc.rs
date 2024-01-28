@@ -8,14 +8,13 @@ use std::io::Write;
 use crate::{
     arg::{DumbArgBuilder, DumbArgParser},
     calc::{self, CalcResult},
-    sap_arg,
+    dap_arg,
 };
 
 pub fn create_demo_parser_calc() -> DumbArgParser {
     let mut parser = DumbArgParser::new();
     parser.set_description("DumbCalcProcessor command-line input demo.");
-    sap_arg!("input")
-        .value("123")
+    dap_arg!("input", value = "123")
         .set_multi()
         .set_description("infix expression")
         .add_to(&mut parser)

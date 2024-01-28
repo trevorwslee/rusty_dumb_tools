@@ -6,7 +6,8 @@ use std::collections::HashMap;
 use crate::{
     dlt_comps, dltc,
     ltemp::{
-        DumbLineTempCompBuilder, DumbLineTemplate, LineTempComp, LineTempCompTrait, FLEXIBLE_WIDTH,
+        DumbLineTempCompBuilder, DumbLineTemplate, LineTempComp, LineTempCompTrait, 
+        FLEXIBLE_WIDTH_EX,
     },
 };
 
@@ -85,8 +86,10 @@ fn test_ltemp_under() {
     map.insert(String::from("key2"), String::from("value2"));
     let formatted = ltemp.format(&map).unwrap();
     assert!(formatted.len() >= 30 && formatted.len() <= 100);
-    if FLEXIBLE_WIDTH {
+    if FLEXIBLE_WIDTH_EX {
         assert_eq!(formatted, "|abc>value1  _def_value2 <ghi|");
+    // } else if FLEXIBLE_WIDTH {
+    //     assert_eq!(formatted, "|abc>value1  _def_value2 <ghi|");
     } else {
         assert_eq!(formatted, "|abc>value1   _def_value2<ghi|");
     }
@@ -128,8 +131,10 @@ fn test_ltemp_align() {
     map.insert(String::from("key3"), String::from("value3"));
     let formatted = ltemp.format(&map).unwrap();
     assert!(formatted.len() >= 37 && formatted.len() <= 100);
-    if FLEXIBLE_WIDTH {
+    if FLEXIBLE_WIDTH_EX {
         assert_eq!(formatted, "|abc>value1   |  value2 | value3<ghi|");
+    // } else if FLEXIBLE_WIDTH {
+    //     assert_eq!(formatted, "|abc>value1   |  value2 | value3<ghi|");
     } else {
         assert_eq!(formatted, "|abc>value1    |  value2 |value3<ghi|");
     }

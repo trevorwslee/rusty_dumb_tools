@@ -14,7 +14,7 @@ pub mod test_ltemp;
 
 use crate::{
     arg::{DumbArgBuilder, DumbArgParser},
-    sap_arg,
+    dap_arg,
 };
 
 use crate::demo::{
@@ -47,8 +47,7 @@ pub fn run_demo(in_args: Option<Vec<&str>>) {
 pub fn create_demo_parser() -> DumbArgParser {
     let mut parser = DumbArgParser::new();
     parser.set_description("Demos of rusty_dumb_tools.");
-    sap_arg!("demo")
-        .value("calc")
+    dap_arg!("demo", value = "calc")
         .set_description("a demo")
         .set_with_desc_enums(vec![
             "calc:DumbCalcProcessor command-line input demo",

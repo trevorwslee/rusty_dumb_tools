@@ -38,10 +38,10 @@ use rusty_dumb_tools::{
 // }
 
 fn main() {
-    // if true {
-    //     demo::demo_ltemp::show_table("012345678901234567890");
-    //     return;
-    // }
+    if false {
+        demo::demo_ltemp::show_table("012345678901234567890");
+        return;
+    }
 
     // let released = if env::var("CARGO_PKG_NAME").is_ok() {
     //     println!("Running with cargo run");
