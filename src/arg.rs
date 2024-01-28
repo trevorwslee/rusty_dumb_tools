@@ -52,7 +52,11 @@ macro_rules! sap_arg {
 #[macro_export]
 macro_rules! dap_arg {
     // for case like "name, flag2=flag2, value=value, default=default, fixed=fixed"
-    ($name:expr $(, flag2=$flag2:expr)? $(, value=$value:expr)? $(, default=$default:expr)? $(, fixed=$fixed:expr)?) => {
+    ($name:expr
+        $(, flag2=$flag2:expr)?
+        $(, value=$value:expr)?
+        $(, default=$default:expr)?
+        $(, fixed=$fixed:expr)?) => {
           {
               let mut name_or_flags = Vec::new();
               name_or_flags.push($name.to_string());
@@ -79,13 +83,13 @@ macro_rules! dap_arg {
         name_or_flags.push($name.to_string());
         DumbArgBuilder::new(name_or_flags)
     }};
-    ($($x:expr),*) => {
-        {
-            let mut name_or_flags = Vec::new();
-            $(name_or_flags.push($x.to_string());)*
-            DumbArgBuilder::new(name_or_flags)
-        }
-    };
+    // ($($x:expr),*) => {
+    //     {
+    //         let mut name_or_flags = Vec::new();
+    //         $(name_or_flags.push($x.to_string());)*
+    //         DumbArgBuilder::new(name_or_flags)
+    //     }
+    // };
   }
 
 #[test]

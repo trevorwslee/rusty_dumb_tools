@@ -43,19 +43,22 @@ pub fn show_table(name: &str) {
     ];
     let ltemp = DumbLineTemplate::new(31, 31, &lt_comps);
 
-    let mut map = HashMap::new();
-    map.insert(String::from("label"), String::from("NAME"));
-    map.insert(String::from("value"), name.to_string());
+    let map = HashMap::from([("label", "NAME"), ("value", name)]);
+    // let mut map = HashMap::new();
+    // map.insert("label", String::from("NAME"));
+    // map.insert("value", name.to_string());
     let line1 = ltemp.format(&map).unwrap();
 
-    let mut map = HashMap::new();
-    map.insert(String::from("label"), String::from("AGE"));
-    map.insert(String::from("value"), String::from("<undisclosed>"));
+    let map = HashMap::from([("label", "AGE"), ("value", "<undisclosed>")]);
+    // let mut map = HashMap::new();
+    // map.insert("label", String::from("AGE"));
+    // map.insert("value", String::from("<undisclosed>"));
     let line2 = ltemp.format(&map).unwrap();
 
-    let mut map = HashMap::new();
-    map.insert(String::from("label"), String::from(""));
-    map.insert(String::from("value"), String::from("and counting ..."));
+    let map = HashMap::from([("label", ""), ("value", "and counting ...")]);
+    // let mut map = HashMap::new();
+    // map.insert("label", String::from(""));
+    // map.insert("value", String::from("and counting ..."));
     let line3 = ltemp.format(&map).unwrap();
 
     println!("{}", "=".repeat(31));
@@ -75,9 +78,10 @@ pub fn show_table(name: &str) {
     let ltemp = DumbLineTemplate::new(31, 31, &lt_comps);
 
     for i in 1..=20 {
-        let mut map: HashMap<String, String> = HashMap::new();
-        map.insert(String::from("bar"), "#".repeat(i));
-        map.insert(String::from("val"), i.to_string());
+        let map = HashMap::from([("bar", "#".repeat(i)), ("val", i.to_string())]);
+        // let mut map = HashMap::new();
+        // map.insert("bar", "#".repeat(i));
+        // map.insert("val", i.to_string());
         let line = ltemp.format(&map).unwrap();
         print!("\x1B[1A");
         print!("\x1B[1A");

@@ -11,6 +11,8 @@ use crate::arg::DumbArgBuilder;
 pub const FLEXIBLE_WIDTH_EX: bool = true;
 //pub const FLEXIBLE_WIDTH: bool = false;
 
+type WIDTH = u16;
+
 #[macro_export]
 macro_rules! dlt_comps {
   ($($x:expr),*) => {{
@@ -25,7 +27,13 @@ macro_rules! dlt_comps {
 
 #[macro_export]
 macro_rules! dltc {
-    ($x:expr $(, optional=$optional:expr)? $(, fixed_width=$fixed_width:expr)? $(, min_width=$min_width:expr)? $(, max_width=$max_width:expr)? $(, align=$align:expr)?) => {{
+    ($x:expr
+        $(, fixed_width=$fixed_width:expr)?
+        $(, min_width=$min_width:expr)?
+        $(, max_width=$max_width:expr)?
+        $(, align=$align:expr)?
+        $(, optional=$optional:expr)?
+        ) => {{
       let mut builder = DumbLineTempCompBuilder::new($x);
       $(builder.optional($optional);)?
       $(builder.fixed_width($fixed_width);)?
@@ -35,6 +43,16 @@ macro_rules! dltc {
       builder
     }};
 }
+
+// #[macro_export]
+// macro_rules! dltc_escaped {
+//     ($val:expr, $len:expr) => {{
+//         EscapedLineTempComp::new($val.to_string(), $len as u16)
+//     }};
+//     () => {
+
+//     };
+// }
 
 #[test]
 fn debug_ltemp() {
@@ -49,7 +67,7 @@ fn debug_ltemp() {
         "abc",
         dltc!("key1"),
         "def".to_string(),
-        dltc!("key2", optional = true, min_width = 1, max_width = 10)
+        dltc!("key2", min_width = 1, max_width = 10, optional = true)
     ];
     println!("lt_comps: {:?}", lt_comps);
 
@@ -62,8 +80,8 @@ fn debug_ltemp() {
     println!("ltemp: {:?}", ltemp);
 
     let mut map = HashMap::new();
-    map.insert(String::from("key1"), String::from("value1"));
-    map.insert(String::from("key2"), String::from("value2"));
+    map.insert("key1", String::from("value1"));
+    map.insert("key2", String::from("value2"));
     let formatted = ltemp.format(&map).unwrap();
     println!("formatted: [{}]", formatted);
 }
@@ -85,16 +103,18 @@ fn debug_ltemp() {
 ///     dltc!("value", align = 'R'),
 ///     " |"
 /// ];
-/// let ltemp = DumbLineTemplate::new(30, 30, &lt_comps);
+/// let ltemp = DumbLineTemplate::new_fixed(30, &lt_comps);
 ///
-/// let mut map = HashMap::new();
-/// map.insert(String::from("label"), String::from("NAME"));
-/// map.insert(String::from("value"), name.to_string());
+/// let map = HashMap::from([
+///   ("label", String::from("NAME")),
+///   ("value", name.to_string()),
+/// ]);
 /// let line1 = ltemp.format(&map).unwrap();
 ///
-/// let mut map = HashMap::new();
-/// map.insert(String::from("label"), String::from("AGE"));
-/// map.insert(String::from("value"), String::from("<undisclosed>"));
+/// let map = HashMap::from([
+///  ("label", String::from("AGE")),
+///  ("value", String::from("<undisclosed>")),
+/// ]);
 /// let line2 = ltemp.format(&map).unwrap();
 ///
 /// assert_eq!(line1, "| NAME   :        Trevor Lee |");
@@ -102,8 +122,8 @@ fn debug_ltemp() {
 /// ```
 #[derive(Debug)]
 pub struct DumbLineTemplate {
-    min_width: u32,
-    max_width: u32,
+    min_width: WIDTH,
+    max_width: WIDTH,
     components: Vec<LineTempComp>,
 }
 impl DumbLineTemplate {
@@ -111,29 +131,47 @@ impl DumbLineTemplate {
     /// * `min_width` - the minimum width of the line
     /// * `max_width` - the maximum width of the line
     /// * `components` - the template components of the line, which can be created using the macro [`dlt_comps!`]
-    pub fn new(min_width: u32, max_width: u32, components: &Vec<LineTempComp>) -> DumbLineTemplate {
+    pub fn new(
+        min_width: WIDTH,
+        max_width: WIDTH,
+        components: &Vec<LineTempComp>,
+    ) -> DumbLineTemplate {
         DumbLineTemplate {
             min_width,
             max_width,
             components: components.clone(),
         }
     }
+    // the same as [`new`] but with fixed width
+    pub fn new_fixed(fixed_width: WIDTH, components: &Vec<LineTempComp>) -> DumbLineTemplate {
+        DumbLineTemplate {
+            min_width: fixed_width,
+            max_width: fixed_width,
+            components: components.clone(),
+        }
+    }
+    pub fn min_width(&self) -> WIDTH {
+        self.min_width
+    }
+    pub fn max_width(&self) -> WIDTH {
+        self.max_width
+    }
     /// based on the template and the input map of values, format and return a line
-    pub fn format<T: fmt::Display>(&self, map: &HashMap<String, T>) -> Result<String, String> {
+    pub fn format<T: fmt::Display>(&self, map: &HashMap<&str, T>) -> Result<String, String> {
         let map = map
             .iter()
             .map(|(k, v)| (k.to_string(), v.to_string()))
             .collect::<HashMap<String, String>>();
-        let map_value_provide_fn = |key: &str| -> Option<&str> {
+        let map_value_provide_fn = |key: &str| -> Option<(&str, WIDTH)> {
             match map.get(key) {
-                Some(value) => Some(value),
+                Some(value) => Some((value, value.len() as WIDTH)),
                 None => None,
             }
         };
-        return self.format_ex(map_value_provide_fn);
+        return self.format_extended(map_value_provide_fn);
     }
     /// like [`format`] but accept function that returns the mapped values
-    pub fn format_ex<'a, F: Fn(&str) -> Option<&'a str>>(
+    pub fn format_extended<'a, F: Fn(&str) -> Option<(&'a str, WIDTH)>>(
         &self,
         map_value_provide_fn: F,
     ) -> Result<String, String> {
@@ -141,15 +179,17 @@ impl DumbLineTemplate {
         // .iter()
         // .map(|(k, v)| (k.to_string(), v.to_string()))
         // .collect::<HashMap<String, String>>();
-        let mut total_fixed_width: u32 = 0;
-        let mut total_mapped_needed_width: u32 = 0;
+        let mut total_fixed_width = 0;
+        let mut total_mapped_needed_width = 0;
         let mut mapped_comp_indexes = Vec::new();
         let mut mapped_comps = Vec::new();
         let mut mapped_needed_widths = Vec::new();
-        let mut total_mapped_min_width = 0;
-        let mut mapped_min_widths = Vec::new();
-        let mut total_mapped_max_width = 0_u64;
-        let mut mapped_max_widths = Vec::new();
+        //let mut total_mapped_min_width = 0;
+        //let mut mapped_min_widths = Vec::new();
+        //let mut total_mapped_max_width = 0_u64;
+        //let mut mapped_max_widths = Vec::new();
+        let mut total_mapped_room = 0_u64;
+        let mut mapped_rooms = Vec::new();
         for (index, comp) in self.components.iter().enumerate() {
             match comp {
                 LineTempComp::Mapped(mapped_comp) => {
@@ -167,20 +207,32 @@ impl DumbLineTemplate {
                             }
                         }
                     };
-                    let needed_width = mapped_comp.get_needed_width(&map_value);
+                    let needed_width = mapped_comp.get_needed_width(map_value.1);
                     total_mapped_needed_width += needed_width;
                     mapped_comps.push(mapped_comp);
                     mapped_needed_widths.push(needed_width);
                     let min_width = mapped_comp.get_min_width();
-                    total_mapped_min_width += min_width;
-                    mapped_min_widths.push(min_width);
+                    //total_mapped_min_width += min_width;
+                    //mapped_min_widths.push(min_width);
                     let max_width = mapped_comp.get_max_width();
-                    total_mapped_max_width += max_width as u64;
-                    mapped_max_widths.push(max_width);
+                    //total_mapped_max_width += max_width as u64;
+                    //mapped_max_widths.push(max_width);
+                    if min_width > max_width {
+                        panic!("min_width {} > max_width {}", min_width, max_width);
+                    }
+                    let room = max_width - min_width;
+                    //println!("***** room={}; min_width={}; max_width={}", room, min_width, max_width);
+                    total_mapped_room += room as u64;
+                    mapped_rooms.push(room);
                 }
-                LineTempComp::Fixed(fixed_comp) => {
+                // LineTempComp::Fixed(fixed_comp) => {
+                //     mapped_comp_indexes.push(None);
+                //     let fixed_width = fixed_comp.len() as u32;
+                //     total_fixed_width += fixed_width;
+                // }
+                LineTempComp::Fixed(escaped_comp, width) => {
                     mapped_comp_indexes.push(None);
-                    let fixed_width = fixed_comp.len() as u32;
+                    let fixed_width = width;
                     total_fixed_width += fixed_width;
                 }
             }
@@ -190,16 +242,21 @@ impl DumbLineTemplate {
             if total_need_width < self.min_width {
                 if FLEXIBLE_WIDTH_EX {
                     let mut remain_width_to_add = self.min_width - total_need_width;
-                    let mut loop_total_mapped_max_width = total_mapped_max_width;
+                    let mut loop_total_mapped_room = total_mapped_room;
                     loop {
                         let loop_total_width_to_add = remain_width_to_add;
                         for (index, mapped_comp) in mapped_comps.iter().enumerate() {
                             let max_width = mapped_comp.get_max_width();
                             let assigned_width = mapped_needed_widths[index];
-                            let proportion = max_width as f64 / loop_total_mapped_max_width as f64;
-                            let width_to_add =
-                                (proportion * loop_total_width_to_add as f64).ceil() as u32;
-                            let width_to_add: u32 = cmp::min(width_to_add, remain_width_to_add);
+                            let width_to_add: WIDTH = if loop_total_mapped_room == 0 {
+                                0
+                            } else {
+                                let proportion = max_width as f64 / loop_total_mapped_room as f64;
+                                let width_to_add =
+                                    (proportion * loop_total_width_to_add as f64).ceil();
+                                width_to_add as WIDTH
+                            };
+                            let width_to_add = cmp::min(width_to_add, remain_width_to_add);
                             let new_assigned_width =
                                 cmp::min(assigned_width + width_to_add, max_width);
                             if new_assigned_width != assigned_width {
@@ -219,7 +276,7 @@ impl DumbLineTemplate {
                                 remain_width_to_add, self.min_width
                             ));
                         }
-                        loop_total_mapped_max_width -=
+                        loop_total_mapped_room -=
                             (loop_total_width_to_add - remain_width_to_add) as u64;
                     }
                 } else {
@@ -252,24 +309,22 @@ impl DumbLineTemplate {
             } else if total_need_width > self.max_width {
                 if FLEXIBLE_WIDTH_EX {
                     let mut remain_width_to_reduce = total_need_width - self.max_width;
-                    let mut loop_total_mapped_min_width = total_mapped_min_width;
+                    let mut loop_total_mapped_room = total_mapped_room;
                     loop {
                         let loop_total_width_to_reduce = remain_width_to_reduce;
                         for (index, mapped_comp) in mapped_comps.iter().enumerate() {
                             let min_width = mapped_comp.get_min_width();
                             let assigned_width = mapped_needed_widths[index];
-                            let width_to_reduce = if loop_total_mapped_min_width == 0 {
-                                remain_width_to_reduce
+                            let width_to_reduce: WIDTH = if loop_total_mapped_room == 0 {
+                                0 /*remain_width_to_reduce*/
                             } else {
-                                let proportion =
-                                    min_width as f64 / loop_total_mapped_min_width as f64;
+                                let proportion = min_width as f64 / loop_total_mapped_room as f64;
                                 let width_to_reduce =
                                     (proportion * loop_total_width_to_reduce as f64).ceil() as u32;
-                                width_to_reduce
+                                width_to_reduce as WIDTH
                             };
-                            let width_to_reduce: u32 =
-                                cmp::min(width_to_reduce, remain_width_to_reduce);
-                            let width_to_reduce: u32 = cmp::min(width_to_reduce, assigned_width);
+                            let width_to_reduce = cmp::min(width_to_reduce, remain_width_to_reduce);
+                            let width_to_reduce = cmp::min(width_to_reduce, assigned_width);
                             let new_assigned_width =
                                 cmp::max(assigned_width - width_to_reduce, min_width);
                             // println!(
@@ -297,8 +352,8 @@ impl DumbLineTemplate {
                                 remain_width_to_reduce, self.max_width
                             ));
                         }
-                        loop_total_mapped_min_width -=
-                            loop_total_width_to_reduce - remain_width_to_reduce;
+                        loop_total_mapped_room -=
+                            (loop_total_width_to_reduce - remain_width_to_reduce) as u64;
                     }
                 } else {
                     let total_width_to_reduce = total_need_width - self.max_width;
@@ -309,8 +364,7 @@ impl DumbLineTemplate {
                         }
                         let min_width = mapped_comp.get_min_width();
                         let assigned_width = mapped_needed_widths[index];
-                        let max_width_to_reduce = 
-                            remain_width_to_reduce;
+                        let max_width_to_reduce = remain_width_to_reduce;
                         let width_reduce =
                             cmp::min(assigned_width - min_width, max_width_to_reduce);
                         // println!(
@@ -334,14 +388,14 @@ impl DumbLineTemplate {
             for (index, mapped_comp) in mapped_comps.iter().enumerate() {
                 let assigned_width = mapped_needed_widths[index];
                 let assigned_width_delta = mapped_comp.veto_assigned_width(
-                    &map_value_provide_fn(mapped_comp.get_map_key()).unwrap(),
+                    map_value_provide_fn(mapped_comp.get_map_key()).unwrap().1,
                     assigned_width,
                 );
                 if assigned_width_delta != 0 {
                     mapped_needed_widths[index] =
-                        ((assigned_width as i32) + assigned_width_delta) as u32;
+                        ((assigned_width as i32) + assigned_width_delta) as WIDTH;
                     total_mapped_needed_width =
-                        ((total_mapped_needed_width as i32) + assigned_width_delta) as u32;
+                        ((total_mapped_needed_width as i32) + assigned_width_delta) as WIDTH;
                     changed = true
                 }
             }
@@ -356,12 +410,16 @@ impl DumbLineTemplate {
                     if let Some(map_value) = map_value_provide_fn(mapped_comp.get_map_key()) {
                         let mapped_comp_index = mapped_comp_indexes[index].unwrap();
                         let assigned_width = mapped_needed_widths[mapped_comp_index];
-                        let formatted_comp = mapped_comp.format(&map_value, assigned_width);
+                        let formatted_comp =
+                            mapped_comp.format(&map_value.0, map_value.1, assigned_width);
                         formatted.push_str(&formatted_comp);
                     }
                 }
-                LineTempComp::Fixed(fixed_comp) => {
-                    formatted.push_str(fixed_comp);
+                // LineTempComp::Fixed(fixed_comp) => {
+                //     formatted.push_str(fixed_comp);
+                // }
+                LineTempComp::Fixed(escaped_comp, width) => {
+                    formatted.push_str(escaped_comp);
                 }
             }
         }
@@ -414,8 +472,8 @@ impl DumbLineTemplate {
 
 pub struct DumbLineTempCompBuilder {
     optional: bool,
-    min_width: u32, // can be 0
-    max_width: u32, // can be u32:MAX
+    min_width: WIDTH,
+    max_width: WIDTH,
     align: char,
     key: String,
 }
@@ -426,7 +484,7 @@ impl DumbLineTempCompBuilder {
         Self {
             optional: false,
             min_width: 1,
-            max_width: u32::MAX,
+            max_width: WIDTH::MAX,
             align: 'L',
             key: key.to_string(),
         }
@@ -437,18 +495,18 @@ impl DumbLineTempCompBuilder {
         self
     }
     /// set the min and max widths of the component to be the same fixed width
-    pub fn fixed_width(&mut self, fixed_width: u32) -> &mut DumbLineTempCompBuilder {
+    pub fn fixed_width(&mut self, fixed_width: WIDTH) -> &mut DumbLineTempCompBuilder {
         self.min_width = fixed_width;
         self.max_width = fixed_width;
         self
     }
     // set the min width of the component, keeping the max width unchanged
-    pub fn min_width(&mut self, min_width: u32) -> &mut DumbLineTempCompBuilder {
+    pub fn min_width(&mut self, min_width: WIDTH) -> &mut DumbLineTempCompBuilder {
         self.min_width = min_width;
         self
     }
     /// set the max width of the component, keeping the min width unchanged
-    pub fn max_width(&mut self, max_width: u32) -> &mut DumbLineTempCompBuilder {
+    pub fn max_width(&mut self, max_width: WIDTH) -> &mut DumbLineTempCompBuilder {
         self.max_width = max_width;
         self
     }
@@ -472,7 +530,7 @@ impl DumbLineTempCompBuilder {
 #[derive(Debug, Clone)]
 pub enum LineTempComp {
     Mapped(MappedLineTempComp),
-    Fixed(String),
+    Fixed(String, WIDTH),
 }
 
 //#[derive(Debug, Copy, Clone)]
@@ -482,19 +540,34 @@ pub enum LineTempComp {
 //     Center,
 // }
 
+pub struct EscapedLineTempComp {
+    value: String,
+    width: WIDTH,
+}
+impl EscapedLineTempComp {
+    pub fn new(value: String, width: WIDTH) -> Self {
+        Self { value, width }
+    }
+}
+impl LineTempCompTrait for EscapedLineTempComp {
+    fn as_line_temp_comp(&self) -> LineTempComp {
+        LineTempComp::Fixed(self.value.clone(), self.width)
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct MappedLineTempComp {
     optional: bool,
-    min_width: u32, // can be 0
-    max_width: u32, // can be u32:MAX
+    min_width: WIDTH,
+    max_width: WIDTH,
     align: char,
     key: String,
 }
 impl MappedLineTempComp {
-    fn get_min_width(&self) -> u32 {
+    fn get_min_width(&self) -> WIDTH {
         self.min_width
     }
-    fn get_max_width(&self) -> u32 {
+    fn get_max_width(&self) -> WIDTH {
         self.max_width
     }
     fn is_optional(&self) -> bool {
@@ -503,8 +576,8 @@ impl MappedLineTempComp {
     fn get_map_key(&self) -> &str {
         &self.key
     }
-    fn get_needed_width(&self, map_value: &str) -> u32 {
-        let needed_width = map_value.len() as u32;
+    fn get_needed_width(&self, mapped_value_width: WIDTH) -> WIDTH {
+        let needed_width = mapped_value_width; //map_value.len() as WIDTH;
         let needed_width = if needed_width < self.min_width {
             self.min_width
         } else if needed_width > self.max_width {
@@ -519,8 +592,8 @@ impl MappedLineTempComp {
     //     let new_assigned_width = cmp::min(assigned_width + width_to_add, max_width);
     //     new_assigned_width
     // }
-    fn veto_assigned_width(&self, map_value: &str, assigned_width: u32) -> i32 {
-        let needed_width = self.get_needed_width(map_value);
+    fn veto_assigned_width(&self, mapped_value_width: WIDTH, assigned_width: WIDTH) -> i32 {
+        let needed_width = self.get_needed_width(mapped_value_width);
         let mut needed_width_delta: i32 = if assigned_width > self.max_width {
             panic!("not expected")
         } else if assigned_width < needed_width {
@@ -531,12 +604,20 @@ impl MappedLineTempComp {
         };
         needed_width_delta
     }
-    fn format(&self, map_value: &str, assigned_width: u32) -> String {
-        let needed_width = self.get_needed_width(map_value);
+    fn format(
+        &self,
+        mapped_value: &str,
+        mapped_value_width: WIDTH,
+        assigned_width: WIDTH,
+    ) -> String {
+        let needed_width = self.get_needed_width(mapped_value_width);
         if assigned_width > self.max_width {
             panic!("not expected")
         } else if assigned_width < needed_width {
-            return map_value[..assigned_width as usize].to_string();
+            if mapped_value_width != mapped_value.len() as WIDTH {
+                panic!("escaped value [{}] cannot be reduced", mapped_value);
+            }
+            return mapped_value[..assigned_width as usize].to_string();
         }
         // let formatted = if assigned_width > self.max_width {
         //     panic!("not expected")
@@ -572,27 +653,31 @@ impl MappedLineTempComp {
         // } else {
         //     map_value.to_string()
         // };
-        let value_width = map_value.len() as u32;
+        let value_width = mapped_value_width; //map_value.len();
         match self.align {
             'L' => {
-                let mut formatted = map_value.to_string();
-                formatted
-                    .push_str(&" ".repeat((assigned_width - value_width/*needed_width*/) as usize));
+                let mut formatted = mapped_value.to_string();
+                formatted.push_str(&" ".repeat(
+                    (assigned_width as usize - mapped_value_width as usize/*value_width*/) as usize,
+                ));
                 formatted
             }
             'R' => {
-                let mut formatted =
-                    " ".repeat((assigned_width - value_width/*needed_width*/) as usize);
-                formatted.push_str(map_value);
+                let mut formatted = " ".repeat(
+                    (assigned_width as usize - mapped_value_width as usize/*value_width*/) as usize,
+                );
+                formatted.push_str(mapped_value);
                 formatted
             }
             'C' => {
                 let left_count =
-                    ((assigned_width as f64 - needed_width as f64) / 2.0).ceil() as usize;
+                    ((assigned_width as f64 - mapped_value_width/*needed_width*/ as f64) / 2.0)
+                        .ceil() as usize;
                 let right_count =
-                    ((assigned_width as f64 - needed_width as f64) / 2.0).floor() as usize;
+                    ((assigned_width as f64 - mapped_value_width/*needed_width*/ as f64) / 2.0)
+                        .floor() as usize;
                 let mut formatted = " ".repeat(left_count);
-                formatted.push_str(map_value);
+                formatted.push_str(mapped_value);
                 formatted.push_str(&" ".repeat(right_count));
                 formatted
             }
@@ -631,12 +716,22 @@ impl LineTempCompTrait for DumbLineTempCompBuilder {
 }
 impl LineTempCompTrait for String {
     fn as_line_temp_comp(&self) -> LineTempComp {
-        LineTempComp::Fixed(self.clone())
+        LineTempComp::Fixed(self.clone(), self.len() as WIDTH)
     }
 }
 impl LineTempCompTrait for &'static str {
     fn as_line_temp_comp(&self) -> LineTempComp {
-        LineTempComp::Fixed(self.to_string())
+        LineTempComp::Fixed(self.to_string(), self.len() as WIDTH)
+    }
+}
+impl LineTempCompTrait for (String, usize) {
+    fn as_line_temp_comp(&self) -> LineTempComp {
+        LineTempComp::Fixed(self.0.clone(), self.1 as WIDTH)
+    }
+}
+impl LineTempCompTrait for (&'static str, usize) {
+    fn as_line_temp_comp(&self) -> LineTempComp {
+        LineTempComp::Fixed(self.0.to_string(), self.1 as WIDTH)
     }
 }
 
