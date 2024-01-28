@@ -39,15 +39,7 @@ the demo can be ***cargo*** run like
 * `cargo run -- calc-repl`
   <br>the above demonstrates how to invoke the sub-command `calc-repl`, which in turn show how `DumbCalcProcessor` like a REPL
 * `cargo run -- ltemp Trevor`
-  <br>the above demonstrates how to use `DumbLineTemplate` to format lines to show data like
-  ```
-  ===============================
-  | NAME :               Trevor |
-  | AGE  :        <undisclosed> |
-  |      :     and counting ... |
-  | + 20 | #################### |
-  ===============================
-  ```
+  <br>the above demonstrates how to use `DumbLineTemplate` to format lines to show data
 * `cargo run -- arg -f 0.2 5 --string2 VAL1 false 1 2 3`
 
 The output of running `cargo run -- -h`:
@@ -88,6 +80,26 @@ After running `cargo run -- calc-repl`, the demo will get in a loop to get input
 >
 ```
 
+After running `cargo run -- ltemp Trevor`, the demo will show something like
+```
+===============================
+| NAME :               Trevor |
+| AGE  :        <undisclosed> |
+|      :     and counting ... |
+| +  1 | #                    |
+===============================
+```
+`+  1 | #` acts like a "progress indicator"; after 20 seconds:
+```
+===============================
+| NAME :               Trevor |
+| AGE  :        <undisclosed> |
+|      :     and counting ... |
+| + 20 | #################### |
+===============================
+```
+
+
 # Thank You!
 
 Greeting from the author Trevor Lee:
@@ -104,6 +116,9 @@ MIT
 
 
 # Change History:
+
+* v0.1.2
+  - working on DumbLineTemplate
 
 * v0.1.1
   - added more documentations, and via `run_demo` function

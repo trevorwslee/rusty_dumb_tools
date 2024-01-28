@@ -8,11 +8,41 @@ use std::{cmp, collections::HashMap, path::Display};
 
 use crate::arg::DumbArgBuilder;
 
+/// for internal use only
 pub const FLEXIBLE_WIDTH_EX: bool = true;
 //pub const FLEXIBLE_WIDTH: bool = false;
 
 type WIDTH = u16;
 
+/// use this macro to compose [`DumbLineTemplate`] components
+///
+/// for example that also involve ASCII escaped strings:
+/// ```
+/// use rusty_dumb_tools::{
+///    dlt_comps, dltc,
+///    ltemp::{DumbLineTempCompBuilder, DumbLineTemplate, LineTempComp, LineTempCompTrait},
+/// };
+/// use std::collections::HashMap;
+/// let name = "Trevor Lee";
+/// let lt_comps = dlt_comps![
+///     "| ",
+///     ("{1b}[7m(\u{1b}[0m", 1),
+///     dltc!("key", align='C'),
+///     ("{1b}[7m)\u{1b}[0m", 1),
+///     " |"
+/// ];
+/// let ltemp = DumbLineTemplate::new_fixed(15, &lt_comps);
+/// let line = ltemp.format(&HashMap::from([("key", String::from("value"))])).unwrap();
+/// assert_eq!(line, "| {1b}[7m(\u{1b}[0m  value  {1b}[7m)\u{1b}[0m |");
+/// ```
+/// notes:
+/// * `"| "`: a fixed string
+/// * `("{1b}[7m(\u{1b}[0m", 1)`:
+///   - `{1b}[7m(\u{1b}[0m` is the ASCII escaped string for `(`
+///   -  the `1` specifies that the ASCII escaped string has "visual" length 1
+/// * `dltc!("key", align='C')`:
+///   - a value-mapped component
+///   - require a value mapped for key `key` when calling [`DumbLineTemplate::format`]
 #[macro_export]
 macro_rules! dlt_comps {
   ($($x:expr),*) => {{
@@ -25,6 +55,7 @@ macro_rules! dlt_comps {
   }};
 }
 
+/// use this macro to construct a [`DumbLineTemplate`] component, and it is expected to be use together with [`dlt_comps!`]
 #[macro_export]
 macro_rules! dltc {
     ($x:expr
@@ -95,7 +126,8 @@ fn debug_ltemp() {
 ///    ltemp::{DumbLineTempCompBuilder, DumbLineTemplate, LineTempComp, LineTempCompTrait},
 /// };
 /// use std::collections::HashMap;
-/// let name = "Trevor Lee";
+///
+/// // create the template components
 /// let lt_comps = dlt_comps![
 ///     "| ",
 ///     dltc!("label", fixed_width = 6, align = 'L'),
@@ -103,14 +135,19 @@ fn debug_ltemp() {
 ///     dltc!("value", align = 'R'),
 ///     " |"
 /// ];
+///
+/// // create the template
 /// let ltemp = DumbLineTemplate::new_fixed(30, &lt_comps);
 ///
+/// // format line1 from the template
+/// let name = "Trevor Lee";
 /// let map = HashMap::from([
 ///   ("label", String::from("NAME")),
 ///   ("value", name.to_string()),
 /// ]);
 /// let line1 = ltemp.format(&map).unwrap();
 ///
+/// // format line2 from the template
 /// let map = HashMap::from([
 ///  ("label", String::from("AGE")),
 ///  ("value", String::from("<undisclosed>")),
@@ -120,6 +157,11 @@ fn debug_ltemp() {
 /// assert_eq!(line1, "| NAME   :        Trevor Lee |");
 /// assert_eq!(line2, "| AGE    :     <undisclosed> |");
 /// ```
+/// notes:
+/// * `"| "`: a fixed string
+/// * `dltc!("label", fixed_width = 6, align = 'L')`:
+///   - a value-mapped component
+///   - require a value mapped for key `label` when calling [`DumbLineTemplate::format`]
 #[derive(Debug)]
 pub struct DumbLineTemplate {
     min_width: WIDTH,
@@ -168,10 +210,11 @@ impl DumbLineTemplate {
                 None => None,
             }
         };
-        return self.format_extended(map_value_provide_fn);
+        return self.format_ex(map_value_provide_fn);
     }
-    /// like [`format`] but accept function that returns the mapped values
-    pub fn format_extended<'a, F: Fn(&str) -> Option<(&'a str, WIDTH)>>(
+    /// like [`format`] but accept function that returns the mapped values; each mapped value is supposed to be a tuple of the value and its width
+    /// (note that for ASCII escaped string, the "visual" length can be different from the length of the string)
+    pub fn format_ex<'a, F: Fn(&str) -> Option<(&'a str, WIDTH)>>(
         &self,
         map_value_provide_fn: F,
     ) -> Result<String, String> {

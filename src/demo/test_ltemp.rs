@@ -163,7 +163,7 @@ fn test_ltemp_escaped() {
             None
         }
     };
-    let formatted = ltemp.format_extended(map_value_provide_fn).unwrap();
+    let formatted = ltemp.format_ex(map_value_provide_fn).unwrap();
     assert_eq!(formatted, "\u{1b}[7mABC\u{1b}[0m  \u{1b}[7mDEF\u{1b}[0m ");
     //println!("*** {}({}) ***", formatted, formatted.len());
 }
