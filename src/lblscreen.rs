@@ -65,7 +65,7 @@ impl DumbLineByLineScreen {
             initialized: false,
         }
     }
-    pub fn refresh<T: LBLScreenMapValueTrait>(&self, map_value_provider: &T) {
+    pub fn refresh<T: LBLScreenMapValueTrait>(&mut self, map_value_provider: &T) {
         if self.initialized {
             // move cursor up to top first
             unimplemented!();
@@ -73,13 +73,13 @@ impl DumbLineByLineScreen {
         self._update(None, map_value_provider)
     }
     /// refresh the screen assuming only the values of the given keys changed
-    pub fn refresh_for_keys<T: LBLScreenMapValueTrait>(&self, keys: Vec<String>, map_value_provider: &T) {
+    pub fn refresh_for_keys<T: LBLScreenMapValueTrait>(&mut self, keys: Vec<String>, map_value_provider: &T) {
         if !self.initialized {
             panic!("must call refresh() once first");
         }
         self._update(Some(keys), map_value_provider)
     }
-    fn _update<T: LBLScreenMapValueTrait>(&self, keys: Option<Vec<String>>, map_value_provider: &T) {
+    fn _update<T: LBLScreenMapValueTrait>(&mut self, keys: Option<Vec<String>>, map_value_provider: &T) {
         // for each line, keep set of keys, only update the line if key values changed
         let map_value_fn = |key: &str| -> Option<(T::VALUE, u16)> {
             let mapped_value = map_value_provider.map_value(key);
@@ -102,6 +102,7 @@ impl DumbLineByLineScreen {
         if self.bottom_line.is_some() {
             println!("{}", self.bottom_line.as_ref().unwrap());
         }
+        self.initialized = true;
     }
 }
 
