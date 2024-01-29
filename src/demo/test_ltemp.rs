@@ -156,14 +156,14 @@ fn test_ltemp_escaped() {
     assert_eq!(formatted, "\u{1b}[7mABC\u{1b}[0m");
     assert_eq!(formatted.len(), 11);
     //println!("*** {}({}) ***", formatted, formatted.len());
-    let map_value_provide_fn = |key: &str| -> Option<(&str, u16)> {
+    let map_value_fn = |key: &str| -> Option<(&str, u16)> {
         if key == "escaped" {
             Some(("\x1B[7mDEF\x1B[0m", 3))
         } else {
             None
         }
     };
-    let formatted = ltemp.format_ex(map_value_provide_fn).unwrap();
+    let formatted = ltemp.format_ex(map_value_fn).unwrap();
     assert_eq!(formatted, "\u{1b}[7mABC\u{1b}[0m  \u{1b}[7mDEF\u{1b}[0m ");
     //println!("*** {}({}) ***", formatted, formatted.len());
 }

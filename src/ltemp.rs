@@ -31,7 +31,7 @@ type WIDTH = u16;
 ///     ("{1b}[7m)\u{1b}[0m", 1),
 ///     " |"
 /// ];
-/// let ltemp = DumbLineTemplate::new_fixed(15, &lt_comps);
+/// let ltemp = DumbLineTemplate::new_fixed_width(15, &lt_comps);
 /// let line = ltemp.format(&HashMap::from([("key", String::from("value"))])).unwrap();
 /// assert_eq!(line, "| {1b}[7m(\u{1b}[0m  value  {1b}[7m)\u{1b}[0m |");
 /// ```
@@ -138,7 +138,7 @@ fn debug_ltemp() {
 /// ];
 ///
 /// // create the template
-/// let ltemp = DumbLineTemplate::new_fixed(30, &lt_comps);
+/// let ltemp = DumbLineTemplate::new_fixed_width(30, &lt_comps);
 ///
 /// // format line1 from the template
 /// let name = "Trevor Lee";
@@ -176,7 +176,7 @@ impl DumbLineTemplate {
     /// * `max_width` - the maximum width of the line
     /// * `components` - the template components of the line, which can be created using the macro [`dlt_comps!`]
     ///
-    /// also see [`DumbLineTemplate::new_fixed`]
+    /// also see [`DumbLineTemplate::new_fixed_width`]
     pub fn new(
         min_width: WIDTH,
         max_width: WIDTH,
@@ -189,7 +189,7 @@ impl DumbLineTemplate {
         }
     }
     /// the same as [`DumbLineTemplate::new`] but with fixed width
-    pub fn new_fixed(fixed_width: WIDTH, components: &Vec<LineTempComp>) -> DumbLineTemplate {
+    pub fn new_fixed_width(fixed_width: WIDTH, components: &Vec<LineTempComp>) -> DumbLineTemplate {
         DumbLineTemplate {
             min_width: fixed_width,
             max_width: fixed_width,
@@ -209,19 +209,19 @@ impl DumbLineTemplate {
             .iter()
             .map(|(k, v)| (k.to_string(), v.to_string()))
             .collect::<HashMap<String, String>>();
-        let map_value_provide_fn = |key: &str| -> Option<(&str, WIDTH)> {
+        let map_value_fn = |key: &str| -> Option<(&str, WIDTH)> {
             match map.get(key) {
                 Some(value) => Some((value, value.len() as WIDTH)),
                 None => None,
             }
         };
-        return self.format_ex(map_value_provide_fn);
+        return self.format_ex(map_value_fn);
     }
     /// like [`format`] but accept function that returns the mapped values; each mapped value is supposed to be a tuple of the value and its width
     /// (note that for ASCII escaped string, the "visual" length can be different from the length of the string)
     pub fn format_ex<T: fmt::Display, F: Fn(&str) -> Option<(T, WIDTH)>>(
         &self,
-        map_value_provide_fn: F,
+        map_value_fn: F,
     ) -> Result<String, String> {
         // let map = map
         // .iter()
@@ -242,7 +242,7 @@ impl DumbLineTemplate {
             match comp {
                 LineTempComp::Mapped(mapped_comp) => {
                     mapped_comp_indexes.push(Some(mapped_comps.len()));
-                    let map_value = match map_value_provide_fn(&mapped_comp.get_map_key()) {
+                    let map_value = match map_value_fn(&mapped_comp.get_map_key()) {
                         Some(map_value) => map_value,
                         None => {
                             if mapped_comp.is_optional() {
@@ -436,7 +436,7 @@ impl DumbLineTemplate {
             for (index, mapped_comp) in mapped_comps.iter().enumerate() {
                 let assigned_width = mapped_needed_widths[index];
                 let assigned_width_delta = mapped_comp.veto_assigned_width(
-                    map_value_provide_fn(mapped_comp.get_map_key()).unwrap().1,
+                    map_value_fn(mapped_comp.get_map_key()).unwrap().1,
                     assigned_width,
                 );
                 if assigned_width_delta != 0 {
@@ -455,11 +455,14 @@ impl DumbLineTemplate {
         for (index, comp) in self.components.iter().enumerate() {
             match comp {
                 LineTempComp::Mapped(mapped_comp) => {
-                    if let Some(map_value) = map_value_provide_fn(mapped_comp.get_map_key()) {
+                    if let Some(map_value) = map_value_fn(mapped_comp.get_map_key()) {
                         let mapped_comp_index = mapped_comp_indexes[index].unwrap();
                         let assigned_width = mapped_needed_widths[mapped_comp_index];
-                        let formatted_comp =
-                            mapped_comp.format(&map_value.0.to_string(), map_value.1, assigned_width);
+                        let formatted_comp = mapped_comp.format(
+                            &map_value.0.to_string(),
+                            map_value.1,
+                            assigned_width,
+                        );
                         formatted.push_str(&formatted_comp);
                     }
                 }

@@ -35,6 +35,7 @@
 #[macro_use]
 pub mod arg;
 pub mod calc;
+pub mod lblscreen;
 pub mod ltemp;
 
 pub mod calculator;
