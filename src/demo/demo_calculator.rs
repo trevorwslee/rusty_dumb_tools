@@ -19,6 +19,7 @@ use crate::{
 pub fn handle_demo_calculator() {
     let mut ui = CalculatorUI::new();
     ui.refresh();
+    ui.refresh();
 }
 
 const RESULT_WIDTH: u16 = 11;
@@ -131,6 +132,7 @@ impl CalculatorUI {
             line_suffix: Some("|".to_string()),
             top_line: Some(format!("\n\t{}", "=".repeat(FIXED_WIDTH as usize + 2))),
             bottom_line: Some(format!("\t{}\n", "=".repeat(FIXED_WIDTH as usize + 2))),
+            screen_height_adjustment: 2,
             ..LBLScreenSettings::default()
         };
         let screen = DumbLineByLineScreen::new(line_temps, settings);

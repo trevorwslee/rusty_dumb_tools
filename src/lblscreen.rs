@@ -17,11 +17,18 @@ use std::fmt;
 
 use crate::ltemp::DumbLineTemplate;
 
+/// * line_prefix: the prefix to be printed before each formatted line
+/// * line_suffix: the suffix to be printed after each formatted line
+/// * top_line: the top line to be printed before the formatted lines; note that this line will not be prefixed or suffixed
+/// * bottom_line: the bottom line to be printed after the formatted lines; note that this line will not be prefixed or suffixed
+/// * screen_height_adjustment:
+///   normally not needed, but if top_line and/or bottom_line contains newlines, then this adjusts the screen height that is calculated automatically
 pub struct LBLScreenSettings {    
     pub line_prefix: Option<String>,
     pub line_suffix: Option<String>,
     pub top_line: Option<String>,
     pub bottom_line: Option<String>,
+    pub screen_height_adjustment: i32,
 }
 impl Default for LBLScreenSettings {
     fn default() -> Self {
@@ -30,6 +37,7 @@ impl Default for LBLScreenSettings {
             line_suffix: None,
             top_line: None,
             bottom_line: None,
+            screen_height_adjustment: 0,
         }
     }
 }
@@ -40,6 +48,7 @@ pub struct DumbLineByLineScreen {
     line_suffix: Option<String>,
     top_line: Option<String>,
     bottom_line: Option<String>,
+    screen_height_adjustment: i32,
     initialized: bool,
 }
 impl DumbLineByLineScreen {
@@ -56,13 +65,22 @@ impl DumbLineByLineScreen {
             line_suffix: settings.line_suffix,
             top_line: settings.top_line,
             bottom_line: settings.bottom_line,
+            screen_height_adjustment: settings.screen_height_adjustment,
             initialized: false,
         }
     }
     pub fn refresh<T: LBLScreenMapValueTrait>(&mut self, map_value_provider: &T) {
         if self.initialized {
             // move cursor up to top first
-            unimplemented!();
+            let mut by = self.line_temps.len() as i32 + self.screen_height_adjustment;
+            if self.top_line.is_some() {
+                by += 1;
+            }
+            if self.bottom_line.is_some() {
+                by += 1;
+            }
+            let seq = format!("\x1B[{}A", by);
+            print!("{}", seq)
         }
         self._update(None, map_value_provider)
     }
@@ -105,3 +123,15 @@ pub trait LBLScreenMapValueTrait {
     fn map_value(&self, key: &str) -> Option<(Self::VALUE, u16)>;
 
 }
+
+
+// use crossterm::cursor;
+
+// let mut cursor = cursor();
+// let (x, y) = cursor.pos();
+
+// println!("Cursor position: X: {}, Y: {}", x, y);
+
+
+// [dependencies]
+// crossterm = "0.19"
