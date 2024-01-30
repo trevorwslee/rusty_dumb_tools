@@ -88,6 +88,29 @@ fn test_arg_types() {
     assert!(result.is_err());
 }
 #[test]
+fn test_arg_convert() {
+    println!("*** ARG CONVERT ***");
+    let mut parser = DumbArgParser::new();
+    dap_arg!("arg").add_to(&mut parser);
+    dap_arg!("arg_i32", value=1_i32).add_to(&mut parser);
+    dap_arg!("arg_i64", value=1_i64).add_to(&mut parser);
+    dap_arg!("arg_f32", value=1_f32).add_to(&mut parser);
+    dap_arg!("arg_f64", value=1_f64).add_to(&mut parser);
+    parser.process_args(vec!["A", "1", "2", "3.0", "4.0"]);
+    assert_eq!("A", parser.get::<String>("arg").unwrap());
+    assert_eq!(1, parser.get::<i32>("arg_i32").unwrap());
+    assert_eq!(1, parser.get::<i64>("arg_i32").unwrap()); // i32 => i64
+    assert_eq!(1.0, parser.get::<f64>("arg_i32").unwrap()); // i32 => f64
+    assert_eq!("1", parser.get::<String>("arg_i32").unwrap()); // i32 => String
+    assert_eq!(2, parser.get::<i64>("arg_i64").unwrap());
+    assert_eq!("2", parser.get::<String>("arg_i64").unwrap()); // i64 => String
+    assert_eq!(3.0, parser.get::<f32>("arg_f32").unwrap());
+    assert_eq!(3.0, parser.get::<f64>("arg_f32").unwrap()); // f32 => f64
+    assert_eq!("3", parser.get::<String>("arg_f32").unwrap()); // f32 => String
+    assert_eq!(4.0, parser.get::<f64>("arg_f64").unwrap());
+    assert_eq!("4", parser.get::<String>("arg_f64").unwrap()); // f64 => String
+}
+#[test]
 fn test_positional_args() {
     println!("*** POSITIONAL ARGUMENTS ***");
     let mut parser = DumbArgParser::new();

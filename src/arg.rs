@@ -1361,6 +1361,7 @@ impl ArgValueTrait for i64 {
     }
     fn from_arg_value(arg_value: ArgValue) -> Result<Box<i64>, String> {
         match arg_value {
+            ArgValue::I32(v) => Ok(Box::new(v as i64)),
             ArgValue::I64(v) => Ok(Box::new(v)),
             _ => Err(format!("value {:?} is not of type i64", arg_value)),
         }
@@ -1383,6 +1384,8 @@ impl ArgValueTrait for f64 {
     }
     fn from_arg_value(arg_value: ArgValue) -> Result<Box<f64>, String> {
         match arg_value {
+            ArgValue::I32(v) => Ok(Box::new(v as f64)),
+            ArgValue::F32(v) => Ok(Box::new(v as f64)),
             ArgValue::F64(v) => Ok(Box::new(v)),
             _ => Err(format!("value {:?} is not of type f64", arg_value)),
         }

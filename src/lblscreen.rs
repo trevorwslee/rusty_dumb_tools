@@ -1,7 +1,6 @@
 // DumbPrintedScreenUpdater
 // * startoff assume @ the right place to start printing ... and screen can be fit in terminal
 // * pass in
-//   - fixed width
 //   - optional line prefix ... printed before printing every line,
 //   - optional line suffix ... printed after printing every line,
 //   - optional top and bottom lines (will be printed with prefix and suffix)
@@ -18,8 +17,7 @@ use std::fmt;
 
 use crate::ltemp::DumbLineTemplate;
 
-pub struct LBLScreenSettings {
-    pub width: u16,
+pub struct LBLScreenSettings {    
     pub line_prefix: Option<String>,
     pub line_suffix: Option<String>,
     pub top_line: Option<String>,
@@ -28,7 +26,6 @@ pub struct LBLScreenSettings {
 impl Default for LBLScreenSettings {
     fn default() -> Self {
         Self {
-            width: 80,
             line_prefix: None,
             line_suffix: None,
             top_line: None,
@@ -39,7 +36,6 @@ impl Default for LBLScreenSettings {
 
 pub struct DumbLineByLineScreen {
     line_temps: Vec<DumbLineTemplate>,
-    width: u16,
     line_prefix: Option<String>,
     line_suffix: Option<String>,
     top_line: Option<String>,
@@ -56,8 +52,6 @@ impl DumbLineByLineScreen {
     ) -> Self {
         Self {
             line_temps,
-            //map_value_fn: map_value_fn,
-            width: settings.width,
             line_prefix: settings.line_prefix,
             line_suffix: settings.line_suffix,
             top_line: settings.top_line,

@@ -127,10 +127,10 @@ impl CalculatorUI {
         // };
 
         let settings = LBLScreenSettings {
-            line_prefix: Some("|".to_string()),
+            line_prefix: Some("\t|".to_string()),
             line_suffix: Some("|".to_string()),
-            top_line: Some("=".repeat(FIXED_WIDTH as usize + 2)),
-            bottom_line: Some("=".repeat(FIXED_WIDTH as usize + 2)),
+            top_line: Some(format!("\n\t{}", "=".repeat(FIXED_WIDTH as usize + 2))),
+            bottom_line: Some(format!("\t{}\n", "=".repeat(FIXED_WIDTH as usize + 2))),
             ..LBLScreenSettings::default()
         };
         let screen = DumbLineByLineScreen::new(line_temps, settings);
