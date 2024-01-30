@@ -49,6 +49,13 @@ macro_rules! sap_arg {
 /// dap_arg!("position2", default="def").add_to(&mut parser); // e.g. ... -f flag-value positional-1-value positional-2-value
 /// assert_eq!("<program> [-h] -f flag [-v] position1 [position2]", parser.compose_usage());
 /// ```
+///
+/// the optional "ordered but named" arguments are:
+/// - `flag2` - the the second flag name, like "--verbose" in the above example
+/// - `value` - like calling [`DumbArgBuilder::value`]
+/// - `default` - like calling [`DumbArgBuilder::default`]
+/// - `fixed` - like calling [`DumbArgBuilder::fixed`]
+///
 /// also see [`DumbArgParser`]
 #[macro_export]
 macro_rules! dap_arg {

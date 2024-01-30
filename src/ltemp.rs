@@ -1,10 +1,14 @@
-//! A simple line template for formatting a line, which might be helpful in creating a terminal-oriented UI -- [`crate::ltemp::DumbLineTemplate``]
+//! A simple line template for formatting a line, which might be helpful in creating a terminal-oriented UI -- [`crate::ltemp::DumbLineTemplate`]
 
 #![deny(warnings)]
 #![allow(unused)]
 
 use core::fmt;
-use std::{cmp, collections::HashMap, path::Display};
+use std::{
+    cmp,
+    collections::{HashMap, HashSet},
+    path::Display,
+};
 
 use crate::arg::DumbArgBuilder;
 
@@ -57,6 +61,13 @@ macro_rules! dlt_comps {
 }
 
 /// use this macro to construct a value-mapped [`DumbLineTemplate`] component, and it is expected to be use together with [`crate::dlt_comps!`]
+///
+/// the optional "ordered but named" arguments are
+/// * `fixed_width` - like calling [`MappedLineTempCompBuilder::fixed_width`]
+/// * `min_width` - like calling [`MappedLineTempCompBuilder::min_width`]
+/// * `max_width` - like calling [`MappedLineTempCompBuilder::max_width`]
+/// * `align` - like calling [`MappedLineTempCompBuilder::align`]
+/// * `optional` - like calling [`MappedLineTempCompBuilder::optional`]
 #[macro_export]
 macro_rules! dltc {
     ($x:expr
@@ -201,6 +212,18 @@ impl DumbLineTemplate {
     }
     pub fn max_width(&self) -> WIDTH {
         self.max_width
+    }
+    pub fn scan_for_keys(&self) -> HashSet<String> {
+        let mut keys = HashSet::new();
+        for comp in self.components.iter() {
+            match comp {
+                LineTempComp::Mapped(mapped_comp) => {
+                    keys.insert(mapped_comp.get_map_key().to_string());
+                }
+                _ => {}
+            }
+        }
+        keys
     }
     /// based on the template and the input map of values, format and return a line;
     /// for a more flexible way of formatting, try [`DumbLineTemplate::format_ex`]
@@ -527,6 +550,7 @@ pub struct MappedLineTempCompBuilder {
     max_width: WIDTH,
     align: char,
     optional: bool,
+    truncate_indicator: Option<String>,
 }
 /// a builder for a component to be a component of [`DumbLineTemplate`]
 impl MappedLineTempCompBuilder {
@@ -538,6 +562,7 @@ impl MappedLineTempCompBuilder {
             max_width: WIDTH::MAX,
             align: 'L',
             optional: false,
+            truncate_indicator: None,
         }
     }
     /// set the component to be optional
@@ -567,6 +592,13 @@ impl MappedLineTempCompBuilder {
         self.align = align;
         self
     }
+    pub fn set_truncate_indicator(
+        &mut self,
+        truncate_indicator: &str,
+    ) -> &mut MappedLineTempCompBuilder {
+        self.truncate_indicator = Some(truncate_indicator.to_string());
+        self
+    }
     pub fn build(&self) -> MappedLineTempComp {
         MappedLineTempComp {
             key: self.key.clone(),
@@ -574,6 +606,7 @@ impl MappedLineTempCompBuilder {
             max_width: self.max_width,
             align: self.align,
             optional: self.optional,
+            truncate_indicator: self.truncate_indicator.clone(),
         }
     }
 }
@@ -599,6 +632,7 @@ const DEF_MAPPED_LINE_TEMP_COMP_SETTINGS: MappedLineTempCompSettings = MappedLin
     max_width: WIDTH::MAX,
     align: 'L',
     optional: false,
+    truncate_indicator: None,
 };
 
 //#[derive(Debug, Copy, Clone)]
@@ -629,6 +663,7 @@ pub struct MappedLineTempCompSettings {
     pub max_width: WIDTH,
     pub align: char,
     pub optional: bool,
+    pub truncate_indicator: Option<String>,
 }
 impl Default for MappedLineTempCompSettings {
     fn default() -> Self {
@@ -643,6 +678,7 @@ pub struct MappedLineTempComp {
     max_width: WIDTH,
     align: char,
     optional: bool,
+    truncate_indicator: Option<String>,
 }
 impl MappedLineTempComp {
     pub fn new(key: &str, settings: &MappedLineTempCompSettings) -> Self {
@@ -652,6 +688,7 @@ impl MappedLineTempComp {
             max_width: settings.max_width,
             align: settings.align,
             optional: settings.optional,
+            truncate_indicator: settings.truncate_indicator.clone(),
         }
     }
     fn get_min_width(&self) -> WIDTH {
@@ -703,11 +740,24 @@ impl MappedLineTempComp {
         let needed_width = self.get_needed_width(mapped_value_width);
         if assigned_width > self.max_width {
             panic!("not expected")
-        } else if assigned_width < needed_width {
+        } else if assigned_width < needed_width || assigned_width < mapped_value_width {
             if mapped_value_width != mapped_value.len() as WIDTH {
                 panic!("escaped value [{}] cannot be reduced", mapped_value);
             }
-            return mapped_value[..assigned_width as usize].to_string();
+            if let Some(truncate_indicator) = &self.truncate_indicator {
+                let a_width = assigned_width as i32 - truncate_indicator.len() as i32;
+                if a_width < 0 {
+                    panic!(
+                        "width {} too small while truncate indicator is [{}]",
+                        assigned_width, truncate_indicator
+                    )
+                }
+                let mut formatted = mapped_value[..a_width as usize].to_string();
+                formatted.push_str(truncate_indicator);
+                return formatted;
+            } else {
+                return mapped_value[..assigned_width as usize].to_string();
+            }
         }
         // let formatted = if assigned_width > self.max_width {
         //     panic!("not expected")

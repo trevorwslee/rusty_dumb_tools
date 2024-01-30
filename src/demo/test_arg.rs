@@ -92,10 +92,10 @@ fn test_arg_convert() {
     println!("*** ARG CONVERT ***");
     let mut parser = DumbArgParser::new();
     dap_arg!("arg").add_to(&mut parser);
-    dap_arg!("arg_i32", value=1_i32).add_to(&mut parser);
-    dap_arg!("arg_i64", value=1_i64).add_to(&mut parser);
-    dap_arg!("arg_f32", value=1_f32).add_to(&mut parser);
-    dap_arg!("arg_f64", value=1_f64).add_to(&mut parser);
+    dap_arg!("arg_i32", value = 1_i32).add_to(&mut parser);
+    dap_arg!("arg_i64", value = 1_i64).add_to(&mut parser);
+    dap_arg!("arg_f32", value = 1_f32).add_to(&mut parser);
+    dap_arg!("arg_f64", value = 1_f64).add_to(&mut parser);
     parser.process_args(vec!["A", "1", "2", "3.0", "4.0"]);
     assert_eq!("A", parser.get::<String>("arg").unwrap());
     assert_eq!(1, parser.get::<i32>("arg_i32").unwrap());
