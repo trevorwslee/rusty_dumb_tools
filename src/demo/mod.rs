@@ -6,6 +6,7 @@ pub mod demo_arg;
 pub mod demo_calc;
 pub mod demo_calculator;
 pub mod demo_calculator_gui;
+pub mod demo_lblscreen;
 pub mod demo_ltemp;
 
 pub mod test_arg;
@@ -25,7 +26,7 @@ use crate::demo::{
 
 use self::{
     demo_calculator::handle_demo_calculator, demo_calculator_gui::handle_demo_calculator_gui,
-    demo_ltemp::handle_demo_ltemp,
+    demo_lblscreen::handle_demo_lblscreen, demo_ltemp::handle_demo_ltemp,
 };
 
 ///
@@ -59,6 +60,7 @@ pub fn create_demo_parser() -> DumbArgParser {
             "calculator:DumbCalculator text-based UI demo",
             "calculator-gui:DumbCalculator GUI demo",
             "ltemp:DumbLineTemplate demo",
+            "lblscreen:DumbLineByLineScreen demo",
             "arg:DumbArgParser demo (more like debugging)",
         ])
         .set_rest()
@@ -94,6 +96,9 @@ pub fn handle_sub_demo(parser: DumbArgParser) {
             let mut sub_demo_parser = demo_ltemp::create_demo_ltemp_parser();
             parser.process_rest_args("demo", &mut sub_demo_parser);
             handle_demo_ltemp(sub_demo_parser);
+        }
+        "lblscreen" => {
+            handle_demo_lblscreen();
         }
         "arg" => {
             let mut sub_demo_parser = demo_arg::create_debug_arg_parser();

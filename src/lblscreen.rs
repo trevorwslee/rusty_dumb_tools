@@ -3,7 +3,10 @@
 #![deny(warnings)]
 #![allow(unused)]
 
-use std::{collections::HashSet, fmt};
+use std::{
+    collections::{HashMap, HashSet},
+    fmt,
+};
 
 use crate::ltemp::DumbLineTemplate;
 
@@ -35,6 +38,63 @@ impl Default for LBLScreenSettings {
 }
 
 /// a terminal / text-based "screen" update helper, which relies on [`DumbLineTemplate`] to format each "screen" lines
+///
+/// for example:
+/// ```
+/// use std::collections::HashMap;
+/// use rusty_dumb_tools::{
+///     arg::{DumbArgBuilder, DumbArgParser},
+///     dap_arg,
+///     lblscreen::{DumbLineByLineScreen, LBLScreenMapValueTrait, LBLScreenSettings},
+/// };
+/// use rusty_dumb_tools::{
+///    dlt_comps, dltc,
+///    ltemp::{DumbLineTemplate, LineTempComp, LineTempCompTrait, MappedLineTempCompBuilder},
+/// };
+/// let mut lbl_demo_screen = {
+///     let mut comps = dlt_comps![
+//         "| ",
+///         dltc!("description", align = 'C').set_truncate_indicator("..."),
+///         " |"
+///     ];
+///     let temp1 = DumbLineTemplate::new_fixed_width(40, &comps);
+///     let mut comps = dlt_comps![
+///         "| ",
+///         ".".repeat(8),
+///         " |",
+///         dltc!("progress-bar"),
+///         ": ",
+///         dltc!("progress%", fixed_width = 4, align = 'R'),
+///         " |"
+///     ];
+///     let temp2 = DumbLineTemplate::new_fixed_width(40, &comps);
+///     let settings = LBLScreenSettings {
+///         top_line: Some("-".repeat(40)),
+///         bottom_line: Some("-".repeat(40)),
+///         screen_height_adjustment: 0,
+///         ..LBLScreenSettings::default()
+///     };
+///     DumbLineByLineScreen::new(vec![temp1, temp2], settings)
+/// };
+/// lbl_demo_screen.init();
+/// let mut state = HashMap::<&str, String>::new();
+/// let mut progress_done_percent = 100;
+/// let progress_percent = format!("{}%", progress_done_percent);
+/// let description = format!("... wait ... loading {} ...", progress_done_percent);
+/// let progress_bar = ">".repeat(progress_done_percent / 5 as usize);
+/// state.insert("description", description);
+/// state.insert("progress-bar", progress_bar);
+/// state.insert("progress%", progress_percent);
+/// lbl_demo_screen.refresh(&state);
+/// ```
+///
+/// hence, the above code will print out the "screen":
+/// ```none
+/// ----------------------------------------
+/// |     ... wait ... loading 100% ...    |
+/// | ........ |>>>>>>>>>>>>>>>>>>>>: 100% |
+/// ----------------------------------------
+/// ```
 pub struct DumbLineByLineScreen {
     line_temps: Vec<DumbLineTemplate>,
     line_prefix: Option<String>,
@@ -46,9 +106,9 @@ pub struct DumbLineByLineScreen {
     initialized: bool,
 }
 impl DumbLineByLineScreen {
-    /// must call [`DumbLineByLineScreen::refresh`]` once afterward
-    ///
-    /// note that printing will start at the current cursor position; after the first refresh, [`DumbLineByLineScreen`] will take it from there
+    /// must call [`DumbLineByLineScreen::init`] after instantiation;
+    /// note that printing will start at the current cursor position; as long as the cursor position is not changed externally,
+    /// [`DumbLineByLineScreen`] will knows when to update the "screen" when [`DumbLineByLineScreen::refresh`] is called
     pub fn new(line_temps: Vec<DumbLineTemplate>, settings: LBLScreenSettings) -> Self {
         let mut line_keys = Vec::new();
         for line_temp in &line_temps {
@@ -75,17 +135,31 @@ impl DumbLineByLineScreen {
             initialized: false,
         }
     }
-    pub fn refresh<T: LBLScreenMapValueTrait>(&mut self, map_value_provider: &T) {
+    /// call it once after instantiation; before call, make sure the cursor is positioned at the top of the screen
+    pub fn init(&mut self) {
+        if self.initialized {
+            panic!("already initialized");
+        }
+        for i in 0..self.screen_height {
+            println!();
+        }
+        self.initialized = true;
+    }
+    /// refresh the screen; if only want to refresh when the values of some given keys changed, use [`DumbLineByLineScreen::refresh_for_keys`] instead
+    pub fn refresh<T: LBLScreenMapValueTrait>(&self, map_value_provider: &T) {
+        if !self.initialized {
+            panic!("must call init_screen() once first");
+        }
         self._update(None, map_value_provider)
     }
-    /// refresh the screen assuming only the values of the given keys changed
+    /// refresh the screen assuming only the values of the given keys changed; if want to refresh the whole screen, use [`DumbLineByLineScreen::refresh`] instead
     pub fn refresh_for_keys<T: LBLScreenMapValueTrait>(
-        &mut self,
+        &self,
         keys: &Vec<&str>,
         map_value_provider: &T,
     ) {
         if !self.initialized {
-            panic!("must call refresh() once first");
+            panic!("must call init_screen() once first");
         }
         self._update(Some(keys), map_value_provider)
     }
@@ -98,11 +172,7 @@ impl DumbLineByLineScreen {
         }
         height
     }
-    fn _update<T: LBLScreenMapValueTrait>(
-        &mut self,
-        keys: Option<&Vec<&str>>,
-        map_value_provider: &T,
-    ) {
+    fn _update<T: LBLScreenMapValueTrait>(&self, keys: Option<&Vec<&str>>, map_value_provider: &T) {
         if self.initialized {
             //let seq = format!("\x1B[{}A", self.screen_height);
             print!("\x1B[{}A", self.screen_height)
@@ -146,13 +216,26 @@ impl DumbLineByLineScreen {
         if self.bottom_line.is_some() {
             println!("{}", self.bottom_line.as_ref().unwrap());
         }
-        self.initialized = true;
+        //self.initialized = true;
     }
 }
 
 pub trait LBLScreenMapValueTrait {
     type VALUE: fmt::Display;
     fn map_value(&self, key: &str) -> Option<(Self::VALUE, u16)>;
+}
+
+impl LBLScreenMapValueTrait for HashMap<&str, String> {
+    type VALUE = String;
+    fn map_value(&self, key: &str) -> Option<(Self::VALUE, u16)> {
+        let value = self.get(key);
+        if value.is_some() {
+            let value = value.unwrap();
+            Some((value.clone(), value.len() as u16))
+        } else {
+            None
+        }
+    }
 }
 
 // use crossterm::cursor;

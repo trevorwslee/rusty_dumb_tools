@@ -38,7 +38,7 @@ use rusty_dumb_tools::{
 // }
 
 fn main() {
-    if true {
+    if false {
         demo::demo_calculator::handle_demo_calculator();
         return;
     }

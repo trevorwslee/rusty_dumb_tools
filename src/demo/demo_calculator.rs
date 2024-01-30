@@ -17,8 +17,8 @@ use crate::{
 };
 
 pub fn handle_demo_calculator() {
-    let mut ui = CalculatorUI::new();
-    ui.refresh();
+    let mut ui = CalculatorUI::new_and_init();
+    //ui.refresh();
 
     let keys = vec!["7"];
     ui.state.pressed_key = Some('7');
@@ -38,7 +38,7 @@ struct CalculatorUI {
     state: CalculatorUIState,
 }
 impl CalculatorUI {
-    fn new() -> Self {
+    fn new_and_init() -> Self {
         let mut line_temps = Vec::<DumbLineTemplate>::new();
 
         let mut comps = dlt_comps![dltc!("display", fixed_width = DISPLAY_WIDTH)];
@@ -112,7 +112,8 @@ impl CalculatorUI {
             bottom_line: Some(format!("\t{}\n", "=".repeat(FIXED_WIDTH as usize + 2))),
             ..LBLScreenSettings::default()
         };
-        let screen = DumbLineByLineScreen::new(line_temps, settings);
+        let mut screen = DumbLineByLineScreen::new(line_temps, settings);
+        screen.init();
 
         Self {
             screen,
