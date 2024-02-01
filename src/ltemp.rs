@@ -1,4 +1,4 @@
-//! A simple line template for formatting a line, which might be helpful in creating a terminal-oriented UI -- [`crate::ltemp::DumbLineTemplate`]
+//! A simple line template for formatting a line, which can be use for printing values as a line with some template -- [`crate::ltemp::DumbLineTemplate`]
 
 #![deny(warnings)]
 #![allow(unused)]
@@ -46,8 +46,8 @@ type WIDTH = u16;
 ///   -  the `1` specifies that the ASCII escaped string has "visual" length 1
 /// * `dltc!("key", align='C')`:
 ///   - a value-mapped component
-///   - require a value mapped for key `key` when calling [`DumbLineTemplate::format`]
-///   - also see [`crate::dltc!`]
+///   - require a mapped value for key `key` when calling [`DumbLineTemplate::format`]
+///   - also see the macro [`crate::dltc!`]
 #[macro_export]
 macro_rules! dlt_comps {
   ($($x:expr),*) => {{
@@ -60,9 +60,10 @@ macro_rules! dlt_comps {
   }};
 }
 
-/// use this macro to construct a value-mapped [`DumbLineTemplate`] component, and it is expected to be use together with [`crate::dlt_comps!`]
+/// use this macro to construct a value-mapped [`DumbLineTemplate`] component (a [`MappedLineTempCompBuilder`] to be precise), and it is expected to be use together with [`crate::dlt_comps!`]
 ///
-/// the optional "ordered but named" arguments are
+/// the compulsory argument is the key for the line template component;
+/// the other optional "ordered but named" arguments are
 /// * `fixed_width` - like calling [`MappedLineTempCompBuilder::fixed_width`]
 /// * `min_width` - like calling [`MappedLineTempCompBuilder::min_width`]
 /// * `max_width` - like calling [`MappedLineTempCompBuilder::max_width`]
@@ -129,7 +130,7 @@ fn debug_ltemp() {
     println!("formatted: [{}]", formatted);
 }
 
-/// a simple line template for formatting a line, say for use of terminal-oriented UI
+/// a simple line template for formatting a line; it can be use for printing values as a line with some template.
 ///
 /// example:
 /// ```
@@ -173,8 +174,8 @@ fn debug_ltemp() {
 /// * `"| "`: a fixed string
 /// * `dltc!("label", fixed_width = 6, align = 'L')`:
 ///   - a value-mapped component
-///   - require a value mapped for key `label` when calling [`DumbLineTemplate::format`]
-///   - also see [`dlt_comps!`] and [`dltc!`]
+///   - require a mapped value for key `label` when calling [`DumbLineTemplate::format`]
+///   - also see the macros [`dlt_comps!`] and [`dltc!`]
 #[derive(Debug)]
 pub struct DumbLineTemplate {
     min_width: WIDTH,
@@ -213,6 +214,7 @@ impl DumbLineTemplate {
     pub fn max_width(&self) -> WIDTH {
         self.max_width
     }
+    /// a helper function that the help to scan for the keys involved in formatting the line
     pub fn scan_for_keys(&self) -> HashSet<String> {
         let mut keys = HashSet::new();
         for comp in self.components.iter() {
@@ -691,16 +693,16 @@ impl MappedLineTempComp {
             truncate_indicator: settings.truncate_indicator.clone(),
         }
     }
-    fn get_min_width(&self) -> WIDTH {
+    pub fn get_min_width(&self) -> WIDTH {
         self.min_width
     }
-    fn get_max_width(&self) -> WIDTH {
+    pub fn get_max_width(&self) -> WIDTH {
         self.max_width
     }
-    fn is_optional(&self) -> bool {
+    pub fn is_optional(&self) -> bool {
         self.optional
     }
-    fn get_map_key(&self) -> &str {
+    pub fn get_map_key(&self) -> &str {
         &self.key
     }
     fn get_needed_width(&self, mapped_value_width: WIDTH) -> WIDTH {

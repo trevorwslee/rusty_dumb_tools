@@ -13,7 +13,7 @@ use std::{
 
 use crate::arg;
 
-/// ***please consider using [`crate::dap_arg!`] macro instead, since this macro will be deprecated***
+/// ***please consider using the macro [`crate::dap_arg!`] instead, since this macro will be deprecated***
 ///
 /// use this macro to create a [`DumbArgBuilder`] instance to build argument object (argument specification) to be added to [`DumbArgParser`] with [`DumbArgBuilder::add_to`]
 /// the macro accepts one for more strings (positional argument name or flags) like
@@ -50,13 +50,14 @@ macro_rules! sap_arg {
 /// assert_eq!("<program> [-h] -f flag [-v] position1 [position2]", parser.compose_usage());
 /// ```
 ///
-/// the optional "ordered but named" arguments are:
-/// - `flag2` - the the second flag name, like "--verbose" in the above example
+/// the compulsory argument is the name of the argument, be it a positional argument or a flag argument like "-v";
+/// the other optional "ordered but named" arguments are:
+/// - `flag2` - the the second (alias) flag name, like "--verbose" in the above example
 /// - `value` - like calling [`DumbArgBuilder::value`]
 /// - `default` - like calling [`DumbArgBuilder::default`]
 /// - `fixed` - like calling [`DumbArgBuilder::fixed`]
 ///
-/// also see [`DumbArgParser`]
+/// note that after it parsing the arguments, you retrieve the argument value with [`DumbArgParser::get`] by providing the argument name (or flag name like "-v" / "-verbose")
 #[macro_export]
 macro_rules! dap_arg {
     // for case like "name, flag2=flag2, value=value, default=default, fixed=fixed"
@@ -194,7 +195,7 @@ fn debug_arg_sap() {
 /// notes:
 /// * -h and --help are reserved for showing help message; after showing the help message, the program will exit
 /// * in case of invalid input argument, will show the error message as well as the help message, then the program will exit
-/// * also see [`dap_arg`] macro
+/// * also see the macro [`dap_arg`]
 ///
 /// you may want to refer to [`crate::demo::run_demo`] for a demo program that uses [`DumbArgParser`].
 #[derive(Debug)]
@@ -307,7 +308,8 @@ impl DumbArgParser {
         parameters
     }
     /// get the parsed -- [`DumbArgParser::parse_args`] -- argument value (parameter) assigned to the given argument name
-    /// * `arg_name` - the argument name of which the value is to be retrieved
+    /// * `arg_name` - the argument name of which the value is to be retrieved; it can be a positional argument name,
+    ///                or can be a flag argument name (including `flag2`, which is just an alias to the flag argument)
     ///
     /// note: except that all types can be implicitly converted to [`String`], no other implicit type conversion; if type does not agree, will panic
     pub fn get<T: ArgValueTrait>(&self, arg_name: &str) -> Option<T> {

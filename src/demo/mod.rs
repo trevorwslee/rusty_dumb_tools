@@ -1,6 +1,6 @@
 #![deny(warnings)]
 
-//! Home for `rusty_dumb_tools` demo.
+//! Home for `rusty_dumb_tools` demo, and sub-demos for the various tools included in this crate. Please refer to [`crate::demo::run_demo`].
 
 pub mod demo_arg;
 pub mod demo_calc;
@@ -36,6 +36,9 @@ use self::{
 /// sub-demos:
 /// * `calc`: see [`crate::demo::demo_calc::handle_demo_calc`]
 /// * `calc-repl`: see [`crate::demo::demo_calc::handle_demo_calc_repl`]
+/// * `calculator`: see [`crate::demo::demo_calculator::handle_demo_calculator`]
+/// * `ltemp`: see [`crate::demo::demo_ltemp::handle_demo_ltemp`]
+/// * `lblscreen`: see [`crate::demo::demo_lblscreen::handle_demo_lblscreen`]
 /// * `arg`: see [`crate::demo::demo_arg::handle_demo_arg`]
 pub fn run_demo(in_args: Option<Vec<&str>>) {
     let mut parser = create_demo_parser();

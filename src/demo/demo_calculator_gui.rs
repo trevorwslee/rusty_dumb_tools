@@ -1,6 +1,4 @@
-//! core [`crate::calculator`] demo code
-//!
-//! ***work in progress***
+//! core [`crate::calculator`] sub-demo code
 
 #![deny(warnings)]
 #![allow(unused)]

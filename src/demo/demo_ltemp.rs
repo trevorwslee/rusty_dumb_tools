@@ -1,3 +1,5 @@
+//! core [`crate::ltemp`] sub-demo code
+
 #![deny(warnings)]
 #![allow(unused)]
 

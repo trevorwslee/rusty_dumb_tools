@@ -12,6 +12,7 @@ exclude = [".vscode", ".ignore"]
 
 
 [dependencies]
+crossterm = "0.19.0"
 iced = "0.10"
 #iced = {version="0.10",features=["canvas", "tokio", "debug"]}
 #time = { version = "0.3", features = ["local-offset"] }

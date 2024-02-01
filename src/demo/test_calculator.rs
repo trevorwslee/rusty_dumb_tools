@@ -11,23 +11,25 @@ fn test_calculator_push() {
     assert_eq!(calculator.get_display(), "1");
     calculator.push(".").unwrap();
     assert_eq!(calculator.get_display(), "1.0");
+    calculator.push("0").unwrap();
+    assert_eq!(calculator.get_display(), "1.0");
     calculator.push("2").unwrap();
-    assert_eq!(calculator.get_display(), "1.2");
+    assert_eq!(calculator.get_display(), "1.02");
     calculator.push(".").unwrap();
-    assert_eq!(calculator.get_display(), "1.2");
+    assert_eq!(calculator.get_display(), "1.02");
     calculator.push("+").unwrap();
-    assert_eq!(calculator.get_display(), "1.2");
+    assert_eq!(calculator.get_display(), "1.02");
     calculator.push("1").unwrap();
     calculator.push("0").unwrap();
     assert_eq!(calculator.get_display(), "10");
     calculator.push("=").unwrap();
-    assert_eq!(calculator.get_display(), "11.2");
+    assert_eq!(calculator.get_display(), "11.02");
     calculator.push("*").unwrap();
-    assert_eq!(calculator.get_display(), "11.2");
+    assert_eq!(calculator.get_display(), "11.02");
     calculator.push("4").unwrap();
     assert_eq!(calculator.get_display(), "4");
     calculator.push("=").unwrap();
-    assert_eq!(calculator.get_display(), "44.8");
+    assert_eq!(calculator.get_display(), "44.08");
 }
 
 #[test]
@@ -56,6 +58,11 @@ fn test_calculator_normal() {
 fn test_calculator_push_chars() {
     let mut calculator = DumbCalculator::new();
     assert_eq!(calculator.get_display(), "0");
+    if true {
+        calculator.push_chars("1.2").unwrap();
+        assert_eq!(calculator.get_display(), "1.2");
+        calculator.reset();
+    }
     calculator.push_chars("1.2+3.4=").unwrap();
     assert_eq!(calculator.get_display(), "4.6");
     calculator.push_chars("2 * (3.4 - 5) -6.7 =").unwrap();

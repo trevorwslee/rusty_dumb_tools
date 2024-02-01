@@ -1,3 +1,5 @@
+//! core [`crate::lblscreen`] sub-demo code
+
 #![deny(warnings)]
 #![allow(unused)]
 
@@ -52,8 +54,8 @@ pub fn handle_demo_lblscreen() {
         state.insert("progress-bar", progress_bar);
         state.insert("progress%", progress_percent);
         lbl_demo_screen.refresh(&state);
-        thread::sleep(Duration::from_secs(1));
-        progress_done_percent += 2;
+        thread::sleep(Duration::from_millis(200));
+        progress_done_percent += 1;
         if progress_done_percent > 100 {
             break;
         }

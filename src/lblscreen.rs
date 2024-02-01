@@ -1,4 +1,4 @@
-//! A terminal / text-based "screen" update helper -- [`crate::lblscreen::DumbLineByLineScreen`]
+//! A simple terminal / text-based "screen" update helper -- [`crate::lblscreen::DumbLineByLineScreen`]
 
 #![deny(warnings)]
 #![allow(unused)]
@@ -13,11 +13,15 @@ use crate::ltemp::DumbLineTemplate;
 /// settings for [`DumbLineByLineScreen`]
 /// * line_prefix: the prefix to be printed before each formatted line
 /// * line_suffix: the suffix to be printed after each formatted line
-/// * top_line: the top line to be printed before the formatted lines; note that this line will not be prefixed or suffixed
-/// * bottom_line: the bottom line to be printed after the formatted lines; note that this line will not be prefixed or suffixed
+/// * top_line: the top line to be printed before the formatted lines
+///   - it will not be prefixed or suffixed
+///   - and it may contain newline characters
+/// * bottom_line: the bottom line to be printed after the formatted lines
+///   - it will not be prefixed or suffixed
+///   - and it may contain newline characters
 /// * screen_height_adjustment:
-///   normally not needed since screen height will be automatically,
-///   but if the calculation is not correct, can use this to adjust the screen height
+///   - normally not needed since screen height will be automatically calculated
+///   - but if the calculation is not correct, can use this to adjust the screen height
 pub struct LBLScreenSettings {
     pub line_prefix: Option<String>,
     pub line_suffix: Option<String>,
@@ -37,7 +41,7 @@ impl Default for LBLScreenSettings {
     }
 }
 
-/// a terminal / text-based "screen" update helper, which relies on [`DumbLineTemplate`] to format each "screen" lines
+/// a simple terminal / text-based "screen" update helper, which relies on [`DumbLineTemplate`] to format each "screen" lines
 ///
 /// for example:
 /// ```
@@ -52,12 +56,15 @@ impl Default for LBLScreenSettings {
 ///    ltemp::{DumbLineTemplate, LineTempComp, LineTempCompTrait, MappedLineTempCompBuilder},
 /// };
 /// let mut lbl_demo_screen = {
+///     /// template for the line that ends up like "|     ... wait ... loading 100% ...    |"
 ///     let mut comps = dlt_comps![
 //         "| ",
 ///         dltc!("description", align = 'C').set_truncate_indicator("..."),
 ///         " |"
 ///     ];
 ///     let temp1 = DumbLineTemplate::new_fixed_width(40, &comps);
+///
+///     /// template for the line that ends up like "| ........ |>>>>>>>>>>>>>>>>>>>>: 100% |"
 ///     let mut comps = dlt_comps![
 ///         "| ",
 ///         ".".repeat(8),
@@ -68,15 +75,18 @@ impl Default for LBLScreenSettings {
 ///         " |"
 ///     ];
 ///     let temp2 = DumbLineTemplate::new_fixed_width(40, &comps);
+///
 ///     let settings = LBLScreenSettings {
-///         top_line: Some("-".repeat(40)),
-///         bottom_line: Some("-".repeat(40)),
-///         screen_height_adjustment: 0,
+///         top_line: Some("-".repeat(40)),  // the top line of the "screen"
+///         bottom_line: Some("-".repeat(40)),  // the bottom line of the "screen"
 ///         ..LBLScreenSettings::default()
 ///     };
 ///     DumbLineByLineScreen::new(vec![temp1, temp2], settings)
 /// };
+/// println!("The following is the \"screen\":");
 /// lbl_demo_screen.init();
+///
+/// // setup a map of values for the "screen"
 /// let mut state = HashMap::<&str, String>::new();
 /// let mut progress_done_percent = 100;
 /// let progress_percent = format!("{}%", progress_done_percent);
@@ -85,16 +95,19 @@ impl Default for LBLScreenSettings {
 /// state.insert("description", description);
 /// state.insert("progress-bar", progress_bar);
 /// state.insert("progress%", progress_percent);
-/// lbl_demo_screen.refresh(&state);
-/// ```
 ///
-/// hence, the above code will print out the "screen":
+/// lbl_demo_screen.refresh(&state);  // update the "screen" according to the mapped values
+/// ```
+/// hence, the above code will show:
 /// ```none
+/// The following is the "screen":
 /// ----------------------------------------
 /// |     ... wait ... loading 100% ...    |
 /// | ........ |>>>>>>>>>>>>>>>>>>>>: 100% |
 /// ----------------------------------------
 /// ```
+///
+/// please refer to [`DumbLineTemplate`] for more details on the line formatting of the different lines of the "screen"
 pub struct DumbLineByLineScreen {
     line_temps: Vec<DumbLineTemplate>,
     line_prefix: Option<String>,
@@ -107,8 +120,8 @@ pub struct DumbLineByLineScreen {
 }
 impl DumbLineByLineScreen {
     /// must call [`DumbLineByLineScreen::init`] after instantiation;
-    /// note that printing will start at the current cursor position; as long as the cursor position is not changed externally,
-    /// [`DumbLineByLineScreen`] will knows when to update the "screen" when [`DumbLineByLineScreen::refresh`] is called
+    /// note that printing will start at the current cursor position (likely should be start of a line); as long as the cursor position is not changed externally,
+    /// [`DumbLineByLineScreen`] will know where to update which "screen" lines when [`DumbLineByLineScreen::refresh`] / [`DumbLineByLineScreen::refresh_for_keys`] is called
     pub fn new(line_temps: Vec<DumbLineTemplate>, settings: LBLScreenSettings) -> Self {
         let mut line_keys = Vec::new();
         for line_temp in &line_temps {
@@ -155,7 +168,7 @@ impl DumbLineByLineScreen {
     /// refresh the screen assuming only the values of the given keys changed; if want to refresh the whole screen, use [`DumbLineByLineScreen::refresh`] instead
     pub fn refresh_for_keys<T: LBLScreenMapValueTrait>(
         &self,
-        keys: &Vec<&str>,
+        keys: &Vec<String>,
         map_value_provider: &T,
     ) {
         if !self.initialized {
@@ -172,7 +185,11 @@ impl DumbLineByLineScreen {
         }
         height
     }
-    fn _update<T: LBLScreenMapValueTrait>(&self, keys: Option<&Vec<&str>>, map_value_provider: &T) {
+    fn _update<T: LBLScreenMapValueTrait>(
+        &self,
+        keys: Option<&Vec<String>>,
+        map_value_provider: &T,
+    ) {
         if self.initialized {
             //let seq = format!("\x1B[{}A", self.screen_height);
             print!("\x1B[{}A", self.screen_height)
@@ -191,7 +208,7 @@ impl DumbLineByLineScreen {
                 let line_keys = &self.line_keys[index];
                 let mut refresh_line = false;
                 for key in keys {
-                    if line_keys.contains(*key) {
+                    if line_keys.contains(key) {
                         refresh_line = true;
                         break;
                     }

@@ -3,7 +3,7 @@
 #![deny(warnings)]
 #![allow(unused)]
 
-use crate::calc;
+use crate::calc::{self, CalcResult};
 
 #[test]
 fn test_calculator() {}
@@ -33,39 +33,50 @@ impl DumbCalculator {
     ///   - "="
     pub fn push(&mut self, key: &str) -> Result<(), String> {
         if key == "." {
-            match self.entering {
+            match &self.entering {
                 EnteringMode::Not => {
-                    self.entering = EnteringMode::Decimal(0, 0);
+                    self.entering = EnteringMode::Decimal(0, String::from(""));
                 }
                 EnteringMode::Integer(i) => {
-                    self.entering = EnteringMode::Decimal(i, 0);
+                    self.entering = EnteringMode::Decimal(*i, String::from(""));
                 }
                 EnteringMode::Decimal(i, d) => {
-                    self.entering = EnteringMode::Decimal(i, d);
+                    self.entering = EnteringMode::Decimal(*i, d.clone());
                 }
             }
         } else if key >= "0" && key <= "9" {
             let digit = key.parse::<u32>().unwrap();
-            match self.entering {
+            match &self.entering {
                 EnteringMode::Not => {
-                    self.entering = EnteringMode::Integer(digit);
+                    self.entering = EnteringMode::Integer(digit); // TODO: move self.entering out
                 }
                 EnteringMode::Integer(i) => {
-                    self.entering = EnteringMode::Integer(i * 10 + digit);
+                    self.entering = EnteringMode::Integer(*i * 10 + digit);
                 }
                 EnteringMode::Decimal(i, d) => {
-                    self.entering = EnteringMode::Decimal(i, d * 10 + digit);
+                    let digit_str = digit.to_string();
+                    if d == "" {
+                        self.entering = EnteringMode::Decimal(*i, digit_str);
+                    } else {
+                        let mut new_d = d.clone();
+                        new_d.push_str(&digit_str /*&digit.to_string()*/);
+                        self.entering = EnteringMode::Decimal(*i, new_d);
+                    }
                 }
             }
         } else {
-            match self.entering {
+            match &self.entering {
                 EnteringMode::Not => {}
                 EnteringMode::Integer(i) => {
                     self.calc.push(i.to_string().as_str()).unwrap();
                     self.entering = EnteringMode::Not;
                 }
                 EnteringMode::Decimal(i, d) => {
-                    let num = format!("{}.{}", i, d);
+                    let num = if d == "" {
+                        format!("{}.0", i)
+                    } else {
+                        format!("{}.{}", i, d)
+                    };
                     self.calc.push(num.as_str()).unwrap();
                     self.entering = EnteringMode::Not;
                 }
@@ -87,21 +98,90 @@ impl DumbCalculator {
         self.entering = EnteringMode::Not;
         self.calc.reset();
     }
+    // pub fn get_display(&self) -> CalculatorDisplay {
+    //     match self.entering {
+    //         EnteringMode::Not => {
+    //             match self.calc.get_result() {
+    //                 CalcResult::Final(r) => CalculatorDisplay::Normal(r),
+    //                 CalcResult::Intermediate(r) => CalculatorDisplay::Normal(r),
+    //                 CalcResult::Error(e) => CalculatorDisplay::Error(e),
+    //             }
+    //         }
+    //         EnteringMode::Integer(i) => CalculatorDisplay::Normal(i as f64),
+    //         EnteringMode::Decimal(i, d) => {
+    //             let d_str = d.to_string();
+    //             let divider = 10_f64.powf(d_str.len() as f64);
+    //             let r = i as f64 + d as f64 / divider;
+    //             CalculatorDisplay::Normal(r)
+    //         }
+    //     }
+    // }
     pub fn get_display(&self) -> String {
-        match self.entering {
-            EnteringMode::Not => self.calc.get_result().to_string(),
+        return self._get_display(None);
+    }
+    pub fn get_display_ex(&self, display_width: usize) -> String {
+        return self._get_display(Some(display_width));
+    }
+    fn _get_display(&self, display_width: Option<usize>) -> String {
+        let (mut display_result, result) = match &self.entering {
+            EnteringMode::Not => {
+                let result = match self.calc.get_result() {
+                    CalcResult::Final(r) => r,
+                    CalcResult::Intermediate(r) => r,
+                    CalcResult::Error(e) => return String::from("Error"),
+                };
+                let display_result = format!("{}", result);
+                (display_result, result)
+            }
             EnteringMode::Integer(i) => {
-                format!("{}", i)
+                let result = *i as f64;
+                let display_result = format!("{}", result);
+                (display_result, result)
             }
             EnteringMode::Decimal(i, d) => {
-                format!("{}.{}", i, d)
+                if d == "" {
+                    let display_result = format!("{}.0", i);
+                    let result = *i as f64;
+                    (display_result, result)
+                } else {
+                    let display_result = format!("{}.{}", i, d);
+                    let divider = 10_f64.powf(d.len() as f64);
+                    let d = d.parse::<u32>().unwrap();
+                    let result = *i as f64 + d as f64 / divider;
+                    (display_result, result)
+                }
+            }
+        };
+        //let result = -21.2345;
+        //let result = -0.123456789123456789;
+        //let result = -1234567891234.0;
+        if display_width.is_some() {
+            let display_width = display_width.unwrap();
+            if display_result.len() < display_width {
+                let room = display_width - display_result.len();
+                display_result = format!("{}{}", " ".repeat(room), display_result);
+            } else {
+                let room = display_width - (if result < 0.0 { 5 } else { 4 });
+                display_result = format!("{:.*}", room, result);
+                if display_result.len() > display_width {
+                    let room = display_width - (if result < 0.0 { 8 } else { 7 });
+                    display_result = format!("{:.*e}", room, result);
+                }
             }
         }
+        display_result
+        //let display_result = format!("\x1B[7m {} \x1B[0m", display_result);
+        //Some((display_result, DISPLAY_WIDTH))
     }
 }
+
+// pub enum CalculatorDisplay {
+//     Normal(f64),
+//     Error(String),
+// }
 
 enum EnteringMode {
     Not,
     Integer(u32),
-    Decimal(u32, u32),
+    Decimal(u32, String),
 }

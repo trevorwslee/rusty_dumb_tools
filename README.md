@@ -6,8 +6,12 @@ A collection of simple tools in ***Rust*** as ***Rust*** modules:
 * `crate::calc::DumbCalcProcessor`: A simple infix calculation processor 
   It can be used to implement a simple calculator in ***Rust***.
 * `crate::ltemp::DumbLineTemplate`: A simple line template for formatting a line.
-  It might be helpful in creating a terminal-oriented UI
-
+  It can be usee for printing values as a line with some template.
+* `crate::lblscreen::DumbLineByLineScreen`: A terminal / text-based "screen" update helper.  
+  It is extended from `crate::ltemp::DumbLineTemplate`, and should be helpful in managing the updates of the formatted lines 
+   that acts as a "screen".
+  
+  
 
 
 You may also want to refer to the [`crates.io` page about `RustyDumbTools`](https://crates.io/crates/rusty_dumb_tools).
@@ -40,6 +44,8 @@ the demo can be ***cargo*** run like
   <br>the above demonstrates how to invoke the sub-command `calc-repl`, which in turn show how `DumbCalcProcessor` like a REPL
 * `cargo run -- ltemp Trevor`
   <br>the above demonstrates how to use `DumbLineTemplate` to format lines to show data
+* `cargo run -- lblscreen`
+  <br>the above demonstrates how to use `DumbLineByLineScreen` to implement a "progress info panel"
 * `cargo run -- arg -f 0.2 5 --string2 VAL1 false 1 2 3`
 
 The output of running `cargo run -- -h`:
@@ -99,6 +105,20 @@ After running `cargo run -- ltemp Trevor`, the demo will show something like
 ===============================
 ```
 
+After running `cargo run -- lblscreen`, the screen will show something like
+```
+----------------------------------------
+|      ... wait ... loading 0% ...     |
+| ........ |                    :   0% |
+----------------------------------------
+```
+after 20 seconds, when 100% done, the screen will be like
+```
+|     ... wait ... loading 100% ...    |
+| ........ |>>>>>>>>>>>>>>>>>>>>: 100% |
+----------------------------------------
+```
+
 
 # Thank You!
 
@@ -118,7 +138,7 @@ MIT
 # Change History:
 
 * v0.1.2
-  - working on DumbLineTemplate
+  - working on `DumbLineTemplate` and `DumbLineByLineScreen`
 
 * v0.1.1
   - added more documentations, and via `run_demo` function

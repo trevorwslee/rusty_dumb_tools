@@ -1,4 +1,4 @@
-//! core [`crate::arg`] demo code
+//! core [`crate::arg`] sub-demo code
 
 #![deny(warnings)]
 
