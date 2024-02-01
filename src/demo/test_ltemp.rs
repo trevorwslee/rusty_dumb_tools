@@ -169,6 +169,12 @@ fn test_ltemp_escaped() {
 }
 #[test]
 fn test_ltemp_truncate() {
+    let lt_comps = dlt_comps![dltc!("key", fixed_width = 10)];
+    let ltemp = DumbLineTemplate::new(0, 100, &lt_comps);
+    let formatted = ltemp.format(&HashMap::from([("key", "abc")])).unwrap();
+    //println!("*** {}({}) ***", formatted, formatted.len());
+    assert_eq!(formatted, "abc       ");
+
     let lt_comps = dlt_comps![dltc!("key", fixed_width = 15, align = 'C')];
     let ltemp = DumbLineTemplate::new(0, 100, &lt_comps);
     let formatted = ltemp

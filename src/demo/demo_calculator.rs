@@ -5,7 +5,8 @@
 
 use std::{collections::HashMap, io, thread, time::Duration};
 
-use crossterm::event::{read, Event, KeyCode};
+use crossterm::{event::{read, Event, KeyCode}, style::Colorize};
+use iced::color;
 
 use crate::{
     calculator::DumbCalculator,
@@ -114,6 +115,60 @@ impl CalculatorUI {
             ..LBLScreenSettings::default()
         };
         let mut screen = DumbLineByLineScreen::new(line_temps, settings);
+        println!();
+        println!("* arrow keys to move selected key");
+        println!("* space key to commit selected key");
+        println!("* can press corresponding keys directly");
+        println!("* note that 'c' is the same as 'C' and the enter key is the same as '='");
+
+        // 1️⃣2️⃣3️⃣4️⃣5️⃣6️⃣7️⃣8️⃣9️⃣0️⃣
+        // ±
+        // ➀ (U+2780)
+
+        // let v = 0x1F600;
+        // let character = std::char::from_u32(v).unwrap();
+        // let string = character.to_string();
+
+        // // Split the string into grapheme clusters
+        // let graphemes: Vec<&str> = string.graphemes(true).collect();
+
+        // // Print each grapheme cluster
+        // for grapheme in graphemes {
+        //     println!("{}", grapheme);
+        // }
+
+        // use unicode_segmentation::UnicodeSegmentation;
+
+        // let string = "😄👋🏽";
+        // let graphemes: Vec<&str> = string.graphemes(true).collect();
+        // let num_graphemes = graphemes.len();
+
+        // println!("Number of graphemes: {}", num_graphemes); // Output: Number of graphemes: 3
+
+        // [dependencies]
+        // unicode-segmentation = "1.8.0"
+        if true {
+            println!("{} :({}):{} ", "1️⃣", "1️⃣".len(), "123".red());
+            for i in 0..=9 {
+                let v = i + 0x277f;
+                let char1 = std::char::from_u32(v).unwrap();
+                print!("{} ", char1);
+            }
+            println!();
+        }
+
+        if true {
+            // ➕➖✖️➗🟰🇦🇨▪%±
+            println!("±\u{2780}ABC1️⃣2️⃣3️⃣4️⃣5️⃣6️⃣7️⃣8️⃣9️⃣0️⃣ABC±\u{2780}");
+            let v = 0x1F600;
+            let character = std::char::from_u32(v).unwrap();
+            let string = character.to_string();
+            println!("{}", string); // Output: 😄
+            let a = '😄' as u32;
+            let a_char = std::char::from_u32(a).unwrap();
+            println!("A:{}", a_char);
+        }
+
         screen.init();
 
         let key_map = vec![keys_8, keys_5, keys_2, keys_0];
@@ -140,7 +195,7 @@ impl CalculatorUI {
             if let LineTempComp::Mapped(mapped_comp) = comp {
                 let key = mapped_comp.get_map_key().chars().next().unwrap();
                 keys.push(key);
-                if mapped_comp.get_min_width() > 1 {
+                if mapped_comp.get_min_width() > 2 {
                     keys.push(key);
                 }
             }
@@ -150,10 +205,9 @@ impl CalculatorUI {
     fn run(mut self) {
         self._refresh();
         let key = self.state.selected_key.unwrap();
-        let keys = vec![key.to_string()];
         self.state.selected_key = Some(key);
         // self.key_press_state.highlight_selected = true;
-        self._refresh_for_keys(&keys);
+        self._refresh_for_keys(&vec![key.to_string().as_ref()]);
         // thread::sleep(Duration::from_millis(500));
         // self.key_press_state.highlight_selected = false;
         // self._refresh_for_keys(&keys);
@@ -183,11 +237,14 @@ impl CalculatorUI {
                     KeyCode::Right => {
                         self._move_key_selected(MoveDir::Right);
                     }
-                    KeyCode::Enter | KeyCode::Char(' ') => {
-                        self._enter_key_selected();
+                    KeyCode::Char(' ') => {
+                        self._commit_key_selected();
                     }
                     KeyCode::Char(c) => {
                         self._select_and_enter_key(c);
+                    }
+                    KeyCode::Enter => {
+                        self._select_and_enter_key('=');
                     }
                     // KeyCode::Char(c)   => println!("You pressed {}", c),
                     // KeyCode::Enter     => println!("You pressed Enter"),
@@ -203,7 +260,7 @@ impl CalculatorUI {
     fn _refresh(&mut self) {
         self.screen.refresh(&self.state);
     }
-    fn _refresh_for_keys(&mut self, keys: &Vec<String>) {
+    fn _refresh_for_keys(&mut self, keys: &Vec<&str>) {
         self.screen.refresh_for_keys(keys, &self.state);
     }
     fn _get_key_coor(key: char, key_map: &Vec<Vec<char>>) -> Option<(usize, usize)> {
@@ -216,23 +273,23 @@ impl CalculatorUI {
         }
         None
     }
-    fn _enter_key_selected(&mut self) {
+    fn _commit_key_selected(&mut self) {
         let key = self.key_map[self.selected_key_rc.0][self.selected_key_rc.1];
         self.state.highlight_selected = true;
-        self._refresh_for_keys(&vec![key.to_string()]);
+        self._refresh_for_keys(&vec![key.to_string().as_ref()]);
 
         thread::sleep(Duration::from_millis(ENTER_DELAY_MILLIS));
 
         self.state.highlight_selected = false;
-        self._refresh_for_keys(&vec![key.to_string()]);
+        self._refresh_for_keys(&vec![key.to_string().as_ref()]);
 
         if key == 'C' {
             self.calculator.reset();
         } else {
             self.calculator.push(key.to_string().as_str()).unwrap();
         }
-        self.state.display = self.calculator.get_display();
-        self._refresh_for_keys(&vec![String::from("display")]);
+        self.state.display = self.calculator.get_display_sized(RESULT_WIDTH as usize);
+        self._refresh_for_keys(&vec!["display"]);
     }
     fn _select_and_enter_key(&mut self, key: char) {
         let key = key.to_ascii_uppercase();
@@ -240,29 +297,24 @@ impl CalculatorUI {
         if let Some((row_idx, col_idx)) = key_coor {
             let key = self.key_map[self.selected_key_rc.0][self.selected_key_rc.1];
             self.state.selected_key = None;
-            self._refresh_for_keys(&vec![key.to_string()]);
+            self._refresh_for_keys(&vec![key.to_string().as_ref()]);
 
             self.selected_key_rc = (row_idx, col_idx);
             let key = self.key_map[self.selected_key_rc.0][self.selected_key_rc.1];
             self.state.selected_key = Some(key);
-            self._refresh_for_keys(&vec![key.to_string()]);
+            self._refresh_for_keys(&vec![key.to_string().as_ref()]);
 
-            self._enter_key_selected();
-
-            // thread::sleep(Duration::from_millis(ENTER_DELAY_MILLIS));
-
-            // self.key_press_state.highlight_selected = false;
-            // self._refresh_for_keys(&vec![key.to_string()]);
+            self._commit_key_selected();
         }
     }
     fn _move_key_selected(&mut self, move_dir: MoveDir) {
         let key = self.key_map[self.selected_key_rc.0][self.selected_key_rc.1];
         self.state.selected_key = None;
-        self._refresh_for_keys(&vec![key.to_string()]);
+        self._refresh_for_keys(&vec![key.to_string().as_ref()]);
 
         let key = self._adjust_key_selected(move_dir);
         self.state.selected_key = Some(key);
-        self._refresh_for_keys(&vec![key.to_string()]);
+        self._refresh_for_keys(&vec![key.to_string().as_ref()]);
     }
     fn _adjust_key_selected(&mut self, move_dir: MoveDir) -> char {
         let row_count = self.key_map.len();
@@ -341,34 +393,13 @@ impl LBLScreenMapValueTrait for CalculatorUIState {
             };
             Some((key_value, 1))
         } else if key == "display" {
-            unimplemented!()
-            //Some((self.display, DISPLAY_WIDTH))
-            // match &self.display {
-            //     CalculatorDisplay::Normal(result) => {
-            //         let result = *result;
-            //         //let result = -21.2345;
-            //         //let result = -0.123456789123456789;
-            //         //let result = -1234567891234.0;
-            //         let mut display_result = format!("{}", result);
-            //         if display_result.len() < RESULT_WIDTH as usize {
-            //             let room = RESULT_WIDTH - display_result.len() as u16;
-            //             display_result = format!("{}{}", " ".repeat(room as usize), display_result);
-            //         } else {
-            //             let room = DISPLAY_WIDTH - (if result < 0.0 { 5 } else { 4 });
-            //             display_result = format!("{:.*}", room as usize, result);
-            //             if display_result.len() > DISPLAY_WIDTH as usize {
-            //                 let room = DISPLAY_WIDTH - (if result < 0.0 { 8 } else { 7 });
-            //                 display_result = format!("{:.*e}", room as usize, result);
-            //             }
-            //         }
-            //         let display_result = format!("\x1B[7m {} \x1B[0m", display_result);
-            //         Some((display_result, DISPLAY_WIDTH))
-            //     },
-            //     CalculatorDisplay::Error(error) => {
-            //         let display_result = format!("\x1B[7m {} \x1B[0m", error);
-            //         Some((display_result, DISPLAY_WIDTH))
-            //     },
-            // }
+            let mut display_result = self.display.clone();
+            if display_result.len() < RESULT_WIDTH as usize {
+                let room = RESULT_WIDTH - display_result.len() as u16;
+                display_result = format!("{}{}", " ".repeat(room as usize), display_result);
+            }
+            let display_result = format!("\x1B[7m {} \x1B[0m", display_result);
+            Some((display_result, DISPLAY_WIDTH))
         } else {
             None
         }

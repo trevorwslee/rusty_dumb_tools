@@ -119,10 +119,10 @@ impl DumbCalculator {
     pub fn get_display(&self) -> String {
         return self._get_display(None);
     }
-    pub fn get_display_ex(&self, display_width: usize) -> String {
-        return self._get_display(Some(display_width));
+    pub fn get_display_sized(&self, result_width: usize) -> String {
+        return self._get_display(Some(result_width));
     }
-    fn _get_display(&self, display_width: Option<usize>) -> String {
+    fn _get_display(&self, result_width: Option<usize>) -> String {
         let (mut display_result, result) = match &self.entering {
             EnteringMode::Not => {
                 let result = match self.calc.get_result() {
@@ -155,16 +155,16 @@ impl DumbCalculator {
         //let result = -21.2345;
         //let result = -0.123456789123456789;
         //let result = -1234567891234.0;
-        if display_width.is_some() {
-            let display_width = display_width.unwrap();
-            if display_result.len() < display_width {
-                let room = display_width - display_result.len();
+        if result_width.is_some() {
+            let result_width = result_width.unwrap();
+            if display_result.len() < result_width {
+                let room = result_width - display_result.len();
                 display_result = format!("{}{}", " ".repeat(room), display_result);
             } else {
-                let room = display_width - (if result < 0.0 { 5 } else { 4 });
+                let room = result_width - (if result < 0.0 { 5 } else { 4 });
                 display_result = format!("{:.*}", room, result);
-                if display_result.len() > display_width {
-                    let room = display_width - (if result < 0.0 { 8 } else { 7 });
+                if display_result.len() > result_width {
+                    let room = result_width - (if result < 0.0 { 8 } else { 7 });
                     display_result = format!("{:.*e}", room, result);
                 }
             }

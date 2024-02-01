@@ -168,7 +168,7 @@ impl DumbLineByLineScreen {
     /// refresh the screen assuming only the values of the given keys changed; if want to refresh the whole screen, use [`DumbLineByLineScreen::refresh`] instead
     pub fn refresh_for_keys<T: LBLScreenMapValueTrait>(
         &self,
-        keys: &Vec<String>,
+        keys: &Vec<&str>,
         map_value_provider: &T,
     ) {
         if !self.initialized {
@@ -185,11 +185,7 @@ impl DumbLineByLineScreen {
         }
         height
     }
-    fn _update<T: LBLScreenMapValueTrait>(
-        &self,
-        keys: Option<&Vec<String>>,
-        map_value_provider: &T,
-    ) {
+    fn _update<T: LBLScreenMapValueTrait>(&self, keys: Option<&Vec<&str>>, map_value_provider: &T) {
         if self.initialized {
             //let seq = format!("\x1B[{}A", self.screen_height);
             print!("\x1B[{}A", self.screen_height)
@@ -208,7 +204,7 @@ impl DumbLineByLineScreen {
                 let line_keys = &self.line_keys[index];
                 let mut refresh_line = false;
                 for key in keys {
-                    if line_keys.contains(key) {
+                    if line_keys.contains(*key) {
                         refresh_line = true;
                         break;
                     }
