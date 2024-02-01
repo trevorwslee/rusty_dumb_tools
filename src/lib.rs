@@ -2,7 +2,8 @@
 //! * [`crate::arg::DumbArgParser`]: A simple argument parser.
 //! It can be useful for handling command line argument parsing.
 //! * [`crate::calc::DumbCalcProcessor`]: A simple infix calculation processor.
-//! It can be used to implement a simple calculator.
+//! * [`crate::calculator::DumbCalculator`]: A simple calculator that accepts input keys acting like a real calculator.
+//! It can be used to implement a simple calculator UI.
 //! * [`crate::ltemp::DumbLineTemplate`]: A simple line template for formatting a line, which can be use to print values as a line with some template.
 //! * [`crate::lblscreen::DumbLineByLineScreen`]: A terminal / text-based "screen" update helper, which is extended from [`crate::ltemp::DumbLineTemplate`],
 //!   and should be helpful in managing the updates of the formatted lines that acts as a "screen".
@@ -26,6 +27,7 @@
 //! * `cargo run -- calc -h`
 //! * `cargo run -- calc 1.1 + 2.2 * (4.3 - 2.4) + 5`
 //! * `cargo run -- calc-repl`
+//! * `cargo run -- calculator`
 //! * `cargo run -- ltemp Trevor`
 //! * `cargo run -- lblscreen`
 //! * `cargo run -- arg -f 0.2 5 --string2 VAL1 false 1 2 3`

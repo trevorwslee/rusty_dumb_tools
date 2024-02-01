@@ -5,6 +5,8 @@ A collection of simple tools in ***Rust*** as ***Rust*** modules:
   It can be useful for handling command line argument parsing for a ***Rust*** program.
 * `crate::calc::DumbCalcProcessor`: A simple infix calculation processor 
   It can be used to implement a simple calculator in ***Rust***.
+* `crate::calculator::DumbCalculator`: A simple calculator that accepts input keys acting like a real calculator.
+  It can be used to implement a simple calculator UI in **Rust**.
 * `crate::ltemp::DumbLineTemplate`: A simple line template for formatting a line.
   It can be usee for printing values as a line with some template.
 * `crate::lblscreen::DumbLineByLineScreen`: A terminal / text-based "screen" update helper.  
@@ -42,6 +44,8 @@ the demo can be ***cargo*** run like
   which in turn will show how to use `DumbCalcProcessor` for performing calculation of the sub-command arguments
 * `cargo run -- calc-repl`
   <br>the above demonstrates how to invoke the sub-command `calc-repl`, which in turn show how `DumbCalcProcessor` like a REPL
+* `cargo run -- calculator`
+  <br>the above demonstrate to use `DumbCalculator` and `DumbLineByLineScreen` to implement a simple text-based calculator (UI)
 * `cargo run -- ltemp Trevor`
   <br>the above demonstrates how to use `DumbLineTemplate` to format lines to show data
 * `cargo run -- lblscreen`
@@ -119,6 +123,22 @@ after 20 seconds, when 100% done, the screen will be like
 ----------------------------------------
 ```
 
+After running `cargo run -- calculator`, the simple text-based calculator UI will be like
+
+```
+* arrow keys to move selected key
+* space key to commit selected key
+* can press corresponding keys directly
+* note that 'c' is the same as 'C' and the enter key is the same as '='
+
+        ===============
+        |           0 |                                                                                                                                                          
+        | 7 8 9 |  C  |                                                                                                                                                          
+        | 4 5 6 | * / |                                                                                                                                                          
+        | 1 2 3 | + - |                                                                                                                                                          
+        | % 0 . |  =  |                                                                                                                                                          
+        ===============
+```
 
 # Thank You!
 
@@ -138,7 +158,7 @@ MIT
 # Change History:
 
 * v0.1.2
-  - working on `DumbLineTemplate` and `DumbLineByLineScreen`
+  - added `DumbLineTemplate`, `DumbLineByLineScreen` and `DumbLineByLineScreen`
 
 * v0.1.1
   - added more documentations, and via `run_demo` function

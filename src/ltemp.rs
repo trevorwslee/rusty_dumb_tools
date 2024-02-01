@@ -36,7 +36,7 @@ type WIDTH = u16;
 ///     " |"
 /// ];
 /// let ltemp = DumbLineTemplate::new_fixed_width(15, &lt_comps);
-/// let line = ltemp.format(&HashMap::from([("key", String::from("value"))])).unwrap();
+/// let line = ltemp.format(HashMap::from([("key", String::from("value"))])).unwrap();
 /// assert_eq!(line, "| {1b}[7m(\u{1b}[0m  value  {1b}[7m)\u{1b}[0m |");
 /// ```
 /// notes:
@@ -126,7 +126,7 @@ fn debug_ltemp() {
     let mut map = HashMap::new();
     map.insert("key1", String::from("value1"));
     map.insert("key2", String::from("value2"));
-    let formatted = ltemp.format(&map).unwrap();
+    let formatted = ltemp.format(map).unwrap();
     println!("formatted: [{}]", formatted);
 }
 
@@ -158,14 +158,14 @@ fn debug_ltemp() {
 ///   ("label", String::from("NAME")),
 ///   ("value", name.to_string()),
 /// ]);
-/// let line1 = ltemp.format(&map).unwrap();
+/// let line1 = ltemp.format(map).unwrap();
 ///
 /// // format line2 from the template
 /// let map = HashMap::from([
 ///  ("label", String::from("AGE")),
 ///  ("value", String::from("<undisclosed>")),
 /// ]);
-/// let line2 = ltemp.format(&map).unwrap();
+/// let line2 = ltemp.format(map).unwrap();
 ///
 /// assert_eq!(line1, "| NAME   :        Trevor Lee |");
 /// assert_eq!(line2, "| AGE    :     <undisclosed> |");
@@ -227,16 +227,28 @@ impl DumbLineTemplate {
         }
         keys
     }
+    // /// based on the template and the input map of values, format and return a line;
+    // /// for a more flexible way of formatting, try [`DumbLineTemplate::format_ex`]
+    // pub fn format<T: fmt::Display>(&self, map: &HashMap<&str, T>) -> Result<String, String> {
+    //     let map = map
+    //         .iter()
+    //         .map(|(k, v)| (k.to_string(), v.to_string()))
+    //         .collect::<HashMap<String, String>>();
+    //     let map_value_fn = |key: &str| -> Option<(&str, WIDTH)> {
+    //         match map.get(key) {
+    //             Some(value) => Some((value, value.len() as WIDTH)),
+    //             None => None,
+    //         }
+    //     };
+    //     return self.format_ex(map_value_fn);
+    // }
     /// based on the template and the input map of values, format and return a line;
     /// for a more flexible way of formatting, try [`DumbLineTemplate::format_ex`]
-    pub fn format<T: fmt::Display>(&self, map: &HashMap<&str, T>) -> Result<String, String> {
-        let map = map
-            .iter()
-            .map(|(k, v)| (k.to_string(), v.to_string()))
-            .collect::<HashMap<String, String>>();
-        let map_value_fn = |key: &str| -> Option<(&str, WIDTH)> {
-            match map.get(key) {
-                Some(value) => Some((value, value.len() as WIDTH)),
+    pub fn format<T: LineTempCompMapValueTrait>(&self, value_mapper: T) -> Result<String, String> {
+        let map_value_fn = |key: &str| -> Option<(T::VALUE, WIDTH)> {
+            let mapped_value = value_mapper.map_value(key);
+            match mapped_value {
+                Some(mapped_value) => Some(mapped_value),
                 None => None,
             }
         };
@@ -510,6 +522,64 @@ impl DumbLineTemplate {
     //     }
     //     self.format(&new_map)
     // }
+}
+
+// pub trait LineTempCompMapValueTrait {
+//     type VALUE: fmt::Display;
+//     fn map_value(&self, key: &str) -> Option<(Self::VALUE, WIDTH)>;
+// }
+// impl LineTempCompMapValueTrait for HashMap<&str, String> {
+//     type VALUE = String;
+//     fn map_value(&self, key: &str) -> Option<(Self::VALUE, WIDTH)> {
+//         let value = self.get(key);
+//         if value.is_some() {
+//             let value = value.unwrap();
+//             Some((value.clone(), value.len() as WIDTH))
+//         } else {
+//             None
+//         }
+//     }
+// }
+// impl LineTempCompMapValueTrait for HashMap<&str, &str> {
+//     type VALUE = String;
+//     fn map_value(&self, key: &str) -> Option<(Self::VALUE, WIDTH)> {
+//         let value = self.get(key);
+//         if value.is_some() {
+//             let value = value.unwrap();
+//             Some((value.to_string(), value.len() as WIDTH))
+//         } else {
+//             None
+//         }
+//     }
+// }
+
+pub trait LineTempCompMapValueTrait {
+    type VALUE: fmt::Display;
+    fn map_value(&self, key: &str) -> Option<(Self::VALUE, WIDTH)>;
+}
+impl LineTempCompMapValueTrait for HashMap<&str, String> {
+    type VALUE = String;
+    fn map_value(&self, key: &str) -> Option<(String, WIDTH)> {
+        let value = self.get(key);
+        if value.is_some() {
+            let value = value.unwrap();
+            Some((value.clone(), value.len() as WIDTH))
+        } else {
+            None
+        }
+    }
+}
+impl LineTempCompMapValueTrait for HashMap<&str, &str> {
+    type VALUE = String;
+    fn map_value(&self, key: &str) -> Option<(String, WIDTH)> {
+        let value = self.get(key);
+        if value.is_some() {
+            let value = value.unwrap();
+            Some((value.to_string(), value.len() as WIDTH))
+        } else {
+            None
+        }
+    }
 }
 
 // trait LineTempCompTrait {

@@ -1,4 +1,4 @@
-//! work in progress
+//! A simple calculator that accepts input keys acting like a real calculator. It is base on [`crate::calc::DumbCalcProcessor`] for it's calculation processing.
 
 #![deny(warnings)]
 #![allow(unused)]
@@ -16,6 +16,24 @@ pub struct DumbCalculator {
 /// a simple calculator that accepts input keys acting like a real calculator;
 /// it may task is the keep track of key presses and turn them into "calculation units";
 /// it uses a [`crate::calc::DumbCalcProcessor`] to handle the actual calculation processing
+///
+/// for example:
+/// ```
+/// use rusty_dumb_tools::calculator::DumbCalculator;
+/// let mut calculator = DumbCalculator::new();
+/// calculator.push("1").unwrap();
+/// calculator.push(".").unwrap();
+/// calculator.push("0").unwrap();
+/// calculator.push("2").unwrap();
+/// assert_eq!(calculator.get_display(), "1.02");
+/// calculator.push("*").unwrap();
+/// calculator.push("3").unwrap();
+/// assert_eq!(calculator.get_display(), "3");
+/// calculator.push("=").unwrap();
+/// assert_eq!(calculator.get_display(), "3.06");
+/// ```
+///
+/// for a fuller sample code, please refer to the "calculator" sub-demo of [`crate::demo::run_demo`]
 impl DumbCalculator {
     /// create a new [`DumbCalculator`] instance
     pub fn new() -> Self {

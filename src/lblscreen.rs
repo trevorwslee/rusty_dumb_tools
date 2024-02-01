@@ -8,7 +8,7 @@ use std::{
     fmt,
 };
 
-use crate::ltemp::DumbLineTemplate;
+use crate::ltemp::{DumbLineTemplate, LineTempCompMapValueTrait};
 
 /// settings for [`DumbLineByLineScreen`]
 /// * line_prefix: the prefix to be printed before each formatted line
@@ -49,11 +49,11 @@ impl Default for LBLScreenSettings {
 /// use rusty_dumb_tools::{
 ///     arg::{DumbArgBuilder, DumbArgParser},
 ///     dap_arg,
-///     lblscreen::{DumbLineByLineScreen, LBLScreenMapValueTrait, LBLScreenSettings},
+///     lblscreen::{DumbLineByLineScreen, LBLScreenSettings},
 /// };
 /// use rusty_dumb_tools::{
 ///    dlt_comps, dltc,
-///    ltemp::{DumbLineTemplate, LineTempComp, LineTempCompTrait, MappedLineTempCompBuilder},
+///    ltemp::{DumbLineTemplate, LineTempComp, LineTempCompMapValueTrait, LineTempCompTrait, MappedLineTempCompBuilder},
 /// };
 /// let mut lbl_demo_screen = {
 ///     /// template for the line that ends up like "|     ... wait ... loading 100% ...    |"
@@ -159,22 +159,48 @@ impl DumbLineByLineScreen {
         self.initialized = true;
     }
     /// refresh the screen; if only want to refresh when the values of some given keys changed, use [`DumbLineByLineScreen::refresh_for_keys`] instead
-    pub fn refresh<T: LBLScreenMapValueTrait>(&self, map_value_provider: &T) {
+    pub fn refresh<T: LBLScreenMapValueTrait>(&self, value_mapper: &T) {
         if !self.initialized {
             panic!("must call init_screen() once first");
         }
-        self._update(None, map_value_provider)
+        let map_value_fn = |key: &str| -> Option<(T::VALUE, u16)> {
+            let mapped_value = value_mapper.map_value(key);
+            match mapped_value {
+                Some(mapped_value) => Some(mapped_value),
+                None => None,
+            }
+        };
+        self.refresh_ex(map_value_fn)
+    }
+    pub fn refresh_ex<T: fmt::Display, F: Fn(&str) -> Option<(T, u16)>>(&self, map_value_fn: F) {
+        if !self.initialized {
+            panic!("must call init_screen() once first");
+        }
+        self._update(None, map_value_fn)
     }
     /// refresh the screen assuming only the values of the given keys changed; if want to refresh the whole screen, use [`DumbLineByLineScreen::refresh`] instead
-    pub fn refresh_for_keys<T: LBLScreenMapValueTrait>(
+    pub fn refresh_for_keys<T: LBLScreenMapValueTrait>(&self, keys: &Vec<&str>, value_mapper: &T) {
+        if !self.initialized {
+            panic!("must call init_screen() once first");
+        }
+        let map_value_fn = |key: &str| -> Option<(T::VALUE, u16)> {
+            let mapped_value = value_mapper.map_value(key);
+            match mapped_value {
+                Some(mapped_value) => Some(mapped_value),
+                None => None,
+            }
+        };
+        self.refresh_for_keys_ex(keys, map_value_fn)
+    }
+    pub fn refresh_for_keys_ex<T: fmt::Display, F: Fn(&str) -> Option<(T, u16)>>(
         &self,
         keys: &Vec<&str>,
-        map_value_provider: &T,
+        map_value_fn: F,
     ) {
         if !self.initialized {
             panic!("must call init_screen() once first");
         }
-        self._update(Some(keys), map_value_provider)
+        self._update(Some(keys), map_value_fn)
     }
     fn calc_line_height(line: &str) -> i32 {
         let mut height = 1;
@@ -185,14 +211,18 @@ impl DumbLineByLineScreen {
         }
         height
     }
-    fn _update<T: LBLScreenMapValueTrait>(&self, keys: Option<&Vec<&str>>, map_value_provider: &T) {
+    fn _update<T: fmt::Display, F: Fn(&str) -> Option<(T, u16)>>(
+        &self,
+        keys: Option<&Vec<&str>>,
+        map_value_fn: F,
+    ) {
         if self.initialized {
             //let seq = format!("\x1B[{}A", self.screen_height);
             print!("\x1B[{}A", self.screen_height)
         }
         // for each line, keep set of keys, only update the line if key values changed
-        let map_value_fn = |key: &str| -> Option<(T::VALUE, u16)> {
-            let mapped_value = map_value_provider.map_value(key);
+        let map_value_fn = |key: &str| -> Option<(T, u16)> {
+            let mapped_value = map_value_fn(key);
             mapped_value
         };
         if self.top_line.is_some() {
@@ -237,14 +267,25 @@ pub trait LBLScreenMapValueTrait {
     type VALUE: fmt::Display;
     fn map_value(&self, key: &str) -> Option<(Self::VALUE, u16)>;
 }
-
 impl LBLScreenMapValueTrait for HashMap<&str, String> {
     type VALUE = String;
-    fn map_value(&self, key: &str) -> Option<(Self::VALUE, u16)> {
+    fn map_value(&self, key: &str) -> Option<(String, u16)> {
         let value = self.get(key);
         if value.is_some() {
             let value = value.unwrap();
             Some((value.clone(), value.len() as u16))
+        } else {
+            None
+        }
+    }
+}
+impl LBLScreenMapValueTrait for HashMap<&str, &str> {
+    type VALUE = String;
+    fn map_value(&self, key: &str) -> Option<(String, u16)> {
+        let value = self.get(key);
+        if value.is_some() {
+            let value = value.unwrap();
+            Some((value.to_string(), value.len() as u16))
         } else {
             None
         }

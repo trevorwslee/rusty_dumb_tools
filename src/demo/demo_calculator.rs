@@ -3,9 +3,12 @@
 #![deny(warnings)]
 #![allow(unused)]
 
-use std::{collections::HashMap, io, thread, time::Duration};
+use std::{collections::HashMap, fmt, io, thread, time::Duration};
 
-use crossterm::{event::{read, Event, KeyCode}, style::Colorize};
+use crossterm::{
+    event::{read, Event, KeyCode},
+    style::Colorize,
+};
 use iced::color;
 
 use crate::{
@@ -13,8 +16,9 @@ use crate::{
     dlt_comps, dltc,
     lblscreen::{DumbLineByLineScreen, LBLScreenMapValueTrait, LBLScreenSettings},
     ltemp::{
-        DumbLineTemplate, EscapedLineTempComp, LineTempComp, LineTempCompTrait, MappedLineTempComp,
-        MappedLineTempCompBuilder, MappedLineTempCompSettings, FLEXIBLE_WIDTH_EX,
+        DumbLineTemplate, EscapedLineTempComp, LineTempComp, LineTempCompMapValueTrait,
+        LineTempCompTrait, MappedLineTempComp, MappedLineTempCompBuilder,
+        MappedLineTempCompSettings, FLEXIBLE_WIDTH_EX,
     },
 };
 
@@ -33,7 +37,7 @@ struct CalculatorUI {
     screen: DumbLineByLineScreen,
     key_map: Vec<Vec<char>>,
     selected_key_rc: (usize, usize),
-    state: CalculatorUIState,
+    refresh_state: RefreshState,
 }
 impl CalculatorUI {
     fn new_and_init() -> Self {
@@ -147,7 +151,7 @@ impl CalculatorUI {
 
         // [dependencies]
         // unicode-segmentation = "1.8.0"
-        if true {
+        if false {
             println!("{} :({}):{} ", "1️⃣", "1️⃣".len(), "123".red());
             for i in 0..=9 {
                 let v = i + 0x277f;
@@ -157,7 +161,7 @@ impl CalculatorUI {
             println!();
         }
 
-        if true {
+        if false {
             // ➕➖✖️➗🟰🇦🇨▪%±
             println!("±\u{2780}ABC1️⃣2️⃣3️⃣4️⃣5️⃣6️⃣7️⃣8️⃣9️⃣0️⃣ABC±\u{2780}");
             let v = 0x1F600;
@@ -179,7 +183,7 @@ impl CalculatorUI {
             screen: screen,
             key_map: key_map,
             selected_key_rc: key_pressed_coor,
-            state: CalculatorUIState {
+            refresh_state: RefreshState {
                 display: String::from("0"),
                 selected_key: Some(key),
                 highlight_selected: false,
@@ -204,8 +208,8 @@ impl CalculatorUI {
     }
     fn run(mut self) {
         self._refresh();
-        let key = self.state.selected_key.unwrap();
-        self.state.selected_key = Some(key);
+        let key = self.refresh_state.selected_key.unwrap();
+        self.refresh_state.selected_key = Some(key);
         // self.key_press_state.highlight_selected = true;
         self._refresh_for_keys(&vec![key.to_string().as_ref()]);
         // thread::sleep(Duration::from_millis(500));
@@ -258,10 +262,14 @@ impl CalculatorUI {
         }
     }
     fn _refresh(&mut self) {
-        self.screen.refresh(&self.state);
+        let map_value_fn =
+            |key: &str| -> Option<(String, u16)> { self.refresh_state.map_value(key) };
+        self.screen.refresh_ex(map_value_fn);
     }
     fn _refresh_for_keys(&mut self, keys: &Vec<&str>) {
-        self.screen.refresh_for_keys(keys, &self.state);
+        let map_value_fn =
+            |key: &str| -> Option<(String, u16)> { self.refresh_state.map_value(key) };
+        self.screen.refresh_for_keys_ex(keys, map_value_fn);
     }
     fn _get_key_coor(key: char, key_map: &Vec<Vec<char>>) -> Option<(usize, usize)> {
         for (row_idx, row) in key_map.iter().enumerate() {
@@ -275,12 +283,12 @@ impl CalculatorUI {
     }
     fn _commit_key_selected(&mut self) {
         let key = self.key_map[self.selected_key_rc.0][self.selected_key_rc.1];
-        self.state.highlight_selected = true;
+        self.refresh_state.highlight_selected = true;
         self._refresh_for_keys(&vec![key.to_string().as_ref()]);
 
         thread::sleep(Duration::from_millis(ENTER_DELAY_MILLIS));
 
-        self.state.highlight_selected = false;
+        self.refresh_state.highlight_selected = false;
         self._refresh_for_keys(&vec![key.to_string().as_ref()]);
 
         if key == 'C' {
@@ -288,7 +296,7 @@ impl CalculatorUI {
         } else {
             self.calculator.push(key.to_string().as_str()).unwrap();
         }
-        self.state.display = self.calculator.get_display_sized(RESULT_WIDTH as usize);
+        self.refresh_state.display = self.calculator.get_display_sized(RESULT_WIDTH as usize);
         self._refresh_for_keys(&vec!["display"]);
     }
     fn _select_and_enter_key(&mut self, key: char) {
@@ -296,12 +304,12 @@ impl CalculatorUI {
         let key_coor = CalculatorUI::_get_key_coor(key, &self.key_map);
         if let Some((row_idx, col_idx)) = key_coor {
             let key = self.key_map[self.selected_key_rc.0][self.selected_key_rc.1];
-            self.state.selected_key = None;
+            self.refresh_state.selected_key = None;
             self._refresh_for_keys(&vec![key.to_string().as_ref()]);
 
             self.selected_key_rc = (row_idx, col_idx);
             let key = self.key_map[self.selected_key_rc.0][self.selected_key_rc.1];
-            self.state.selected_key = Some(key);
+            self.refresh_state.selected_key = Some(key);
             self._refresh_for_keys(&vec![key.to_string().as_ref()]);
 
             self._commit_key_selected();
@@ -309,11 +317,11 @@ impl CalculatorUI {
     }
     fn _move_key_selected(&mut self, move_dir: MoveDir) {
         let key = self.key_map[self.selected_key_rc.0][self.selected_key_rc.1];
-        self.state.selected_key = None;
+        self.refresh_state.selected_key = None;
         self._refresh_for_keys(&vec![key.to_string().as_ref()]);
 
         let key = self._adjust_key_selected(move_dir);
-        self.state.selected_key = Some(key);
+        self.refresh_state.selected_key = Some(key);
         self._refresh_for_keys(&vec![key.to_string().as_ref()]);
     }
     fn _adjust_key_selected(&mut self, move_dir: MoveDir) -> char {
@@ -369,27 +377,32 @@ enum MoveDir {
     Right,
 }
 
-struct CalculatorUIState {
+struct RefreshState {
     display: String,
     selected_key: Option<char>,
     highlight_selected: bool,
 }
 
-impl LBLScreenMapValueTrait for CalculatorUIState {
+impl LBLScreenMapValueTrait for RefreshState {
     type VALUE = String;
-    fn map_value(&self, key: &str) -> Option<(Self::VALUE, u16)> {
+    fn map_value(&self, key: &str) -> Option<(String, u16)> {
         if key.len() == 1 {
             let current_key = self.selected_key;
             let key = key.chars().next().unwrap();
-            let mut key_value = key.to_string();
-            if let Some(current_key) = current_key {
-                if current_key == key {
+            let key_value = key.to_string();
+            let key_value = match current_key {
+                Some(current_key) if current_key == key => {
                     if self.highlight_selected {
-                        key_value = format!("\x1B[7m{}\x1B[0m", key_value); // invert color
+                        format!("\x1B[7m{}\x1B[0m", key_value) // invert color
                     } else {
-                        key_value = format!("\x1B[4m{}\x1B[0m", key_value); // underline
+                        if true {
+                            format!("\x1B[31m{}\x1B[0m", key_value) // underline
+                        } else {
+                            format!("\x1B[4m{}\x1B[0m", key_value) // underline
+                        }
                     }
                 }
+                _ => key_value,
             };
             Some((key_value, 1))
         } else if key == "display" {

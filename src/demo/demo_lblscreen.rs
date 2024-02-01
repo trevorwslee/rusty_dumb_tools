@@ -8,7 +8,7 @@ use std::{collections::HashMap, thread, time::Duration};
 use crate::{
     arg::{DumbArgBuilder, DumbArgParser},
     dap_arg,
-    lblscreen::{DumbLineByLineScreen, LBLScreenMapValueTrait, LBLScreenSettings},
+    lblscreen::{DumbLineByLineScreen, LBLScreenSettings},
 };
 
 use crate::{
