@@ -129,14 +129,20 @@ impl DumbLineByLineScreen {
             line_keys.push(keys);
         }
         let mut screen_height = line_temps.len() as i32 + settings.screen_height_adjustment;
-        if settings.top_line.is_some() {
-            screen_height +=
-                DumbLineByLineScreen::calc_line_height(settings.top_line.as_ref().unwrap());
+        if let Some(top_line) = &settings.top_line {
+            screen_height += DumbLineByLineScreen::calc_line_height(top_line);
         }
-        if settings.bottom_line.is_some() {
-            screen_height +=
-                DumbLineByLineScreen::calc_line_height(settings.bottom_line.as_ref().unwrap());
+        if let Some(bottom_line) = &settings.bottom_line {
+            screen_height += DumbLineByLineScreen::calc_line_height(bottom_line);
         }
+        // if settings.top_line.is_some() {
+        //     screen_height +=
+        //         DumbLineByLineScreen::calc_line_height(settings.top_line.as_ref().unwrap());
+        // }
+        // if settings.bottom_line.is_some() {
+        //     screen_height +=
+        //         DumbLineByLineScreen::calc_line_height(settings.bottom_line.as_ref().unwrap());
+        // }
         Self {
             line_temps,
             line_prefix: settings.line_prefix,
@@ -225,12 +231,14 @@ impl DumbLineByLineScreen {
             let mapped_value = map_value_fn(key);
             mapped_value
         };
-        if self.top_line.is_some() {
-            println!("{}", self.top_line.as_ref().unwrap());
+        // if self.top_line.is_some() {
+        //     println!("{}", self.top_line.as_ref().unwrap());
+        // }
+        if let Some(top_line) = &self.top_line {
+            println!("{}", top_line);
         }
         for (index, line_temp) in self.line_temps.iter().enumerate() {
-            let refresh_line = if keys.is_some() {
-                let keys = keys.unwrap();
+            let refresh_line = if let Some(keys) = keys {
                 let line_keys = &self.line_keys[index];
                 let mut refresh_line = false;
                 for key in keys {
@@ -243,22 +251,47 @@ impl DumbLineByLineScreen {
             } else {
                 true
             };
+            // let refresh_line = if keys.is_some() {
+            //     let keys = keys.unwrap();
+            //     let line_keys = &self.line_keys[index];
+            //     let mut refresh_line = false;
+            //     for key in keys {
+            //         if line_keys.contains(*key) {
+            //             refresh_line = true;
+            //             break;
+            //         }
+            //     }
+            //     refresh_line
+            // } else {
+            //     true
+            // };
             if refresh_line {
-                let line = line_temp.format_ex(map_value_fn).unwrap();
+                let line = line_temp
+                    .format_ex(map_value_fn)
+                    .expect(format!("line[{}]", index).as_str());
                 print!("\x1B[0K");
-                if self.line_prefix.is_some() {
-                    print!("{}", self.line_prefix.as_ref().unwrap());
+                if let Some(line_prefix) = &self.line_prefix {
+                    print!("{}", line_prefix);
                 }
+                // if self.line_prefix.is_some() {
+                //     print!("{}", self.line_prefix.as_ref().unwrap());
+                // }
                 print!("{}", line); // | is the line prefix and suffix
-                if self.line_suffix.is_some() {
-                    print!("{}", self.line_suffix.as_ref().unwrap());
+                if let Some(line_suffix) = &self.line_suffix {
+                    print!("{}", line_suffix);
                 }
+                // if self.line_suffix.is_some() {
+                //     print!("{}", self.line_suffix.as_ref().unwrap());
+                // }
             }
             println!()
         }
-        if self.bottom_line.is_some() {
-            println!("{}", self.bottom_line.as_ref().unwrap());
+        if let Some(bottom_line) = &self.bottom_line {
+            println!("{}", bottom_line);
         }
+        // if self.bottom_line.is_some() {
+        //     println!("{}", self.bottom_line.as_ref().unwrap());
+        // }
         //self.initialized = true;
     }
 }
@@ -271,8 +304,8 @@ impl LBLScreenMapValueTrait for HashMap<&str, String> {
     type VALUE = String;
     fn map_value(&self, key: &str) -> Option<(String, u16)> {
         let value = self.get(key);
-        if value.is_some() {
-            let value = value.unwrap();
+        if let Some(value) = value {
+            //let value = value.unwrap();
             Some((value.clone(), value.len() as u16))
         } else {
             None
@@ -283,8 +316,8 @@ impl LBLScreenMapValueTrait for HashMap<&str, &str> {
     type VALUE = String;
     fn map_value(&self, key: &str) -> Option<(String, u16)> {
         let value = self.get(key);
-        if value.is_some() {
-            let value = value.unwrap();
+        if let Some(value) = value {
+            //let value = value.unwrap();
             Some((value.to_string(), value.len() as u16))
         } else {
             None

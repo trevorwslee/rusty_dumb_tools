@@ -69,7 +69,7 @@ macro_rules! assert_calc_result_error {
 }
 
 #[test]
-pub fn test_calc_empty() {
+pub fn test_calc_push() {
     let mut calc = DumbCalcProcessor::new();
     assert_calc_eq_result!(&calc, 0.0);
     calc.push("123");
@@ -86,6 +86,10 @@ pub fn test_calc_empty() {
     calc.push("neg");
     calc.eval().unwrap();
     assert_eq!(-777.0, calc.get_result().unwrap());
+    calc.reset();
+    calc.push("15");
+    calc.push("%");
+    assert_eq!(0.15, calc.get_result().unwrap());
 }
 #[test]
 pub fn test_calc_general() {
@@ -96,6 +100,12 @@ pub fn test_calc_general() {
     calc.parse_and_push("+ 2.5 * 3 - 4");
     calc.eval().unwrap();
     assert_eq!(5.0, calc.get_result().unwrap());
+    calc.parse_and_push("12 neg");
+    calc.eval().unwrap();
+    assert_eq!(-12.0, calc.get_result().unwrap());
+    calc.parse_and_push("15%");
+    calc.eval().unwrap();
+    assert_eq!(0.15, calc.get_result().unwrap());
 }
 #[test]
 pub fn test_calc_parse() {
@@ -172,6 +182,10 @@ pub fn test_calc_unary() {
         test_calc_prase_and_push!("1 exp", 1.0_f64.exp());
         test_calc_prase_and_push!("50%", 0.5);
     }
+    if true {
+        test_calc_prase_and_push!("0 cos * 3", 3.0);
+        test_calc_prase_and_push!("50% + 5", 5.5);
+    }
 }
 #[test]
 pub fn test_calc_const() {
@@ -180,4 +194,23 @@ pub fn test_calc_const() {
     test_calc_prase_and_push!(" 50% + 50 %", 1.0);
     test_calc_prase_and_push!(" 2 * PI ", 2.0 * std::f64::consts::PI);
     test_calc_prase_and_push!(" 3 * E ", 3.0 * std::f64::consts::E);
+}
+
+#[test]
+pub fn test_calc_backup_and_restore() {
+    let mut calc = DumbCalcProcessor::new();
+    assert_calc_eq_result!(&calc, 0.0);
+    calc.push("123.4");
+    assert_eq!(123.4, calc.get_result().unwrap());
+    let backup = calc.backup();
+    calc.push("*");
+    calc.push("2");
+    calc.eval().unwrap();
+    assert_eq!(246.8, calc.get_result().unwrap());
+    calc.restore(backup);
+    assert_eq!(123.4, calc.get_result().unwrap());
+    calc.push("*");
+    calc.push("20");
+    calc.eval().unwrap();
+    assert_eq!(2468.0, calc.get_result().unwrap());
 }

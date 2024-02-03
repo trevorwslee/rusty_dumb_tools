@@ -50,7 +50,7 @@ type WIDTH = u16;
 ///   - also see the macro [`crate::dltc!`]
 #[macro_export]
 macro_rules! dlt_comps {
-  ($($x:expr),*) => {{
+  ($($x:expr),*$(,)?) => {{
     let mut comps: Vec<LineTempComp> = Vec::new();
     $(
       let comp = $x.to_line_temp_comp();
@@ -561,8 +561,8 @@ impl LineTempCompMapValueTrait for HashMap<&str, String> {
     type VALUE = String;
     fn map_value(&self, key: &str) -> Option<(String, WIDTH)> {
         let value = self.get(key);
-        if value.is_some() {
-            let value = value.unwrap();
+        if let Some(value) = value {
+            //let value = value.unwrap();
             Some((value.clone(), value.len() as WIDTH))
         } else {
             None
@@ -573,8 +573,8 @@ impl LineTempCompMapValueTrait for HashMap<&str, &str> {
     type VALUE = String;
     fn map_value(&self, key: &str) -> Option<(String, WIDTH)> {
         let value = self.get(key);
-        if value.is_some() {
-            let value = value.unwrap();
+        if let Some(value) = value {
+            //let value = value.unwrap();
             Some((value.to_string(), value.len() as WIDTH))
         } else {
             None

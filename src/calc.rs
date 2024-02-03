@@ -249,6 +249,7 @@ impl DumbCalcProcessor {
             if let Some(Unit::OpenBracket) = stack.last() {
                 CalcResult::Intermediate(0.0)
             } else {
+                //println!("!!!!! {:?}", stack.last());
                 let scanned = &self.calc_impl.scanned;
                 if scanned.len() > 0 {
                     let intermediate_result = scanned.last().unwrap();
@@ -259,6 +260,12 @@ impl DumbCalcProcessor {
             }
         }
     }
+    pub fn get_last_operator(&self) -> Option<String> {
+        return self.calc_impl.get_last_operator();
+    }
+    pub fn count_opened_brackets(&self) -> u16 {
+        return self.calc_impl.count_opened_brackets();
+    }
     // /// like [`DumbCalcProcessor::get_result`]
     // pub fn get_unwrapped_result(&self) -> f64 {
     //     self.get_result().unwrap()
@@ -267,6 +274,18 @@ impl DumbCalcProcessor {
     pub fn reset(&mut self) {
         self.calc_impl.reset();
     }
+    pub fn backup(&self) -> CalcProcessorBackup {
+        CalcProcessorBackup {
+            calc_impl: self.calc_impl.clone(),
+        }
+    }
+    pub fn restore(&mut self, backup: CalcProcessorBackup) {
+        self.calc_impl = backup.calc_impl;
+    }
+}
+
+pub struct CalcProcessorBackup {
+    calc_impl: CalcImpl,
 }
 
 fn _parse_units_from_str(units: &str) -> Result<Vec<String>, String> {
@@ -350,7 +369,7 @@ fn _to_next_unit_token(mut idx: usize, s: &Vec<char>) -> Option<(usize, usize)> 
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct CalcImpl {
     scanned: Vec<f64>,
     stack: Vec<Unit>, // can only be ) or Op
@@ -445,7 +464,11 @@ impl CalcImpl {
                     let unit = self.stack.pop().unwrap();
                     self._push_to_scanned(&unit);
                 }
-                self.stack.push(push_unit.clone());
+                if op.is_unary() {
+                    self._push_to_scanned(&push_unit);
+                } else {
+                    self.stack.push(push_unit.clone());
+                }
             }
             Unit::Operand(operand) => self.scanned.push(operand),
         }
@@ -462,10 +485,26 @@ impl CalcImpl {
             self.result
         };
     }
+    fn get_last_operator(&self) -> Option<String> {
+        match self.last_pushed {
+            Some(Unit::Operator(op)) => Some(op.to_string()),
+            _ => None,
+        }
+    }
+    fn count_opened_brackets(&self) -> u16 {
+        let mut count = 0;
+        for unit in &self.stack {
+            if *unit == Unit::OpenBracket {
+                count += 1;
+            }
+        }
+        count
+    }
     fn reset(&mut self) {
         self.scanned.clear();
         self.stack.clear();
         self.result = 0.0;
+        self.last_pushed = None;
     }
 }
 impl CalcImpl {

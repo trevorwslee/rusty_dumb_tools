@@ -8,6 +8,7 @@ mod debug;
 
 use std::{collections::HashMap, env, vec};
 
+use crossterm::style::Colorize;
 use rusty_dumb_tools::{
     arg::{self, DumbArgBuilder, DumbArgParser},
     calc::{self, DumbCalcProcessor},
@@ -39,9 +40,17 @@ use rusty_dumb_tools::{
 
 fn main() {
     if false {
-        demo::demo_calculator::handle_demo_calculator();
+        test_chars();
         return;
     }
+    if false {
+        demo::demo_calculator_gui::handle_demo_calculator_gui();
+        return;
+    }
+    // if false {
+    //     demo::demo_calculator::handle_demo_calculator();
+    //     return;
+    // }
     if false {
         demo::demo_ltemp::show_table("012345678901234567890");
         return;
@@ -90,6 +99,84 @@ fn released_main() {
         None
     };
     demo::run_demo(in_args);
+}
+
+fn test_chars() {
+    if true {
+        let c = '✖' as u32 - 1000;
+        for i in 0..=2000 {
+            let v = c + i;
+            let char1 = std::char::from_u32(v).unwrap();
+            print!("{} ", char1);
+        }
+        println!();
+    }
+    if true {
+        let c = '０' as u32 - 1000;
+        for i in 0..=2000 {
+            let v = c + i;
+            let char1 = std::char::from_u32(v).unwrap();
+            print!("{} ", char1);
+        }
+        println!();
+    }
+    if false {
+        println!("0️⃣ 1️⃣ 2️⃣ 3️⃣ 4️⃣ 5️⃣ 6️⃣ 7️⃣ 8️⃣ 9️⃣ ");
+        println!("０１２３４５６７８９");
+        println!("𝟎 𝟏 𝟐 𝟑 𝟒 𝟓 𝟔 𝟕 𝟖 𝟗");
+        println!("𝟘 𝟙 𝟚 𝟛 𝟜 𝟝 𝟞 𝟟 𝟠 𝟡");
+        println!("⓪①②③④⑤⑥⑦⑧⑨");
+        println!("0123456789");
+        println!("🇦🇨|±|+|=|🇽|÷|=|");
+    }
+
+    // 1️⃣2️⃣3️⃣4️⃣5️⃣6️⃣7️⃣8️⃣9️⃣0️⃣
+    // ±
+    // ➀ (U+2780)
+
+    // let v = 0x1F600;
+    // let character = std::char::from_u32(v).unwrap();
+    // let string = character.to_string();
+
+    // // Split the string into grapheme clusters
+    // let graphemes: Vec<&str> = string.graphemes(true).collect();
+
+    // // Print each grapheme cluster
+    // for grapheme in graphemes {
+    //     println!("{}", grapheme);
+    // }
+
+    // use unicode_segmentation::UnicodeSegmentation;
+
+    // let string = "😄👋🏽";
+    // let graphemes: Vec<&str> = string.graphemes(true).collect();
+    // let num_graphemes = graphemes.len();
+
+    // println!("Number of graphemes: {}", num_graphemes); // Output: Number of graphemes: 3
+
+    // [dependencies]
+    // unicode-segmentation = "1.8.0"
+    if false {
+        println!("{} :({}):{} ", "1️⃣", "1️⃣".len(), "123".red());
+        for i in 0..=9 {
+            let v = i + 0x277f;
+            let char1 = std::char::from_u32(v).unwrap();
+            print!("{} ", char1);
+        }
+        println!();
+    }
+
+    if false {
+        // ➕➖✖️➗🟰🇦🇨▪%±
+        println!("±\u{2780}ABC1️⃣2️⃣3️⃣4️⃣5️⃣6️⃣7️⃣8️⃣9️⃣0️⃣ABC±\u{2780}");
+        let v = 0x1F600;
+        let character = std::char::from_u32(v).unwrap();
+        let string = character.to_string();
+        println!("{}", string); // Output: 😄
+        let a = '😄' as u32;
+        let a_char = std::char::from_u32(a).unwrap();
+        println!("A:{}", a_char);
+    }
 }
 
 fn debug_main() {

@@ -70,6 +70,13 @@ fn test_calculator_push_chars() {
 }
 
 #[test]
+fn test_calculator_unary() {
+    let mut calculator = DumbCalculator::new();
+    calculator.push_chars("1%").unwrap();
+    assert_eq!(calculator.get_display(), "0.01");
+}
+
+#[test]
 fn test_calculator_special() {
     let mut calculator = DumbCalculator::new();
     assert_eq!(calculator.get_display(), "0");
@@ -83,4 +90,38 @@ fn test_calculator_special() {
     assert_eq!(calculator.get_display(), "5");
     calculator.push_chars("+-*/5=").unwrap();
     assert_eq!(calculator.get_display(), "1");
+}
+
+#[test]
+fn test_calculator_undo() {
+    let mut calculator = DumbCalculator::new();
+    if true {
+        calculator.push_chars("1+2").unwrap();
+        calculator.undo();
+        calculator.push_chars("3=").unwrap();
+        assert_eq!(calculator.get_display(), "4");
+    }
+    calculator.reset();
+    calculator.undo();
+    assert_eq!(calculator.get_display(), "0");
+    calculator.push_chars("123").unwrap();
+    assert_eq!(calculator.get_display(), "123");
+    calculator.undo();
+    assert_eq!(calculator.get_display(), "12");
+    calculator.push_chars(".3*2=").unwrap();
+    assert_eq!(calculator.get_display(), "24.6");
+    calculator.undo();
+    assert_eq!(calculator.get_display(), "2");
+    calculator.undo();
+    assert_eq!(calculator.get_display(), "12.3");
+    calculator.push_chars("-2=").unwrap();
+    assert_eq!(calculator.get_display(), "10.3");
+    calculator.undo();
+    calculator.undo();
+    calculator.undo();
+    calculator.undo();
+    assert_eq!(calculator.get_display(), "12.3");
+    calculator.push_chars("4*2=").unwrap();
+    assert_eq!(calculator.get_display(), "24.68");
+    calculator.reset();
 }

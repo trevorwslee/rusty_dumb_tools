@@ -157,6 +157,9 @@ MIT
 
 # Change History:
 
+* v0.1.3
+  - added richer text-based calculator demo 
+
 * v0.1.2
   - added `DumbLineTemplate`, `DumbLineByLineScreen` and `DumbLineByLineScreen`
 

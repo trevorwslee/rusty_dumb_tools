@@ -12,7 +12,9 @@ use crossterm::{
 use iced::color;
 
 use crate::{
-    calculator::DumbCalculator,
+    arg::DumbArgBuilder,
+    arg::DumbArgParser,
+    calculator::{self, DumbCalculator},
     dlt_comps, dltc,
     lblscreen::{DumbLineByLineScreen, LBLScreenMapValueTrait, LBLScreenSettings},
     ltemp::{
@@ -22,9 +24,29 @@ use crate::{
     },
 };
 
-pub fn handle_demo_calculator() {
-    let mut ui = CalculatorUI::new_and_init();
-    ui.run();
+pub fn create_demo_parser_calculator() -> DumbArgParser {
+    let mut parser = DumbArgParser::new();
+    parser.set_description("DumbCalculator demo.");
+    dap_arg!("mode", default = "text")
+        .set_description("calculator mode")
+        .set_with_desc_enums(vec![
+            "text:text based",
+            "rich:richer text-based",
+            "gui: graphical",
+        ])
+        .add_to(&mut parser)
+        .unwrap();
+    parser
+}
+
+pub fn handle_demo_calculator(parser: DumbArgParser) {
+    let mode = parser.get::<String>("mode").unwrap();
+    let richer = mode == "rich";
+    if richer {
+        CalculatorUI::<true>::new_and_init().run()
+    } else {
+        CalculatorUI::<false>::new_and_init().run()
+    };
 }
 
 const RESULT_WIDTH: u16 = 11;
@@ -32,165 +54,186 @@ const DISPLAY_WIDTH: u16 = RESULT_WIDTH + 2;
 const FIXED_WIDTH: u16 = DISPLAY_WIDTH;
 const ENTER_DELAY_MILLIS: u64 = 100;
 
-struct CalculatorUI {
+const RICH_WIDTH_ADJUST: u16 = 6;
+
+const RICHER_TEXT_RESULT_WIDTH: u16 = RESULT_WIDTH + RICH_WIDTH_ADJUST;
+const RICHER_TEXT_DISPLAY_WIDTH: u16 = DISPLAY_WIDTH + RICH_WIDTH_ADJUST;
+const RICHER_TEXT_FIXED_WIDTH: u16 = FIXED_WIDTH + RICH_WIDTH_ADJUST;
+
+const INDICATORS_WIDTH: u16 = 4;
+
+struct CalculatorUI<const RICHER: bool> {
     calculator: DumbCalculator,
     screen: DumbLineByLineScreen,
     key_map: Vec<Vec<char>>,
     selected_key_rc: (usize, usize),
-    refresh_state: RefreshState,
+    refresh_state: RefreshState<RICHER>,
 }
-impl CalculatorUI {
+impl<const RICHER: bool> CalculatorUI<RICHER> {
     fn new_and_init() -> Self {
+        let result_fixed_width = if RICHER {
+            RICHER_TEXT_RESULT_WIDTH
+        } else {
+            RESULT_WIDTH
+        };
+        let display_fixed_width = if RICHER {
+            RICHER_TEXT_DISPLAY_WIDTH
+        } else {
+            DISPLAY_WIDTH
+        };
+        let template_fixed_width = if RICHER {
+            RICHER_TEXT_FIXED_WIDTH
+        } else {
+            FIXED_WIDTH
+        };
         let mut line_temps = Vec::<DumbLineTemplate>::new();
+        let mut comps = dlt_comps![dltc!("display", fixed_width = display_fixed_width)];
+        let temp = DumbLineTemplate::new_fixed_width(template_fixed_width, &comps);
+        line_temps.push(temp);
 
-        let mut comps = dlt_comps![dltc!("display", fixed_width = DISPLAY_WIDTH)];
-        let temp = DumbLineTemplate::new_fixed_width(FIXED_WIDTH as u16, &comps);
+        if RICHER {
+            let mut comps = dlt_comps![
+                dltc!("indicators", fixed_width = INDICATORS_WIDTH),
+                (
+                    "〰️".repeat(7 /*9*/),
+                    (template_fixed_width - INDICATORS_WIDTH) as usize
+                ),
+                " "
+            ];
+            let temp = DumbLineTemplate::new_fixed_width(template_fixed_width + 1, &comps);
+            line_temps.push(temp);
+        }
+
+        let mut comps = dlt_comps![
+            " ",
+            CalculatorUI::<RICHER>::_create_key('7', false),
+            " ",
+            CalculatorUI::<RICHER>::_create_key('8', false),
+            " ",
+            CalculatorUI::<RICHER>::_create_key('9', false),
+            if RICHER { (" 🚪 ", 4) } else { (" | ", 3) },
+            CalculatorUI::<RICHER>::_create_key('C', true),
+            " ",
+        ];
+        let keys_8 = CalculatorUI::<RICHER>::_scan_for_keys(&comps);
+        let temp = DumbLineTemplate::new_fixed_width(template_fixed_width, &comps);
         line_temps.push(temp);
 
         let mut comps = dlt_comps![
             " ",
-            CalculatorUI::_create_key('7', 1),
+            CalculatorUI::<RICHER>::_create_key('4', false),
             " ",
-            CalculatorUI::_create_key('8', 1),
+            CalculatorUI::<RICHER>::_create_key('5', false),
             " ",
-            CalculatorUI::_create_key('9', 1),
-            " | ",
-            CalculatorUI::_create_key('C', 3),
-            " "
+            CalculatorUI::<RICHER>::_create_key('6', false),
+            if RICHER { (" 🚪 ", 4) } else { (" | ", 3) },
+            CalculatorUI::<RICHER>::_create_key('*', false),
+            " ",
+            CalculatorUI::<RICHER>::_create_key('/', false),
+            " ",
         ];
-        let keys_8 = CalculatorUI::_scan_for_keys(&comps);
-        let temp = DumbLineTemplate::new_fixed_width(FIXED_WIDTH as u16, &comps);
+        let keys_5 = CalculatorUI::<RICHER>::_scan_for_keys(&comps);
+        let temp = DumbLineTemplate::new_fixed_width(template_fixed_width, &comps);
         line_temps.push(temp);
 
         let mut comps = dlt_comps![
             " ",
-            CalculatorUI::_create_key('4', 1),
+            CalculatorUI::<RICHER>::_create_key('1', false),
             " ",
-            CalculatorUI::_create_key('5', 1),
+            CalculatorUI::<RICHER>::_create_key('2', false),
             " ",
-            CalculatorUI::_create_key('6', 1),
-            " | ",
-            CalculatorUI::_create_key('*', 1),
+            CalculatorUI::<RICHER>::_create_key('3', false),
+            if RICHER { (" 🚪 ", 4) } else { (" | ", 3) },
+            CalculatorUI::<RICHER>::_create_key('+', false),
             " ",
-            CalculatorUI::_create_key('/', 1),
-            " "
+            CalculatorUI::<RICHER>::_create_key('-', false),
+            " ",
         ];
-        let keys_5 = CalculatorUI::_scan_for_keys(&comps);
-        let temp = DumbLineTemplate::new_fixed_width(FIXED_WIDTH as u16, &comps);
+        let keys_2 = CalculatorUI::<RICHER>::_scan_for_keys(&comps);
+        let temp = DumbLineTemplate::new_fixed_width(template_fixed_width, &comps);
         line_temps.push(temp);
 
         let mut comps = dlt_comps![
             " ",
-            CalculatorUI::_create_key('1', 1),
+            CalculatorUI::<RICHER>::_create_key('%', false),
             " ",
-            CalculatorUI::_create_key('2', 1),
+            CalculatorUI::<RICHER>::_create_key('0', false),
             " ",
-            CalculatorUI::_create_key('3', 1),
-            " | ",
-            CalculatorUI::_create_key('+', 1),
+            CalculatorUI::<RICHER>::_create_key('.', false),
+            if RICHER { ("  🚪 ", 4) } else { (" | ", 3) },
+            CalculatorUI::<RICHER>::_create_key('=', true),
             " ",
-            CalculatorUI::_create_key('-', 1),
-            " "
         ];
-        let keys_2 = CalculatorUI::_scan_for_keys(&comps);
-        let temp = DumbLineTemplate::new_fixed_width(FIXED_WIDTH as u16, &comps);
+        let keys_0 = CalculatorUI::<RICHER>::_scan_for_keys(&comps);
+        let temp = DumbLineTemplate::new_fixed_width(template_fixed_width, &comps);
         line_temps.push(temp);
 
-        let mut comps = dlt_comps![
-            " ",
-            CalculatorUI::_create_key('%', 1),
-            " ",
-            CalculatorUI::_create_key('0', 1),
-            " ",
-            CalculatorUI::_create_key('.', 1),
-            " | ",
-            CalculatorUI::_create_key('=', 3),
-            " "
-        ];
-        let keys_0 = CalculatorUI::_scan_for_keys(&comps);
-        let temp = DumbLineTemplate::new_fixed_width(DISPLAY_WIDTH as u16, &comps);
-        line_temps.push(temp);
-
-        let settings = LBLScreenSettings {
-            line_prefix: Some("\t|".to_string()),
-            line_suffix: Some("|".to_string()),
-            top_line: Some(format!("\n\t{}", "=".repeat(FIXED_WIDTH as usize + 2))),
-            bottom_line: Some(format!("\t{}\n", "=".repeat(FIXED_WIDTH as usize + 2))),
-            ..LBLScreenSettings::default()
+        let settings = if RICHER {
+            LBLScreenSettings {
+                line_prefix: Some("\t🧱 ".to_string()),
+                line_suffix: Some("🧱 ".to_string()),
+                top_line: Some(format!("\n\t{}", "🧱".repeat(FIXED_WIDTH as usize - 1))),
+                bottom_line: Some(format!("\t{}\n", "🧱".repeat(FIXED_WIDTH as usize - 1))),
+                ..LBLScreenSettings::default()
+            }
+        } else {
+            LBLScreenSettings {
+                line_prefix: Some("\t|".to_string()),
+                line_suffix: Some("|".to_string()),
+                top_line: Some(format!("\n\t{}", "=".repeat(FIXED_WIDTH as usize + 2))),
+                bottom_line: Some(format!("\t{}\n", "=".repeat(FIXED_WIDTH as usize + 2))),
+                ..LBLScreenSettings::default()
+            }
         };
         let mut screen = DumbLineByLineScreen::new(line_temps, settings);
         println!();
         println!("* arrow keys to move selected key");
         println!("* space key to commit selected key");
         println!("* can press corresponding keys directly");
-        println!("* note that 'c' is the same as 'C' and the enter key is the same as '='");
-
-        // 1️⃣2️⃣3️⃣4️⃣5️⃣6️⃣7️⃣8️⃣9️⃣0️⃣
-        // ±
-        // ➀ (U+2780)
-
-        // let v = 0x1F600;
-        // let character = std::char::from_u32(v).unwrap();
-        // let string = character.to_string();
-
-        // // Split the string into grapheme clusters
-        // let graphemes: Vec<&str> = string.graphemes(true).collect();
-
-        // // Print each grapheme cluster
-        // for grapheme in graphemes {
-        //     println!("{}", grapheme);
-        // }
-
-        // use unicode_segmentation::UnicodeSegmentation;
-
-        // let string = "😄👋🏽";
-        // let graphemes: Vec<&str> = string.graphemes(true).collect();
-        // let num_graphemes = graphemes.len();
-
-        // println!("Number of graphemes: {}", num_graphemes); // Output: Number of graphemes: 3
-
-        // [dependencies]
-        // unicode-segmentation = "1.8.0"
-        if false {
-            println!("{} :({}):{} ", "1️⃣", "1️⃣".len(), "123".red());
-            for i in 0..=9 {
-                let v = i + 0x277f;
-                let char1 = std::char::from_u32(v).unwrap();
-                print!("{} ", char1);
-            }
-            println!();
+        if RICHER {
+            println!(
+                "* note that 'c', '*', '/' and 'enter' are for 'C', 'x', '÷' and '=' respectively"
+            );
+        } else {
+            println!("* note that 'c' is the same as 'C' and the enter key is the same as '='");
         }
-
-        if false {
-            // ➕➖✖️➗🟰🇦🇨▪%±
-            println!("±\u{2780}ABC1️⃣2️⃣3️⃣4️⃣5️⃣6️⃣7️⃣8️⃣9️⃣0️⃣ABC±\u{2780}");
-            let v = 0x1F600;
-            let character = std::char::from_u32(v).unwrap();
-            let string = character.to_string();
-            println!("{}", string); // Output: 😄
-            let a = '😄' as u32;
-            let a_char = std::char::from_u32(a).unwrap();
-            println!("A:{}", a_char);
-        }
+        println!("* backspace to undo last calculator key");
 
         screen.init();
 
         let key_map = vec![keys_8, keys_5, keys_2, keys_0];
         let key = '0';
-        let key_pressed_coor = CalculatorUI::_get_key_coor(key, &key_map).unwrap();
+        let key_pressed_coor = CalculatorUI::<RICHER>::_get_key_coor(key, &key_map).unwrap();
+        let calculator = DumbCalculator::new();
         Self {
-            calculator: DumbCalculator::new(),
+            calculator: calculator,
             screen: screen,
             key_map: key_map,
             selected_key_rc: key_pressed_coor,
             refresh_state: RefreshState {
                 display: String::from("0"),
+                indicators: None,
                 selected_key: Some(key),
                 highlight_selected: false,
+                //result_fixed_width: result_fixed_width,
+                //display_fixed_width: display_fixed_width,
             },
         }
     }
-    fn _create_key(key: char, fixed_width: u16) -> MappedLineTempCompBuilder {
+    fn _create_key(key: char, span_two: bool) -> MappedLineTempCompBuilder {
+        let fixed_width = if RICHER {
+            if span_two {
+                5
+            } else {
+                2
+            }
+        } else {
+            if span_two {
+                3
+            } else {
+                1
+            }
+        };
         dltc!(&key.to_string(), fixed_width = fixed_width, align = 'C')
     }
     fn _scan_for_keys(components: &Vec<LineTempComp>) -> Vec<char> {
@@ -250,12 +293,9 @@ impl CalculatorUI {
                     KeyCode::Enter => {
                         self._select_and_enter_key('=');
                     }
-                    // KeyCode::Char(c)   => println!("You pressed {}", c),
-                    // KeyCode::Enter     => println!("You pressed Enter"),
-                    // KeyCode::Up        => println!("You pressed Up"),
-                    // KeyCode::Down      => println!("You pressed Down"),
-                    // KeyCode::Left      => println!("You pressed Left"),
-                    // KeyCode::Right     => println!("You pressed Right"),
+                    KeyCode::Backspace => {
+                        self._undo_commit();
+                    }
                     _ => {}
                 }
             }
@@ -296,12 +336,72 @@ impl CalculatorUI {
         } else {
             self.calculator.push(key.to_string().as_str()).unwrap();
         }
-        self.refresh_state.display = self.calculator.get_display_sized(RESULT_WIDTH as usize);
-        self._refresh_for_keys(&vec!["display"]);
+        self._update_display();
+    }
+    fn _undo_commit(&mut self) {
+        self.calculator.undo();
+        self._update_display();
+    }
+    fn _update_display(&mut self) {
+        let result_fixed_width = if RICHER {
+            RICHER_TEXT_RESULT_WIDTH
+        } else {
+            RESULT_WIDTH
+        };
+        self.refresh_state.display = self
+            .calculator
+            .get_display_sized(result_fixed_width as usize);
+        //self._refresh_for_keys(&vec!["display"]);
+        if RICHER {
+            let operator = self.calculator.get_last_operator();
+            let mut ind1 = match operator {
+                Some(operator) => match operator.as_str() {
+                    "+" => "+",
+                    "-" => "-",
+                    "*" => "x",
+                    "/" => "÷",
+                    _ => "",
+                },
+                None => "",
+            };
+            let mut ind2 = match self.calculator.count_opened_brackets() {  // actually, no way to input bracket yet
+                1 => "⑴", // ⑴ ⑵ ⑶ ⑷ ⑸ ⑹ ⑺ ⑻ ⑼ ⑽ ⑾ ⑿ ⒀ ⒁ ⒂ ⒃ ⒄ ⒅ ⒆ ⒇
+                2 => "⑵",
+                3 => "⑶",
+                4 => "⑷",
+                5 => "⑸",
+                6 => "⑹",
+                7 => "⑺",
+                8 => "⑻",
+                9 => "⑼",
+                10 => "⑽",
+                _ => "",
+            };
+            let indicators = if ind1 != "" || ind2 != "" {
+                if ind1 == "" {
+                    ind1 = " "
+                }
+                if ind2 == "" {
+                    ind2 = "〰️"
+                }
+                Some(format!("{} {} ", ind1, ind2))
+            } else {
+                None
+            };
+            if let Some(indicators) = indicators {
+                self.refresh_state.indicators = Some(indicators.to_string());
+            } else {
+                self.refresh_state.indicators = None;
+            }
+            self._refresh_for_keys(&vec!["display", "indicators"]);
+        } else {
+            self._refresh_for_keys(&vec!["display"]);
+        }
     }
     fn _select_and_enter_key(&mut self, key: char) {
-        let key = key.to_ascii_uppercase();
-        let key_coor = CalculatorUI::_get_key_coor(key, &self.key_map);
+        let key: char = key.to_ascii_uppercase();
+        let key = if key == 'X' { '*' } else { key };
+        let key_coor = CalculatorUI::<RICHER>::_get_key_coor(key, &self.key_map);
         if let Some((row_idx, col_idx)) = key_coor {
             let key = self.key_map[self.selected_key_rc.0][self.selected_key_rc.1];
             self.refresh_state.selected_key = None;
@@ -313,6 +413,14 @@ impl CalculatorUI {
             self._refresh_for_keys(&vec![key.to_string().as_ref()]);
 
             self._commit_key_selected();
+        } else {
+            // no key on calculator
+            if RICHER {
+                if key == '(' || key == ')' {
+                    self.calculator.push(key.to_string().as_str()).unwrap();
+                    self._update_display();
+                }
+            }
         }
     }
     fn _move_key_selected(&mut self, move_dir: MoveDir) {
@@ -377,26 +485,99 @@ enum MoveDir {
     Right,
 }
 
-struct RefreshState {
+struct RefreshState<const RICHER: bool> {
+    //result_fixed_width: u16,
+    //display_fixed_width: u16,
     display: String,
+    indicators: Option<String>,
     selected_key: Option<char>,
     highlight_selected: bool,
 }
 
-impl LBLScreenMapValueTrait for RefreshState {
+impl<const RICHER: bool> LBLScreenMapValueTrait for RefreshState<RICHER> {
     type VALUE = String;
     fn map_value(&self, key: &str) -> Option<(String, u16)> {
+        let result_fixed_width = if RICHER {
+            RICHER_TEXT_RESULT_WIDTH
+        } else {
+            RESULT_WIDTH
+        };
+        let display_fixed_width = if RICHER {
+            RICHER_TEXT_DISPLAY_WIDTH
+        } else {
+            DISPLAY_WIDTH
+        };
         if key.len() == 1 {
             let current_key = self.selected_key;
             let key = key.chars().next().unwrap();
-            let key_value = key.to_string();
+            let mut key_value = key.to_string();
+            let mut key_width = 1;
+            if RICHER {
+                if key_value == "*" {
+                    key_value = /*'✖'*//*'✱'*/'x'.to_string();
+                    key_width = 1;
+                } else if key_value == "/" {
+                    key_value = "÷" /*'⟋'*/
+                        .to_string();
+                    key_width = 1;
+                } else if key_value == "+" {
+                    key_value = /*"✚"*/'+'.to_string();
+                    key_width = 1;
+                } else if key_value == "-" {
+                    key_value = /*"⚊"*/'-'.to_string();
+                    key_width = 1;
+                } else if key_value == "=" {
+                    key_value = "⚌".to_string();
+                    key_width = 1;
+                } else if key_value == "C" {
+                    key_value = /*"🇦🇨"*/"Ｃ".to_string();
+                    key_width = 2;
+                } else if key_value == "%" {
+                    key_value = "%".to_string();
+                    key_width = 1;
+                } else if key_value == "." {
+                    key_value = "." /*"・"*/
+                        .to_string();
+                    key_width = 2;
+                } else if key_value == "0" {
+                    key_value = "０".to_string();
+                    key_width = 2
+                } else if key_value == "1" {
+                    key_value = "１".to_string();
+                    key_width = 2
+                } else if key_value == "2" {
+                    key_value = "２".to_string();
+                    key_width = 2
+                } else if key_value == "3" {
+                    key_value = "３".to_string();
+                    key_width = 2
+                } else if key_value == "4" {
+                    key_value = "４".to_string();
+                    key_width = 2
+                } else if key_value == "5" {
+                    key_value = "５".to_string();
+                    key_width = 2
+                } else if key_value == "6" {
+                    key_value = "６".to_string();
+                    key_width = 2
+                } else if key_value == "7" {
+                    key_value = "７".to_string();
+                    key_width = 2
+                } else if key_value == "8" {
+                    key_value = "８".to_string();
+                    key_width = 2
+                } else if key_value == "9" {
+                    key_value = "９".to_string();
+                    key_width = 2
+                }
+            }
             let key_value = match current_key {
                 Some(current_key) if current_key == key => {
                     if self.highlight_selected {
                         format!("\x1B[7m{}\x1B[0m", key_value) // invert color
                     } else {
                         if true {
-                            format!("\x1B[31m{}\x1B[0m", key_value) // underline
+                            format!("\x1B[31m{}\x1B[0m", key_value) // red
                         } else {
                             format!("\x1B[4m{}\x1B[0m", key_value) // underline
                         }
@@ -404,15 +585,21 @@ impl LBLScreenMapValueTrait for RefreshState {
                 }
                 _ => key_value,
             };
-            Some((key_value, 1))
+            Some((key_value, key_width))
         } else if key == "display" {
             let mut display_result = self.display.clone();
-            if display_result.len() < RESULT_WIDTH as usize {
-                let room = RESULT_WIDTH - display_result.len() as u16;
+            if display_result.len() < result_fixed_width as usize {
+                let room = result_fixed_width - display_result.len() as u16;
                 display_result = format!("{}{}", " ".repeat(room as usize), display_result);
             }
             let display_result = format!("\x1B[7m {} \x1B[0m", display_result);
-            Some((display_result, DISPLAY_WIDTH))
+            Some((display_result, display_fixed_width))
+        } else if RICHER && key == "indicators" {
+            let indicators = match &self.indicators {
+                Some(indicators) => indicators.clone(),
+                None => "〰️〰️".to_string(),
+            };
+            Some((indicators, INDICATORS_WIDTH))
         } else {
             None
         }

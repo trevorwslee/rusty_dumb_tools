@@ -494,10 +494,10 @@ impl DumbArgParser {
             if show_help_if_needed {
                 self._show_help(&flag_args, &position_args, &err_msg);
             }
-            if err_msg.is_some() {
-                Err(err_msg.unwrap())
+            if let Some(err_msg) = err_msg {
+                return Err(err_msg);
             } else {
-                Ok(false)
+                return Ok(false);
             }
         } else {
             Ok(true)
@@ -695,8 +695,8 @@ impl DumbArgParser {
         //     ArgRange::None => {}
         // }
         self.input_arg_values[arg_idx] = Some(arg_value.clone());
-        let (multi_arg_values, rest_arg_values) = if in_rest_args.is_some() {
-            let in_rest_args = in_rest_args.unwrap();
+        let (multi_arg_values, rest_arg_values) = if let Some(in_rest_args) = in_rest_args {
+            //let in_rest_args = in_rest_args.unwrap();
             if arg.multi_mode == ArgMultiMode::Regular {
                 let mut multi_arg_values = vec![arg_value];
                 for in_rest_arg in in_rest_args.iter() {
@@ -721,23 +721,22 @@ impl DumbArgParser {
         match &arg.key {
             ArgKey::Name(name) => {
                 self.input_arg_index_map.insert(name.clone(), arg_idx);
-                if multi_arg_values.is_some() {
+                if let Some(multi_arg_values) = multi_arg_values {
                     assert!(rest_arg_values.is_none());
-                    self.input_multi_arg_data =
-                        Some((vec![name.clone()], multi_arg_values.unwrap()));
-                } else if rest_arg_values.is_some() {
-                    self.input_rest_arg_data = Some((vec![name.clone()], rest_arg_values.unwrap()));
+                    self.input_multi_arg_data = Some((vec![name.clone()], multi_arg_values));
+                } else if let Some(rest_arg_values) = rest_arg_values {
+                    self.input_rest_arg_data = Some((vec![name.clone()], rest_arg_values));
                 }
             }
             ArgKey::Flags(_, flags) => {
                 for flag in flags.iter() {
                     self.input_arg_index_map.insert(flag.clone(), arg_idx);
                 }
-                if multi_arg_values.is_some() {
+                if let Some(multi_arg_values) = multi_arg_values {
                     assert!(rest_arg_values.is_none());
-                    self.input_multi_arg_data = Some((flags.clone(), multi_arg_values.unwrap()));
-                } else if rest_arg_values.is_some() {
-                    self.input_rest_arg_data = Some((flags.clone(), rest_arg_values.unwrap()));
+                    self.input_multi_arg_data = Some((flags.clone(), multi_arg_values));
+                } else if let Some(rest_arg_values) = rest_arg_values {
+                    self.input_rest_arg_data = Some((flags.clone(), rest_arg_values));
                 }
             }
         }
@@ -785,12 +784,9 @@ impl DumbArgParser {
     }
     fn _show_help(&self, flag_args: &Vec<Arg>, position_args: &Vec<Arg>, err_msg: &Option<String>) {
         println!();
-        if err_msg.is_some() {
+        if let Some(err_msg) = err_msg {
             println!("| !!!");
-            println!(
-                "| !!! INVALID INPUT ARGUMENT: {}",
-                err_msg.as_ref().unwrap()
-            );
+            println!("| !!! INVALID INPUT ARGUMENT: {}", err_msg);
             println!("| !!!");
         }
         let usage = self._compose_usage(flag_args, position_args);
@@ -960,8 +956,8 @@ impl DumbArgParser {
         usage
     }
     fn _get_program_name(&self) -> String {
-        if self.program_name.is_some() {
-            self.program_name.clone().unwrap()
+        if let Some(program_name) = &self.program_name {
+            program_name.clone()
         } else {
             "<program>".to_string()
         }
@@ -1250,8 +1246,8 @@ impl DumbArgBuilder {
                 }
             }
         }
-        let name = if d_name.is_some() {
-            d_name.unwrap()
+        let name = if let Some(d_name) = d_name {
+            d_name
         } else {
             s_name.unwrap()
         };

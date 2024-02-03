@@ -25,8 +25,9 @@ use crate::demo::{
 };
 
 use self::{
-    demo_calculator::handle_demo_calculator, demo_calculator_gui::handle_demo_calculator_gui,
-    demo_lblscreen::handle_demo_lblscreen, demo_ltemp::handle_demo_ltemp,
+    demo_calculator::{create_demo_parser_calculator, handle_demo_calculator},
+    demo_lblscreen::handle_demo_lblscreen,
+    demo_ltemp::handle_demo_ltemp,
 };
 
 ///
@@ -42,8 +43,8 @@ use self::{
 /// * `arg`: see [`crate::demo::demo_arg::handle_demo_arg`]
 pub fn run_demo(in_args: Option<Vec<&str>>) {
     let mut parser = create_demo_parser();
-    if in_args.is_some() {
-        let in_args = in_args.unwrap();
+    if let Some(in_args) = in_args {
+        //let in_args = in_args.unwrap();
         parser.process_args(in_args);
     } else {
         parser.parse_args();
@@ -90,11 +91,13 @@ pub fn handle_sub_demo(parser: DumbArgParser) {
             handle_demo_calc_repl();
         }
         "calculator" => {
-            handle_demo_calculator();
+            let mut demo_parser = create_demo_parser_calculator();
+            parser.process_rest_args("demo", &mut demo_parser);
+            handle_demo_calculator(demo_parser);
         }
-        "calculator-gui" => {
-            handle_demo_calculator_gui();
-        }
+        // "calculator-gui" => {
+        //     handle_demo_calculator_gui();
+        // }
         "ltemp" => {
             let mut sub_demo_parser = demo_ltemp::create_demo_ltemp_parser();
             parser.process_rest_args("demo", &mut sub_demo_parser);
