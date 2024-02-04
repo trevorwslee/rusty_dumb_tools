@@ -223,6 +223,7 @@ impl DumbCalcProcessor {
     }
     /// evaluate the pushed "calculation units";
     /// the result will also be assigned to the internal `result`, which can be used as the "initial" value of the next sequence of "calculation units";
+    /// note that you can call [`DumbCalcProcessor::get_result`] to get the result
     pub fn evaluate(&mut self) {
         self.calc_impl.eval();
     }
@@ -235,7 +236,7 @@ impl DumbCalcProcessor {
             CalcResult::Error(err_msg) => Err(err_msg),
         }
     }
-    /// return the calculation result so far; call [`DumbCalcProcessor::eval`] to evaluate the pushed "calculation units", and assign the result to it (as final result)
+    /// return the calculation result so far; call [`DumbCalcProcessor::evaluate`] to evaluate the pushed "calculation units", and assign the result to it (as final result)
     ///
     /// note that the result is a [`CalcResult`] enum, that can be one of three kinds -- final, intermediate, or error
     pub fn get_result(&self) -> CalcResult {
@@ -260,25 +261,25 @@ impl DumbCalcProcessor {
             }
         }
     }
+    /// return the last input "calculation unit", only if it is an operator
     pub fn get_last_operator(&self) -> Option<String> {
         return self.calc_impl.get_last_operator();
     }
+    /// count and return the number of opened brackets
     pub fn count_opened_brackets(&self) -> u16 {
         return self.calc_impl.count_opened_brackets();
     }
-    // /// like [`DumbCalcProcessor::get_result`]
-    // pub fn get_unwrapped_result(&self) -> f64 {
-    //     self.get_result().unwrap()
-    // }
     /// reset for new input
     pub fn reset(&mut self) {
         self.calc_impl.reset();
     }
+    /// make a backup of the current state; can call [`DumbCalcProcessor::restore`] to restore the state
     pub fn backup(&self) -> CalcProcessorBackup {
         CalcProcessorBackup {
             calc_impl: self.calc_impl.clone(),
         }
     }
+    /// restore the state from a backup, made with [`DumbCalcProcessor::backup`]
     pub fn restore(&mut self, backup: CalcProcessorBackup) {
         self.calc_impl = backup.calc_impl;
     }

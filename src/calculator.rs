@@ -12,6 +12,7 @@ pub struct DumbCalculator {
     entering: EnteringMode,
     calc: calc::DumbCalcProcessor,
     undo_stack: Option<Vec<UndoStep>>,
+    history_stack: Option<Vec<String>>,
 }
 
 /// a simple calculator that accepts input keys acting like a real calculator;
@@ -36,22 +37,26 @@ pub struct DumbCalculator {
 ///
 /// for a fuller sample code, please refer to the "calculator" sub-demo of [`crate::demo::run_demo`]
 impl DumbCalculator {
-    /// create a new [`DumbCalculator`] instance
+    /// create a new [`DumbCalculator`] instance, with undo feature enabled
     pub fn new() -> Self {
-        return DumbCalculator::_new(true);
+        return DumbCalculator::new_ex(false, false);
     }
-    pub fn new_no_undo() -> Self {
-        return DumbCalculator::_new(false);
-    }
-    fn _new(enable_undo: bool) -> Self {
+    /// like [`DumbCalculator::new`] but without undo feature
+    pub fn new_ex(enable_undo: bool, enable_history: bool) -> Self {
         let undo_stack = if enable_undo { Some(Vec::new()) } else { None };
+        let history_stack = if enable_history {
+            Some(Vec::new())
+        } else {
+            None
+        };
         Self {
             entering: EnteringMode::Not,
             calc: calc::DumbCalcProcessor::new(),
             undo_stack: undo_stack,
+            history_stack: history_stack,
         }
     }
-    /// push a key input:
+    /// push a "key input":
     /// * a digit, including a "."
     /// * operators accepted by [`crate::calc::DumbCalcProcessor::push`] like:
     ///   - binary operators; e.g. "+", "-", "*", "/"
@@ -60,7 +65,7 @@ impl DumbCalculator {
     ///   - "="
     pub fn push(&mut self, key: &str) -> Result<(), String> {
         if key == "." {
-            self._record_undo(false);
+            self._record_undo(key, false);
             self.entering = match &self.entering {
                 EnteringMode::Not => EnteringMode::Decimal(0, String::from("")),
                 EnteringMode::Integer(i) => EnteringMode::Decimal(*i, String::from("")),
@@ -68,7 +73,7 @@ impl DumbCalculator {
                 EnteringMode::Error => EnteringMode::Error,
             }
         } else if key >= "0" && key <= "9" {
-            self._record_undo(false);
+            self._record_undo(key, false);
             let digit = key.parse::<u32>().unwrap();
             self.entering = match &self.entering {
                 EnteringMode::Not => EnteringMode::Integer(digit),
@@ -95,7 +100,7 @@ impl DumbCalculator {
                 EnteringMode::Error => EnteringMode::Error,
             }
         } else {
-            self._record_undo(true);
+            self._record_undo(key, true);
             self.entering = match &self.entering {
                 EnteringMode::Not => EnteringMode::Not,
                 EnteringMode::Integer(i) => {
@@ -117,7 +122,20 @@ impl DumbCalculator {
         }
         Ok(())
     }
+    /// like [`DumbCalculator::push`] but each characters of the input will be pushed individually one by one
+    pub fn push_chars(&mut self, keys: &str) -> Result<(), String> {
+        for key in keys.chars() {
+            if key != ' ' {
+                self.push(key.to_string().as_str())?;
+            }
+        }
+        Ok(())
+    }
+    /// undo the last "key input" done by [`DumbCalculator::push`]
     pub fn undo(&mut self) {
+        if let Some(history_stack) = &mut self.history_stack {
+            history_stack.pop();
+        }
         if let Some(undo_stack) = &mut self.undo_stack {
             let undo = undo_stack.pop();
             if let Some(undo) = undo {
@@ -143,7 +161,10 @@ impl DumbCalculator {
             }
         }
     }
-    fn _record_undo(&mut self, for_calc: bool) {
+    fn _record_undo(&mut self, key: &str, for_calc: bool) {
+        if let Some(history_stack) = &mut self.history_stack {
+            history_stack.push(key.to_string());
+        }
         if let Some(undo_stack) = &mut self.undo_stack {
             let undo = if for_calc {
                 UndoStep::CalcBackup(self.calc.backup(), self.entering.clone())
@@ -159,20 +180,14 @@ impl DumbCalculator {
             undo_stack.push(undo);
         }
     }
-    /// like [`DumbCalculator::push`] but each characters of the input will be pushed individually one by one
-    pub fn push_chars(&mut self, keys: &str) -> Result<(), String> {
-        for key in keys.chars() {
-            if key != ' ' {
-                self.push(key.to_string().as_str())?;
-            }
-        }
-        Ok(())
-    }
     pub fn reset(&mut self) {
         self.entering = EnteringMode::Not;
         self.calc.reset();
         if let Some(undo_stack) = &mut self.undo_stack {
             undo_stack.clear();
+        }
+        if let Some(history_stack) = &mut self.history_stack {
+            history_stack.clear();
         }
     }
     // pub fn get_display(&self) -> CalculatorDisplay {
@@ -193,6 +208,13 @@ impl DumbCalculator {
     //         }
     //     }
     // }
+    pub fn get_history<'a>(&'a self) -> Option<&'a Vec<String>> {
+        if let Some(history_stack) = &self.history_stack {
+            Some(history_stack)
+        } else {
+            None
+        }
+    }
     pub fn get_display(&self) -> String {
         return self._get_display(None);
     }
@@ -259,7 +281,6 @@ impl DumbCalculator {
     pub fn count_opened_brackets(&self) -> u16 {
         self.calc.count_opened_brackets()
     }
-    
 }
 
 // pub enum CalculatorDisplay {

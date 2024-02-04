@@ -4,6 +4,7 @@
 #![allow(unused)]
 
 use std::{
+    cell::{Cell, RefCell},
     collections::{HashMap, HashSet},
     fmt,
 };
@@ -27,7 +28,7 @@ pub struct LBLScreenSettings {
     pub line_suffix: Option<String>,
     pub top_line: Option<String>,
     pub bottom_line: Option<String>,
-    pub screen_height_adjustment: i32,
+    //pub screen_height_adjustment: i32,
 }
 impl Default for LBLScreenSettings {
     fn default() -> Self {
@@ -36,7 +37,7 @@ impl Default for LBLScreenSettings {
             line_suffix: None,
             top_line: None,
             bottom_line: None,
-            screen_height_adjustment: 0,
+            //screen_height_adjustment: 0,
         }
     }
 }
@@ -114,8 +115,11 @@ pub struct DumbLineByLineScreen {
     line_suffix: Option<String>,
     top_line: Option<String>,
     bottom_line: Option<String>,
-    screen_height: usize,
+    bottom_line_height: usize,
+    //line_start: usize,
+    //screen_height: usize,
     line_keys: Vec<HashSet<String>>,
+    line_cache: RefCell<Vec<Option<String>>>,
     initialized: bool,
 }
 impl DumbLineByLineScreen {
@@ -124,24 +128,26 @@ impl DumbLineByLineScreen {
     /// [`DumbLineByLineScreen`] will know where to update which "screen" lines when [`DumbLineByLineScreen::refresh`] / [`DumbLineByLineScreen::refresh_for_keys`] is called
     pub fn new(line_temps: Vec<DumbLineTemplate>, settings: LBLScreenSettings) -> Self {
         let mut line_keys = Vec::new();
+        let mut line_cache = Vec::new();
         for line_temp in &line_temps {
             let keys = line_temp.scan_for_keys();
             line_keys.push(keys);
+            line_cache.push(None::<String>);
         }
-        let mut screen_height = line_temps.len() as i32 + settings.screen_height_adjustment;
-        if let Some(top_line) = &settings.top_line {
-            screen_height += DumbLineByLineScreen::calc_line_height(top_line);
-        }
-        if let Some(bottom_line) = &settings.bottom_line {
-            screen_height += DumbLineByLineScreen::calc_line_height(bottom_line);
-        }
-        // if settings.top_line.is_some() {
-        //     screen_height +=
-        //         DumbLineByLineScreen::calc_line_height(settings.top_line.as_ref().unwrap());
-        // }
-        // if settings.bottom_line.is_some() {
-        //     screen_height +=
-        //         DumbLineByLineScreen::calc_line_height(settings.bottom_line.as_ref().unwrap());
+        let bottom_line_height = if let Some(bottom_line) = &settings.bottom_line {
+            DumbLineByLineScreen::calc_line_height(bottom_line)
+        } else {
+            0
+        };
+        // let line_start = if let Some(top_line) = &settings.top_line {
+        //         DumbLineByLineScreen::calc_line_height(top_line)
+        //     } else {0};
+        // let mut screen_height = line_start + line_temps.len()/*  + settings.screen_height_adjustment*/;
+        // // if let Some(top_line) = &settings.top_line {
+        // //     screen_height += //DumbLineByLineScreen::calc_line_height(top_line);
+        // // }
+        // if let Some(bottom_line) = &settings.bottom_line {
+        //     screen_height += DumbLineByLineScreen::calc_line_height(bottom_line);
         // }
         Self {
             line_temps,
@@ -150,7 +156,10 @@ impl DumbLineByLineScreen {
             top_line: settings.top_line,
             bottom_line: settings.bottom_line,
             line_keys: line_keys,
-            screen_height: screen_height as usize,
+            line_cache: RefCell::new(line_cache),
+            bottom_line_height: bottom_line_height,
+            //line_start: line_start,
+            //screen_height: screen_height,
             initialized: false,
         }
     }
@@ -159,8 +168,15 @@ impl DumbLineByLineScreen {
         if self.initialized {
             panic!("already initialized");
         }
-        for i in 0..self.screen_height {
+        if let Some(top_line) = &self.top_line {
+            println!("{}", top_line);
+        }
+        let line_count = self.line_temps.len();
+        for i in 0..line_count {
             println!();
+        }
+        if let Some(bottom_line) = &self.bottom_line {
+            println!("{}", bottom_line);
         }
         self.initialized = true;
     }
@@ -208,7 +224,7 @@ impl DumbLineByLineScreen {
         }
         self._update(Some(keys), map_value_fn)
     }
-    fn calc_line_height(line: &str) -> i32 {
+    fn calc_line_height(line: &str) -> usize {
         let mut height = 1;
         for c in line.chars() {
             if c == '\n' {
@@ -223,20 +239,17 @@ impl DumbLineByLineScreen {
         map_value_fn: F,
     ) {
         if self.initialized {
-            //let seq = format!("\x1B[{}A", self.screen_height);
-            print!("\x1B[{}A", self.screen_height)
+            //print!("\x1B[{}A", self.screen_height);
+            print!("\x1B[{}A", self.line_temps.len() + self.bottom_line_height);
         }
         // for each line, keep set of keys, only update the line if key values changed
         let map_value_fn = |key: &str| -> Option<(T, u16)> {
             let mapped_value = map_value_fn(key);
             mapped_value
         };
-        // if self.top_line.is_some() {
-        //     println!("{}", self.top_line.as_ref().unwrap());
+        // if let Some(top_line) = &self.top_line {
+        //     println!("{}", top_line);
         // }
-        if let Some(top_line) = &self.top_line {
-            println!("{}", top_line);
-        }
         for (index, line_temp) in self.line_temps.iter().enumerate() {
             let refresh_line = if let Some(keys) = keys {
                 let line_keys = &self.line_keys[index];
@@ -251,48 +264,37 @@ impl DumbLineByLineScreen {
             } else {
                 true
             };
-            // let refresh_line = if keys.is_some() {
-            //     let keys = keys.unwrap();
-            //     let line_keys = &self.line_keys[index];
-            //     let mut refresh_line = false;
-            //     for key in keys {
-            //         if line_keys.contains(*key) {
-            //             refresh_line = true;
-            //             break;
-            //         }
-            //     }
-            //     refresh_line
-            // } else {
-            //     true
-            // };
             if refresh_line {
                 let line = line_temp
                     .format_ex(map_value_fn)
                     .expect(format!("line[{}]", index).as_str());
-                print!("\x1B[0K");
-                if let Some(line_prefix) = &self.line_prefix {
-                    print!("{}", line_prefix);
+                let cache = &mut self.line_cache.borrow_mut();
+                let cached_line = cache.get_mut(index).unwrap();
+                let line = if cached_line.is_none() || cached_line.as_ref().unwrap() != &line {
+                    cached_line.replace(line.clone());
+                    Some(line)
+                } else {
+                    None
+                };
+                if let Some(line) = line {
+                    print!("\x1B[0K");
+                    if let Some(line_prefix) = &self.line_prefix {
+                        print!("{}", line_prefix);
+                    }
+                    print!("{}", line); // | is the line prefix and suffix
+                    if let Some(line_suffix) = &self.line_suffix {
+                        print!("{}", line_suffix);
+                    }
                 }
-                // if self.line_prefix.is_some() {
-                //     print!("{}", self.line_prefix.as_ref().unwrap());
-                // }
-                print!("{}", line); // | is the line prefix and suffix
-                if let Some(line_suffix) = &self.line_suffix {
-                    print!("{}", line_suffix);
-                }
-                // if self.line_suffix.is_some() {
-                //     print!("{}", self.line_suffix.as_ref().unwrap());
-                // }
             }
             println!()
         }
-        if let Some(bottom_line) = &self.bottom_line {
-            println!("{}", bottom_line);
+        for i in 0..self.bottom_line_height {
+            println!();
         }
-        // if self.bottom_line.is_some() {
-        //     println!("{}", self.bottom_line.as_ref().unwrap());
+        // if let Some(bottom_line) = &self.bottom_line {
+        //     println!("{}", bottom_line);
         // }
-        //self.initialized = true;
     }
 }
 

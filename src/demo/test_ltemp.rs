@@ -206,4 +206,25 @@ fn test_ltemp_truncate() {
         .unwrap();
     //println!("*** {}({}) ***", formatted, formatted.len());
     assert_eq!(formatted, "...");
+
+    let lt_comps = dlt_comps![dltc!("key", fixed_width = 6).set_truncate_indicator(">>:...")];
+    let ltemp = DumbLineTemplate::new(0, 100, &lt_comps);
+    let formatted = ltemp
+        .format(HashMap::from([("key", "0123456789")]))
+        .unwrap();
+    assert_eq!(formatted, "012...");
+
+    let lt_comps = dlt_comps![dltc!("key", fixed_width = 6).set_truncate_indicator("...:<<")];
+    let ltemp = DumbLineTemplate::new(0, 100, &lt_comps);
+    let formatted = ltemp
+        .format(HashMap::from([("key", "0123456789")]))
+        .unwrap();
+    assert_eq!(formatted, "...789");
+
+    let lt_comps = dlt_comps![dltc!("key", fixed_width = 6).set_truncate_indicator("…")];
+    let ltemp = DumbLineTemplate::new(0, 100, &lt_comps);
+    let formatted = ltemp
+        .format(HashMap::from([("key", "0123456789")]))
+        .unwrap();
+    assert_eq!(formatted, "01234…");
 }

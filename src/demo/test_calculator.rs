@@ -94,7 +94,7 @@ fn test_calculator_special() {
 
 #[test]
 fn test_calculator_undo() {
-    let mut calculator = DumbCalculator::new();
+    let mut calculator = DumbCalculator::new_ex(true, false);
     if true {
         calculator.push_chars("1+2").unwrap();
         calculator.undo();

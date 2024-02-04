@@ -115,11 +115,6 @@ fn debug_ltemp() {
     ];
     println!("lt_comps: {:?}", lt_comps);
 
-    // let lt_comps = dlt_comps![
-    //   dltc!("key1")
-    // ];
-    // println!("lt_comps: {:?}", lt_comps);
-
     let ltemp = DumbLineTemplate::new(0, 100, &lt_comps);
     println!("ltemp: {:?}", ltemp);
 
@@ -127,6 +122,22 @@ fn debug_ltemp() {
     map.insert("key1", String::from("value1"));
     map.insert("key2", String::from("value2"));
     let formatted = ltemp.format(map).unwrap();
+    println!("formatted: [{}]", formatted);
+
+    let formatted = DumbLineTemplate::new_fixed_width(
+        50,
+        &dlt_comps![
+            "abc",
+            dltc!("key1"),
+            "def".to_string(),
+            dltc!("key2", min_width = 1, max_width = 10, optional = true)
+        ],
+    )
+    .format(HashMap::from([
+        ("key1", String::from("value1")),
+        ("key2", String::from("value2")),
+    ]))
+    .unwrap();
     println!("formatted: [{}]", formatted);
 }
 
@@ -664,6 +675,10 @@ impl MappedLineTempCompBuilder {
         self.align = align;
         self
     }
+    /// set the truncate indicator of the component;
+    /// e.g.
+    /// - `…`  or `>>:…` -- truncate to the right using `…` as indicator
+    /// - `…:<<` -- truncate to the left using `…` as indicator
     pub fn set_truncate_indicator(
         &mut self,
         truncate_indicator: &str,
@@ -817,16 +832,41 @@ impl MappedLineTempComp {
                 panic!("escaped value [{}] cannot be reduced", mapped_value);
             }
             if let Some(truncate_indicator) = &self.truncate_indicator {
-                let a_width = assigned_width as i32 - truncate_indicator.len() as i32;
+                let (truncate_left, truncate_indicator) = {
+                    let truncate_right = false;
+                    if truncate_indicator.starts_with(">>:") {
+                        (false, &truncate_indicator[3..])
+                    } else if truncate_indicator.ends_with(":<<") {
+                        (true, &truncate_indicator[..truncate_indicator.len() - 3])
+                    } else {
+                        (false, truncate_indicator.as_str())
+                    }
+                };
+                let truncate_indicator_len = if truncate_indicator == "…" {
+                    1
+                } else {
+                    truncate_indicator.len()
+                };
+                let a_width = assigned_width as i32 - truncate_indicator_len as i32;
                 if a_width < 0 {
                     panic!(
                         "width {} too small while truncate indicator is [{}]",
                         assigned_width, truncate_indicator
                     )
                 }
-                let mut formatted = mapped_value[..a_width as usize].to_string();
-                formatted.push_str(truncate_indicator);
-                return formatted;
+                let (front, end) = if (truncate_left) {
+                    let front = truncate_indicator.to_string();
+                    let end = mapped_value[mapped_value.len() - a_width as usize..].to_string();
+                    (front, end)
+                } else {
+                    let front = mapped_value[..a_width as usize].to_string();
+                    let end = truncate_indicator.to_string();
+                    (front, end)
+                };
+                return format!("{}{}", front, end);
+                // let mut formatted = mapped_value[..a_width as usize].to_string();
+                // formatted.push_str(truncate_indicator);
+                // return formatted;
             } else {
                 return mapped_value[..assigned_width as usize].to_string();
             }

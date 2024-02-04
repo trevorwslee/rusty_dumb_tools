@@ -40,6 +40,12 @@ use rusty_dumb_tools::{
 
 fn main() {
     if false {
+        println!("ABC…XYZ...({})", "…".len());
+        println!("ABCD?YZ");
+        return;
+    }
+
+    if false {
         test_chars();
         return;
     }
@@ -47,10 +53,11 @@ fn main() {
         demo::demo_calculator_gui::handle_demo_calculator_gui();
         return;
     }
-    // if false {
-    //     demo::demo_calculator::handle_demo_calculator();
-    //     return;
-    // }
+    if true {
+        demo::run_demo(Some(vec!["calculator", "rich"]));
+        //demo::demo_calculator::debug_demo_calculator(true);
+        return;
+    }
     if false {
         demo::demo_ltemp::show_table("012345678901234567890");
         return;

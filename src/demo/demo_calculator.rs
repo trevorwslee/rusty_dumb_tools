@@ -49,6 +49,14 @@ pub fn handle_demo_calculator(parser: DumbArgParser) {
     };
 }
 
+// pub fn debug_demo_calculator(richer: bool) {
+//     if richer {
+//         CalculatorUI::<true>::new_and_init().run()
+//     } else {
+//         CalculatorUI::<false>::new_and_init().run()
+//     };
+// }
+
 const RESULT_WIDTH: u16 = 11;
 const DISPLAY_WIDTH: u16 = RESULT_WIDTH + 2;
 const FIXED_WIDTH: u16 = DISPLAY_WIDTH;
@@ -86,7 +94,22 @@ impl<const RICHER: bool> CalculatorUI<RICHER> {
         } else {
             FIXED_WIDTH
         };
+
         let mut line_temps = Vec::<DumbLineTemplate>::new();
+
+        if RICHER {
+            let mut comps =
+                dlt_comps![
+                    dltc!("history", fixed_width = display_fixed_width, align = 'R')
+                        .set_truncate_indicator("…:<<")
+                ];
+            let temp = DumbLineTemplate::new_fixed_width(template_fixed_width, &comps);
+            line_temps.push(temp);
+            // let mut comps = dlt_comps![dltc!("history2", fixed_width = display_fixed_width)];
+            // let temp = DumbLineTemplate::new_fixed_width(template_fixed_width, &comps);
+            // line_temps.push(temp);
+        }
+
         let mut comps = dlt_comps![dltc!("display", fixed_width = display_fixed_width)];
         let temp = DumbLineTemplate::new_fixed_width(template_fixed_width, &comps);
         line_temps.push(temp);
@@ -187,32 +210,35 @@ impl<const RICHER: bool> CalculatorUI<RICHER> {
         };
         let mut screen = DumbLineByLineScreen::new(line_temps, settings);
         println!();
-        println!("* arrow keys to move selected key");
-        println!("* space key to commit selected key");
+        println!("* arrow keys to move selected key; space key to commit selected key");
         println!("* can press corresponding keys directly");
         if RICHER {
+            println!("* can input brackets '(' and ')'; backspace to undo last calculator key");
             println!(
                 "* note that 'c', '*', '/' and 'enter' are for 'C', 'x', '÷' and '=' respectively"
             );
         } else {
             println!("* note that 'c' is the same as 'C' and the enter key is the same as '='");
         }
-        println!("* backspace to undo last calculator key");
 
         screen.init();
 
         let key_map = vec![keys_8, keys_5, keys_2, keys_0];
         let key = '0';
         let key_pressed_coor = CalculatorUI::<RICHER>::_get_key_coor(key, &key_map).unwrap();
-        let calculator = DumbCalculator::new();
+        let calculator = if RICHER {
+            DumbCalculator::new_ex(true, true)
+        } else {
+            DumbCalculator::new()
+        };
         Self {
             calculator: calculator,
             screen: screen,
             key_map: key_map,
             selected_key_rc: key_pressed_coor,
             refresh_state: RefreshState {
-                display: String::from("0"),
-                indicators: None,
+                //display: String::from("0"),
+                //indicators: None,
                 selected_key: Some(key),
                 highlight_selected: false,
                 //result_fixed_width: result_fixed_width,
@@ -302,13 +328,15 @@ impl<const RICHER: bool> CalculatorUI<RICHER> {
         }
     }
     fn _refresh(&mut self) {
-        let map_value_fn =
-            |key: &str| -> Option<(String, u16)> { self.refresh_state.map_value(key) };
+        let map_value_fn = |key: &str| -> Option<(String, u16)> {
+            self.refresh_state.map_value(key, &self.calculator)
+        };
         self.screen.refresh_ex(map_value_fn);
     }
     fn _refresh_for_keys(&mut self, keys: &Vec<&str>) {
-        let map_value_fn =
-            |key: &str| -> Option<(String, u16)> { self.refresh_state.map_value(key) };
+        let map_value_fn = |key: &str| -> Option<(String, u16)> {
+            self.refresh_state.map_value(key, &self.calculator)
+        };
         self.screen.refresh_for_keys_ex(keys, map_value_fn);
     }
     fn _get_key_coor(key: char, key_map: &Vec<Vec<char>>) -> Option<(usize, usize)> {
@@ -343,57 +371,58 @@ impl<const RICHER: bool> CalculatorUI<RICHER> {
         self._update_display();
     }
     fn _update_display(&mut self) {
-        let result_fixed_width = if RICHER {
-            RICHER_TEXT_RESULT_WIDTH
-        } else {
-            RESULT_WIDTH
-        };
-        self.refresh_state.display = self
-            .calculator
-            .get_display_sized(result_fixed_width as usize);
+        // let result_fixed_width = if RICHER {
+        //     RICHER_TEXT_RESULT_WIDTH
+        // } else {
+        //     RESULT_WIDTH
+        // };
+        // self.refresh_state.display = self
+        //     .calculator
+        //     .get_display_sized(result_fixed_width as usize);
         //self._refresh_for_keys(&vec!["display"]);
         if RICHER {
-            let operator = self.calculator.get_last_operator();
-            let mut ind1 = match operator {
-                Some(operator) => match operator.as_str() {
-                    "+" => "+",
-                    "-" => "-",
-                    "*" => "x",
-                    "/" => "÷",
-                    _ => "",
-                },
-                None => "",
-            };
-            let mut ind2 = match self.calculator.count_opened_brackets() {  // actually, no way to input bracket yet
-                1 => "⑴", // ⑴ ⑵ ⑶ ⑷ ⑸ ⑹ ⑺ ⑻ ⑼ ⑽ ⑾ ⑿ ⒀ ⒁ ⒂ ⒃ ⒄ ⒅ ⒆ ⒇
-                2 => "⑵",
-                3 => "⑶",
-                4 => "⑷",
-                5 => "⑸",
-                6 => "⑹",
-                7 => "⑺",
-                8 => "⑻",
-                9 => "⑼",
-                10 => "⑽",
-                _ => "",
-            };
-            let indicators = if ind1 != "" || ind2 != "" {
-                if ind1 == "" {
-                    ind1 = " "
-                }
-                if ind2 == "" {
-                    ind2 = "〰️"
-                }
-                Some(format!("{} {} ", ind1, ind2))
-            } else {
-                None
-            };
-            if let Some(indicators) = indicators {
-                self.refresh_state.indicators = Some(indicators.to_string());
-            } else {
-                self.refresh_state.indicators = None;
-            }
-            self._refresh_for_keys(&vec!["display", "indicators"]);
+            // let operator = self.calculator.get_last_operator();
+            // let mut ind1 = match operator {
+            //     Some(operator) => match operator.as_str() {
+            //         "+" => "+",
+            //         "-" => "-",
+            //         "*" => "x",
+            //         "/" => "÷",
+            //         _ => "",
+            //     },
+            //     None => "",
+            // };
+            // let mut ind2 = match self.calculator.count_opened_brackets() {
+            //     // actually, no way to input bracket yet
+            //     1 => "⑴", // ⑴ ⑵ ⑶ ⑷ ⑸ ⑹ ⑺ ⑻ ⑼ ⑽ ⑾ ⑿ ⒀ ⒁ ⒂ ⒃ ⒄ ⒅ ⒆ ⒇
+            //     2 => "⑵",
+            //     3 => "⑶",
+            //     4 => "⑷",
+            //     5 => "⑸",
+            //     6 => "⑹",
+            //     7 => "⑺",
+            //     8 => "⑻",
+            //     9 => "⑼",
+            //     10 => "⑽",
+            //     _ => "",
+            // };
+            // let indicators = if ind1 != "" || ind2 != "" {
+            //     if ind1 == "" {
+            //         ind1 = " "
+            //     }
+            //     if ind2 == "" {
+            //         ind2 = " "
+            //     }
+            //     Some(format!("{} {} ", ind1, ind2))
+            // } else {
+            //     None
+            // };
+            // if let Some(indicators) = indicators {
+            //     self.refresh_state.indicators = Some(indicators.to_string());
+            // } else {
+            //     self.refresh_state.indicators = None;
+            // }
+            self._refresh_for_keys(&vec!["display", "indicators", "history"]);
         } else {
             self._refresh_for_keys(&vec!["display"]);
         }
@@ -486,17 +515,17 @@ enum MoveDir {
 }
 
 struct RefreshState<const RICHER: bool> {
-    //result_fixed_width: u16,
-    //display_fixed_width: u16,
-    display: String,
-    indicators: Option<String>,
+    // //result_fixed_width: u16,
+    // //display_fixed_width: u16,
+    // display: String,
+    // indicators: Option<String>,
     selected_key: Option<char>,
     highlight_selected: bool,
 }
 
-impl<const RICHER: bool> LBLScreenMapValueTrait for RefreshState<RICHER> {
-    type VALUE = String;
-    fn map_value(&self, key: &str) -> Option<(String, u16)> {
+impl<const RICHER: bool> RefreshState<RICHER> {
+    //type VALUE = String;
+    fn map_value(&self, key: &str, calculator: &DumbCalculator) -> Option<(String, u16)> {
         let result_fixed_width = if RICHER {
             RICHER_TEXT_RESULT_WIDTH
         } else {
@@ -587,7 +616,13 @@ impl<const RICHER: bool> LBLScreenMapValueTrait for RefreshState<RICHER> {
             };
             Some((key_value, key_width))
         } else if key == "display" {
-            let mut display_result = self.display.clone();
+            let result_fixed_width = if RICHER {
+                RICHER_TEXT_RESULT_WIDTH
+            } else {
+                RESULT_WIDTH
+            };
+            let mut display_result = calculator.get_display_sized(result_fixed_width as usize);
+            //let mut display_result = self.display.clone();
             if display_result.len() < result_fixed_width as usize {
                 let room = result_fixed_width - display_result.len() as u16;
                 display_result = format!("{}{}", " ".repeat(room as usize), display_result);
@@ -595,11 +630,64 @@ impl<const RICHER: bool> LBLScreenMapValueTrait for RefreshState<RICHER> {
             let display_result = format!("\x1B[7m {} \x1B[0m", display_result);
             Some((display_result, display_fixed_width))
         } else if RICHER && key == "indicators" {
-            let indicators = match &self.indicators {
+            let operator = calculator.get_last_operator();
+            let mut ind1 = match operator {
+                Some(operator) => match operator.as_str() {
+                    "+" => "+",
+                    "-" => "-",
+                    "*" => "x",
+                    "/" => "÷",
+                    _ => "",
+                },
+                None => "",
+            };
+            let mut ind2 = match calculator.count_opened_brackets() {
+                // actually, no way to input bracket yet
+                1 => "⑴", // ⑴ ⑵ ⑶ ⑷ ⑸ ⑹ ⑺ ⑻ ⑼ ⑽ ⑾ ⑿ ⒀ ⒁ ⒂ ⒃ ⒄ ⒅ ⒆ ⒇
+                2 => "⑵",
+                3 => "⑶",
+                4 => "⑷",
+                5 => "⑸",
+                6 => "⑹",
+                7 => "⑺",
+                8 => "⑻",
+                9 => "⑼",
+                10 => "⑽",
+                _ => "",
+            };
+            let indicators = if ind1 != "" || ind2 != "" {
+                if ind1 == "" {
+                    ind1 = " "
+                }
+                if ind2 == "" {
+                    ind2 = " "
+                }
+                Some(format!("{} {} ", ind1, ind2))
+            } else {
+                None
+            };
+            // if let Some(indicators) = indicators {
+            //     self.refresh_state.indicators = Some(indicators.to_string());
+            // } else {
+            //     self.refresh_state.indicators = None;
+            // }
+            let indicators = match indicators {
                 Some(indicators) => indicators.clone(),
                 None => "〰️〰️".to_string(),
             };
             Some((indicators, INDICATORS_WIDTH))
+        } else if RICHER && key == "history" {
+            let history = calculator.get_history();
+            if let Some(history) = history {
+                let history = history.join("");
+                //let history = "ABC".to_string();
+                let history_len = history.len();
+                Some((history, history_len as u16))
+            } else {
+                None
+            }
+            // let history = key;
+            // Some((history.to_string(), history.len() as u16))
         } else {
             None
         }

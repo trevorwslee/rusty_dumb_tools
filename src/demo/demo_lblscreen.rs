@@ -37,7 +37,7 @@ pub fn handle_demo_lblscreen() {
         let settings = LBLScreenSettings {
             top_line: Some("-".repeat(40)),
             bottom_line: Some("-".repeat(40)),
-            screen_height_adjustment: 0,
+            //screen_height_adjustment: 0,
             ..LBLScreenSettings::default()
         };
         DumbLineByLineScreen::new(vec![temp1, temp2], settings)

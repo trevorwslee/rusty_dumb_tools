@@ -44,7 +44,7 @@ the demo can be ***cargo*** run like
   which in turn will show how to use `DumbCalcProcessor` for performing calculation of the sub-command arguments
 * `cargo run -- calc-repl`
   <br>the above demonstrates how to invoke the sub-command `calc-repl`, which in turn show how `DumbCalcProcessor` like a REPL
-* `cargo run -- calculator`
+* `cargo run -- calculator` or `cargo run -- calculator rich` 
   <br>the above demonstrate to use `DumbCalculator` and `DumbLineByLineScreen` to implement a simple text-based calculator (UI)
 * `cargo run -- ltemp Trevor`
   <br>the above demonstrates how to use `DumbLineTemplate` to format lines to show data
