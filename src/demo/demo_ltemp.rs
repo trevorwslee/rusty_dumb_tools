@@ -49,19 +49,19 @@ pub fn show_table(name: &str) {
     // let mut map = HashMap::new();
     // map.insert("label", String::from("NAME"));
     // map.insert("value", name.to_string());
-    let line1 = ltemp.format(map).unwrap();
+    let line1 = ltemp.format(&map).unwrap();
 
     let map = HashMap::from([("label", "AGE"), ("value", "<undisclosed>")]);
     // let mut map = HashMap::new();
     // map.insert("label", String::from("AGE"));
     // map.insert("value", String::from("<undisclosed>"));
-    let line2 = ltemp.format(map).unwrap();
+    let line2 = ltemp.format(&map).unwrap();
 
     let map = HashMap::from([("label", ""), ("value", "and counting ...")]);
     // let mut map = HashMap::new();
     // map.insert("label", String::from(""));
     // map.insert("value", String::from("and counting ..."));
-    let line3 = ltemp.format(map).unwrap();
+    let line3 = ltemp.format(&map).unwrap();
 
     println!("{}", "=".repeat(31));
     println!("{}", line1);
@@ -84,7 +84,7 @@ pub fn show_table(name: &str) {
         // let mut map = HashMap::new();
         // map.insert("bar", "#".repeat(i));
         // map.insert("val", i.to_string());
-        let line = ltemp.format(map).unwrap();
+        let line = ltemp.format(&map).unwrap();
         print!("\x1B[1A");
         print!("\x1B[1A");
         print!("{}", line);

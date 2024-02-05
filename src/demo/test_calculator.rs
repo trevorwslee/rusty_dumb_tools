@@ -1,7 +1,7 @@
 #![deny(warnings)]
 #![allow(unused)]
 
-use crate::calculator::DumbCalculator;
+use crate::calculator::{DumbCalculator, DumbCalculatorSettings};
 
 #[test]
 fn test_calculator_push() {
@@ -94,7 +94,10 @@ fn test_calculator_special() {
 
 #[test]
 fn test_calculator_undo() {
-    let mut calculator = DumbCalculator::new_ex(true, false);
+    let mut calculator = DumbCalculator::new_ex(DumbCalculatorSettings {
+        enable_undo: true,
+        ..DumbCalculatorSettings::default()
+    });
     if true {
         calculator.push_chars("1+2").unwrap();
         calculator.undo();

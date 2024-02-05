@@ -3,7 +3,7 @@
 #![deny(warnings)]
 #![allow(unused)]
 
-use crate::calc::{self, CalcProcessorBackup, CalcResult};
+use crate::calc::{self, CalcProcessorBackup, CalcResult, DumbCalcProcessor};
 
 #[test]
 fn test_calculator() {}
@@ -37,14 +37,18 @@ pub struct DumbCalculator {
 ///
 /// for a fuller sample code, please refer to the "calculator" sub-demo of [`crate::demo::run_demo`]
 impl DumbCalculator {
-    /// create a new [`DumbCalculator`] instance, with undo feature enabled
+    /// create a new [`DumbCalculator`] instance with default settings (i.e. no uodo etc)
     pub fn new() -> Self {
-        return DumbCalculator::new_ex(false, false);
+        DumbCalculator::new_ex(DumbCalculatorSettings::default())
     }
-    /// like [`DumbCalculator::new`] but without undo feature
-    pub fn new_ex(enable_undo: bool, enable_history: bool) -> Self {
-        let undo_stack = if enable_undo { Some(Vec::new()) } else { None };
-        let history_stack = if enable_history {
+    /// like [`DumbCalculator::new`] but with settings
+    pub fn new_ex(settings: DumbCalculatorSettings) -> Self {
+        let undo_stack = if settings.enable_undo {
+            Some(Vec::new())
+        } else {
+            None
+        };
+        let history_stack = if settings.enable_history {
             Some(Vec::new())
         } else {
             None
@@ -89,7 +93,7 @@ impl DumbCalculator {
                 }
                 EnteringMode::Decimal(i, d) => {
                     let digit_str = digit.to_string();
-                    if d == "" {
+                    if d.is_empty() {
                         EnteringMode::Decimal(*i, digit_str)
                     } else {
                         let mut new_d = d.clone();
@@ -108,7 +112,7 @@ impl DumbCalculator {
                     EnteringMode::Not
                 }
                 EnteringMode::Decimal(i, d) => {
-                    let num = if d == "" {
+                    let num = if d.is_empty() {
                         format!("{}.0", i)
                     } else {
                         format!("{}.{}", i, d)
@@ -143,12 +147,6 @@ impl DumbCalculator {
                     UndoStep::EnteringBackup(entering) => {
                         self.entering = entering;
                     }
-                    // UndoStep::EnteringInteger(i) => {
-                    //     self.entering = EnteringMode::Integer(i);
-                    // }
-                    // UndoStep::EnteringDecimal(i, d) => {
-                    //     self.entering = EnteringMode::Decimal(i, d);
-                    // }
                     UndoStep::CalcBackup(backup, entering) => {
                         //println!("backup: {:?}", entering);
                         self.calc.restore(backup);
@@ -215,11 +213,45 @@ impl DumbCalculator {
             None
         }
     }
+    // pub fn get_history_formatted(&self) -> Option<String> {
+    //     if let Some(history_stack) = &self.history_stack {
+    //         if true {
+    //             let mut formatted = String::new();
+    //             for history in history_stack.iter() {
+    //                 formatted.push_str(history);
+    //             }
+    //             Some(formatted)
+    //         } else {
+    //             let history: Vec<String> = history_stack.iter().map(|s| s.to_string()).collect();
+    //             let count = history.len();
+    //             let mut formatted = Vec::new();
+    //             let mut i = 0;
+    //             loop {
+    //                 if i >= count {
+    //                     break;
+    //                 }
+    //                 let hist = history.get(i).unwrap();
+    //                 if DumbCalcProcessor::is_unary_operator(hist) {
+    //                     let f = formatted.pop().unwrap();
+    //                     let f = format!(" {}({})", hist, f);
+    //                     formatted.push(f);
+    //                 } else {
+    //                     formatted.push(hist.clone());
+    //                 }
+    //                 i = i + 1;
+    //             }
+    //             let formatted = formatted.join("");
+    //             Some(formatted)
+    //         }
+    //     } else {
+    //         None
+    //     }
+    // }
     pub fn get_display(&self) -> String {
-        return self._get_display(None);
+        self._get_display(None)
     }
     pub fn get_display_sized(&self, result_width: usize) -> String {
-        return self._get_display(Some(result_width));
+        self._get_display(Some(result_width))
     }
     fn _get_display(&self, result_width: Option<usize>) -> String {
         let (mut display_result, result) = match &self.entering {
@@ -238,14 +270,20 @@ impl DumbCalculator {
                 (display_result, result)
             }
             EnteringMode::Decimal(i, d) => {
-                if d == "" {
+                if d.is_empty() {
                     let display_result = format!("{}.0", i);
                     let result = *i as f64;
                     (display_result, result)
                 } else {
                     let display_result = format!("{}.{}", i, d);
                     let divider = 10_f64.powf(d.len() as f64);
-                    let d = d.parse::<u64>().unwrap();
+                    //let d = d.parse::<u64>().unwrap();
+                    let d = match d.parse::<u64>() {
+                        Ok(d) => d,
+                        Err(_) => {
+                            return String::from("Error");
+                        }
+                    };
                     let result = *i as f64 + d as f64 / divider;
                     (display_result, result)
                 }
@@ -280,6 +318,19 @@ impl DumbCalculator {
     }
     pub fn count_opened_brackets(&self) -> u16 {
         self.calc.count_opened_brackets()
+    }
+}
+
+pub struct DumbCalculatorSettings {
+    pub enable_undo: bool,
+    pub enable_history: bool,
+}
+impl Default for DumbCalculatorSettings {
+    fn default() -> Self {
+        Self {
+            enable_undo: false,
+            enable_history: false,
+        }
     }
 }
 

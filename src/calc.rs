@@ -143,7 +143,8 @@ fn debug_calc() {
 /// assert_eq!(5.0, calc.get_result().unwrap());
 /// ```
 ///
-/// You may want to refer to [`crate::demo::run_demo`] for a demo program that uses [`DumbCalcProcessor`].
+/// you may want to refer to [`crate::demo::run_demo`] for a demo program that uses [`DumbCalcProcessor`];
+/// additionally, you may want to consider [`crate::calculator::DumbCalculator`], which should make coding a calculator UI easier
 #[derive(Debug)]
 pub struct DumbCalcProcessor {
     calc_impl: CalcImpl,
@@ -173,32 +174,10 @@ impl DumbCalcProcessor {
             self.evaluate();
             return Ok(());
         } else {
-            let push_unit = match unit {
-                "(" => Unit::OpenBracket,
-                ")" => Unit::CloseBracket,
-                "+" => Unit::Operator(Op::ADD),
-                "-" => Unit::Operator(Op::SUBTRACT),
-                "*" => Unit::Operator(Op::MULTIPLY),
-                "/" => Unit::Operator(Op::DIVIDE),
-                "neg" => Unit::Operator(Op::NEGATE),
-                "sin" => Unit::Operator(Op::SIN),
-                "cos" => Unit::Operator(Op::COS),
-                "tan" => Unit::Operator(Op::TAN),
-                "asin" => Unit::Operator(Op::ASIN),
-                "acos" => Unit::Operator(Op::ACOS),
-                "atan" => Unit::Operator(Op::ATAN),
-                "log" => Unit::Operator(Op::LOG),
-                "ln" => Unit::Operator(Op::LN),
-                "sqrt" => Unit::Operator(Op::SQRT),
-                "square" => Unit::Operator(Op::SQUARE),
-                "inv" => Unit::Operator(Op::INVERSE),
-                "exp" => Unit::Operator(Op::EXP),
-                "mod" => Unit::Operator(Op::MOD),
-                "abs" => Unit::Operator(Op::ABS),
-                "%" => Unit::Operator(Op::PERCENT),
-                "PI" => Unit::Operand(std::f64::consts::PI),
-                "E" => Unit::Operand(std::f64::consts::E),
-                _ => match unit.parse::<f64>() {
+            let push_unit = DumbCalcProcessor::_to_unit(unit);
+            let push_unit = match push_unit {
+                Some(push_unit) => push_unit,
+                None => match unit.parse::<f64>() {
                     Ok(operand) => Unit::Operand(operand),
                     Err(_) => {
                         let err_msg = format!("'{}' is not a valid unit", unit);
@@ -282,6 +261,58 @@ impl DumbCalcProcessor {
     /// restore the state from a backup, made with [`DumbCalcProcessor::backup`]
     pub fn restore(&mut self, backup: CalcProcessorBackup) {
         self.calc_impl = backup.calc_impl;
+    }
+}
+impl DumbCalcProcessor {
+    pub fn is_operator(unit: &str) -> bool {
+        let unit = DumbCalcProcessor::_to_unit(unit);
+        match unit {
+            Some(Unit::Operator(op)) => true,
+            _ => false,
+        }
+    }
+    pub fn is_binary_operator(unit: &str) -> bool {
+        let unit = DumbCalcProcessor::_to_unit(unit);
+        match unit {
+            Some(Unit::Operator(op)) => op.is_binary(),
+            _ => false,
+        }
+    }
+    pub fn is_unary_operator(unit: &str) -> bool {
+        let unit = DumbCalcProcessor::_to_unit(unit);
+        match unit {
+            Some(Unit::Operator(op)) => op.is_unary(),
+            _ => false,
+        }
+    }
+    fn _to_unit(unit: &str) -> Option<Unit> {
+        match unit {
+            "(" => Some(Unit::OpenBracket),
+            ")" => Some(Unit::CloseBracket),
+            "+" => Some(Unit::Operator(Op::ADD)),
+            "-" => Some(Unit::Operator(Op::SUBTRACT)),
+            "*" => Some(Unit::Operator(Op::MULTIPLY)),
+            "/" => Some(Unit::Operator(Op::DIVIDE)),
+            "neg" => Some(Unit::Operator(Op::NEGATE)),
+            "sin" => Some(Unit::Operator(Op::SIN)),
+            "cos" => Some(Unit::Operator(Op::COS)),
+            "tan" => Some(Unit::Operator(Op::TAN)),
+            "asin" => Some(Unit::Operator(Op::ASIN)),
+            "acos" => Some(Unit::Operator(Op::ACOS)),
+            "atan" => Some(Unit::Operator(Op::ATAN)),
+            "log" => Some(Unit::Operator(Op::LOG)),
+            "ln" => Some(Unit::Operator(Op::LN)),
+            "sqrt" => Some(Unit::Operator(Op::SQRT)),
+            "square" => Some(Unit::Operator(Op::SQUARE)),
+            "inv" => Some(Unit::Operator(Op::INVERSE)),
+            "exp" => Some(Unit::Operator(Op::EXP)),
+            "mod" => Some(Unit::Operator(Op::MOD)),
+            "abs" => Some(Unit::Operator(Op::ABS)),
+            "%" => Some(Unit::Operator(Op::PERCENT)),
+            "PI" => Some(Unit::Operand(std::f64::consts::PI)),
+            "E" => Some(Unit::Operand(std::f64::consts::E)),
+            _ => None,
+        }
     }
 }
 

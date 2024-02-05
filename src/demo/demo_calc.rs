@@ -60,7 +60,7 @@ pub fn handle_demo_calc_repl() {
             .expect("Failed to read line");
 
         let mut unit = input.trim();
-        if unit == "" {
+        if unit.is_empty() {
             unit = "=";
         }
 

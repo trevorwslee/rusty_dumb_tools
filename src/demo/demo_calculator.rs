@@ -7,14 +7,15 @@ use std::{collections::HashMap, fmt, io, thread, time::Duration};
 
 use crossterm::{
     event::{read, Event, KeyCode},
-    style::Colorize,
+    style::Colorize, terminal::{disable_raw_mode, enable_raw_mode},
 };
-use iced::color;
+use iced::{color, futures::future::OrElse};
 
 use crate::{
     arg::DumbArgBuilder,
     arg::DumbArgParser,
-    calculator::{self, DumbCalculator},
+    calc::DumbCalcProcessor,
+    calculator::{self, DumbCalculator, DumbCalculatorSettings},
     dlt_comps, dltc,
     lblscreen::{DumbLineByLineScreen, LBLScreenMapValueTrait, LBLScreenSettings},
     ltemp::{
@@ -97,19 +98,6 @@ impl<const RICHER: bool> CalculatorUI<RICHER> {
 
         let mut line_temps = Vec::<DumbLineTemplate>::new();
 
-        if RICHER {
-            let mut comps =
-                dlt_comps![
-                    dltc!("history", fixed_width = display_fixed_width, align = 'R')
-                        .set_truncate_indicator("…:<<")
-                ];
-            let temp = DumbLineTemplate::new_fixed_width(template_fixed_width, &comps);
-            line_temps.push(temp);
-            // let mut comps = dlt_comps![dltc!("history2", fixed_width = display_fixed_width)];
-            // let temp = DumbLineTemplate::new_fixed_width(template_fixed_width, &comps);
-            // line_temps.push(temp);
-        }
-
         let mut comps = dlt_comps![dltc!("display", fixed_width = display_fixed_width)];
         let temp = DumbLineTemplate::new_fixed_width(template_fixed_width, &comps);
         line_temps.push(temp);
@@ -191,6 +179,17 @@ impl<const RICHER: bool> CalculatorUI<RICHER> {
         let temp = DumbLineTemplate::new_fixed_width(template_fixed_width, &comps);
         line_temps.push(temp);
 
+        if RICHER {
+            let mut comps = dlt_comps![("〰️".repeat(9), (template_fixed_width) as usize), " "];
+            let temp = DumbLineTemplate::new_fixed_width(template_fixed_width + 1, &comps);
+            line_temps.push(temp);
+            let mut comps =
+                dlt_comps![dltc!("history", fixed_width = display_fixed_width)
+                    .set_truncate_indicator("…:<<")];
+            let temp = DumbLineTemplate::new_fixed_width(template_fixed_width, &comps);
+            line_temps.push(temp);
+        }
+
         let settings = if RICHER {
             LBLScreenSettings {
                 line_prefix: Some("\t🧱 ".to_string()),
@@ -220,6 +219,7 @@ impl<const RICHER: bool> CalculatorUI<RICHER> {
         } else {
             println!("* note that 'c' is the same as 'C' and the enter key is the same as '='");
         }
+        println!("* === to end, press ESC ===");
 
         screen.init();
 
@@ -227,7 +227,10 @@ impl<const RICHER: bool> CalculatorUI<RICHER> {
         let key = '0';
         let key_pressed_coor = CalculatorUI::<RICHER>::_get_key_coor(key, &key_map).unwrap();
         let calculator = if RICHER {
-            DumbCalculator::new_ex(true, true)
+            DumbCalculator::new_ex(DumbCalculatorSettings {
+                enable_undo: true,
+                enable_history: true,
+            })
         } else {
             DumbCalculator::new()
         };
@@ -279,22 +282,8 @@ impl<const RICHER: bool> CalculatorUI<RICHER> {
         self._refresh();
         let key = self.refresh_state.selected_key.unwrap();
         self.refresh_state.selected_key = Some(key);
-        // self.key_press_state.highlight_selected = true;
         self._refresh_for_keys(&vec![key.to_string().as_ref()]);
-        // thread::sleep(Duration::from_millis(500));
-        // self.key_press_state.highlight_selected = false;
-        // self._refresh_for_keys(&keys);
-
-        // let stdin = io::stdin();
-        // for c in stdin.keys() {
-        //     match c.unwrap() {
-        //         Key::Char('q') => break,
-        //         Key::Char(c)   => println!("You pressed {}", c),
-        //         Key::Ctrl(c)   => println!("You pressed Ctrl-{}", c),
-        //         Key::Alt(c)    => println!("You pressed Alt-{}", c),
-        //         _              => println!("You pressed a key"),
-        //     }
-        // }
+        enable_raw_mode().unwrap();
         loop {
             if let Event::Key(event) = read().unwrap() {
                 match event.code {
@@ -322,10 +311,14 @@ impl<const RICHER: bool> CalculatorUI<RICHER> {
                     KeyCode::Backspace => {
                         self._undo_commit();
                     }
+                    KeyCode::Esc => {
+                        break;
+                    }
                     _ => {}
                 }
             }
         }
+        disable_raw_mode().unwrap();
     }
     fn _refresh(&mut self) {
         let map_value_fn = |key: &str| -> Option<(String, u16)> {
@@ -339,7 +332,10 @@ impl<const RICHER: bool> CalculatorUI<RICHER> {
         };
         self.screen.refresh_for_keys_ex(keys, map_value_fn);
     }
-    fn _get_key_coor(key: char, key_map: &Vec<Vec<char>>) -> Option<(usize, usize)> {
+    fn _get_key_coor(
+        key: char,
+        key_map: &[Vec<char>], /*&Vec<Vec<char>>*/
+    ) -> Option<(usize, usize)> {
         for (row_idx, row) in key_map.iter().enumerate() {
             for (col_idx, cell) in row.iter().enumerate() {
                 if *cell == key {
@@ -371,57 +367,7 @@ impl<const RICHER: bool> CalculatorUI<RICHER> {
         self._update_display();
     }
     fn _update_display(&mut self) {
-        // let result_fixed_width = if RICHER {
-        //     RICHER_TEXT_RESULT_WIDTH
-        // } else {
-        //     RESULT_WIDTH
-        // };
-        // self.refresh_state.display = self
-        //     .calculator
-        //     .get_display_sized(result_fixed_width as usize);
-        //self._refresh_for_keys(&vec!["display"]);
         if RICHER {
-            // let operator = self.calculator.get_last_operator();
-            // let mut ind1 = match operator {
-            //     Some(operator) => match operator.as_str() {
-            //         "+" => "+",
-            //         "-" => "-",
-            //         "*" => "x",
-            //         "/" => "÷",
-            //         _ => "",
-            //     },
-            //     None => "",
-            // };
-            // let mut ind2 = match self.calculator.count_opened_brackets() {
-            //     // actually, no way to input bracket yet
-            //     1 => "⑴", // ⑴ ⑵ ⑶ ⑷ ⑸ ⑹ ⑺ ⑻ ⑼ ⑽ ⑾ ⑿ ⒀ ⒁ ⒂ ⒃ ⒄ ⒅ ⒆ ⒇
-            //     2 => "⑵",
-            //     3 => "⑶",
-            //     4 => "⑷",
-            //     5 => "⑸",
-            //     6 => "⑹",
-            //     7 => "⑺",
-            //     8 => "⑻",
-            //     9 => "⑼",
-            //     10 => "⑽",
-            //     _ => "",
-            // };
-            // let indicators = if ind1 != "" || ind2 != "" {
-            //     if ind1 == "" {
-            //         ind1 = " "
-            //     }
-            //     if ind2 == "" {
-            //         ind2 = " "
-            //     }
-            //     Some(format!("{} {} ", ind1, ind2))
-            // } else {
-            //     None
-            // };
-            // if let Some(indicators) = indicators {
-            //     self.refresh_state.indicators = Some(indicators.to_string());
-            // } else {
-            //     self.refresh_state.indicators = None;
-            // }
             self._refresh_for_keys(&vec!["display", "indicators", "history"]);
         } else {
             self._refresh_for_keys(&vec!["display"]);
@@ -443,10 +389,17 @@ impl<const RICHER: bool> CalculatorUI<RICHER> {
 
             self._commit_key_selected();
         } else {
-            // no key on calculator
+            // no key on calculator UI
             if RICHER {
+                let mut need_update_display = false;
                 if key == '(' || key == ')' {
                     self.calculator.push(key.to_string().as_str()).unwrap();
+                    need_update_display = true;
+                } else if key == 'N' {
+                    self.calculator.push("neg");
+                    need_update_display = true;
+                }
+                if need_update_display {
                     self._update_display();
                 }
             }
@@ -655,11 +608,11 @@ impl<const RICHER: bool> RefreshState<RICHER> {
                 10 => "⑽",
                 _ => "",
             };
-            let indicators = if ind1 != "" || ind2 != "" {
-                if ind1 == "" {
+            let indicators = if !ind1.is_empty() || !ind2.is_empty() {
+                if ind1.is_empty() {
                     ind1 = " "
                 }
-                if ind2 == "" {
+                if ind2.is_empty() {
                     ind2 = " "
                 }
                 Some(format!("{} {} ", ind1, ind2))
@@ -679,15 +632,27 @@ impl<const RICHER: bool> RefreshState<RICHER> {
         } else if RICHER && key == "history" {
             let history = calculator.get_history();
             if let Some(history) = history {
-                let history = history.join("");
-                //let history = "ABC".to_string();
-                let history_len = history.len();
-                Some((history, history_len as u16))
+                if true {
+                    let mut hist = String::new();
+                    let mut hist_len = 0;
+                    for h in history {
+                        if DumbCalcProcessor::is_unary_operator(h) {
+                            hist_len += h.len() + 2;
+                            hist.push_str(format!("_{}_", h).as_str());
+                        } else {
+                            hist.push_str(h.as_str());
+                            hist_len += h.len();
+                        }
+                    }
+                    Some((hist, hist_len as u16))
+                } else {
+                    let history = history.join("");
+                    let history_len = history.len();
+                    Some((history, history_len as u16))
+                }
             } else {
                 None
             }
-            // let history = key;
-            // Some((history.to_string(), history.len() as u16))
         } else {
             None
         }

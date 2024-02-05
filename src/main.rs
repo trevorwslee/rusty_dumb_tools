@@ -53,7 +53,7 @@ fn main() {
         demo::demo_calculator_gui::handle_demo_calculator_gui();
         return;
     }
-    if true {
+    if false {
         demo::run_demo(Some(vec!["calculator", "rich"]));
         //demo::demo_calculator::debug_demo_calculator(true);
         return;

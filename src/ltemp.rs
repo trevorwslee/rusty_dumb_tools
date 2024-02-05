@@ -36,7 +36,7 @@ type WIDTH = u16;
 ///     " |"
 /// ];
 /// let ltemp = DumbLineTemplate::new_fixed_width(15, &lt_comps);
-/// let line = ltemp.format(HashMap::from([("key", String::from("value"))])).unwrap();
+/// let line = ltemp.format(&HashMap::from([("key", String::from("value"))])).unwrap();
 /// assert_eq!(line, "| {1b}[7m(\u{1b}[0m  value  {1b}[7m)\u{1b}[0m |");
 /// ```
 /// notes:
@@ -121,7 +121,7 @@ fn debug_ltemp() {
     let mut map = HashMap::new();
     map.insert("key1", String::from("value1"));
     map.insert("key2", String::from("value2"));
-    let formatted = ltemp.format(map).unwrap();
+    let formatted = ltemp.format(&map).unwrap();
     println!("formatted: [{}]", formatted);
 
     let formatted = DumbLineTemplate::new_fixed_width(
@@ -133,7 +133,7 @@ fn debug_ltemp() {
             dltc!("key2", min_width = 1, max_width = 10, optional = true)
         ],
     )
-    .format(HashMap::from([
+    .format(&HashMap::from([
         ("key1", String::from("value1")),
         ("key2", String::from("value2")),
     ]))
@@ -169,14 +169,14 @@ fn debug_ltemp() {
 ///   ("label", String::from("NAME")),
 ///   ("value", name.to_string()),
 /// ]);
-/// let line1 = ltemp.format(map).unwrap();
+/// let line1 = ltemp.format(&map).unwrap();
 ///
 /// // format line2 from the template
 /// let map = HashMap::from([
 ///  ("label", String::from("AGE")),
 ///  ("value", String::from("<undisclosed>")),
 /// ]);
-/// let line2 = ltemp.format(map).unwrap();
+/// let line2 = ltemp.format(&map).unwrap();
 ///
 /// assert_eq!(line1, "| NAME   :        Trevor Lee |");
 /// assert_eq!(line2, "| AGE    :     <undisclosed> |");
@@ -187,6 +187,8 @@ fn debug_ltemp() {
 ///   - a value-mapped component
 ///   - require a mapped value for key `label` when calling [`DumbLineTemplate::format`]
 ///   - also see the macros [`dlt_comps!`] and [`dltc!`]
+///
+/// you may want to consider the helper [`crate::lblscreen::DumbLineByLineScreen`] for coding a simple terminal / text-based "screen";
 #[derive(Debug)]
 pub struct DumbLineTemplate {
     min_width: WIDTH,
@@ -255,7 +257,7 @@ impl DumbLineTemplate {
     // }
     /// based on the template and the input map of values, format and return a line;
     /// for a more flexible way of formatting, try [`DumbLineTemplate::format_ex`]
-    pub fn format<T: LineTempCompMapValueTrait>(&self, value_mapper: T) -> Result<String, String> {
+    pub fn format<T: LineTempCompMapValueTrait>(&self, value_mapper: &T) -> Result<String, String> {
         let map_value_fn = |key: &str| -> Option<(T::VALUE, WIDTH)> {
             let mapped_value = value_mapper.map_value(key);
             match mapped_value {
@@ -263,7 +265,7 @@ impl DumbLineTemplate {
                 None => None,
             }
         };
-        return self.format_ex(map_value_fn);
+        self.format_ex(map_value_fn)
     }
     /// like [`format`] but accept function that returns the mapped values; each mapped value is supposed to be a tuple of the value and its width
     /// (note that for ASCII escaped string, the "visual" length can be different from the length of the string)
@@ -792,14 +794,13 @@ impl MappedLineTempComp {
     }
     fn get_needed_width(&self, mapped_value_width: WIDTH) -> WIDTH {
         let needed_width = mapped_value_width; //map_value.len() as WIDTH;
-        let needed_width = if needed_width < self.min_width {
+        if needed_width < self.min_width {
             self.min_width
         } else if needed_width > self.max_width {
             self.max_width
         } else {
             needed_width
-        };
-        needed_width
+        }
     }
     // fn try_add_width(&self, assigned_width: u32, width_to_add: u32) -> u32 {
     //     let max_width = self.get_max_width();

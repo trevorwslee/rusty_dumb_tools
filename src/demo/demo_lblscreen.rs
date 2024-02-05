@@ -49,7 +49,7 @@ pub fn handle_demo_lblscreen() {
     loop {
         let progress_percent = format!("{}%", progress_done_percent);
         let description = format!("... wait ... loading {} ...", progress_percent);
-        let progress_bar = ">".repeat(progress_done_percent / 5 as usize);
+        let progress_bar = ">".repeat(progress_done_percent / 5_usize);
         state.insert("description", description);
         state.insert("progress-bar", progress_bar);
         state.insert("progress%", progress_percent);

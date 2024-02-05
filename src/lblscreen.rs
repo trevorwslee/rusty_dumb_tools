@@ -108,7 +108,8 @@ impl Default for LBLScreenSettings {
 /// ----------------------------------------
 /// ```
 ///
-/// please refer to [`DumbLineTemplate`] for more details on the line formatting of the different lines of the "screen"
+/// please refer to [`DumbLineTemplate`] for more details on the line formatting of the different lines of the "screen";
+/// for a fuller sample code, please refer to the "calculator" sub-demo of [`crate::demo::run_demo`]
 pub struct DumbLineByLineScreen {
     line_temps: Vec<DumbLineTemplate>,
     line_prefix: Option<String>,
@@ -180,7 +181,8 @@ impl DumbLineByLineScreen {
         }
         self.initialized = true;
     }
-    /// refresh the screen; if only want to refresh when the values of some given keys changed, use [`DumbLineByLineScreen::refresh_for_keys`] instead
+    /// refresh the screen; since lines are cached, refresh will not re-reprint any lines not changed;
+    /// nevertheless, for a bit better performance, you can use [`DumbLineByLineScreen::refresh_for_keys`] to refresh only the lines that are affected by the given keys
     pub fn refresh<T: LBLScreenMapValueTrait>(&self, value_mapper: &T) {
         if !self.initialized {
             panic!("must call init_screen() once first");
@@ -200,7 +202,7 @@ impl DumbLineByLineScreen {
         }
         self._update(None, map_value_fn)
     }
-    /// refresh the screen assuming only the values of the given keys changed; if want to refresh the whole screen, use [`DumbLineByLineScreen::refresh`] instead
+    /// refresh the screen assuming only the values of the given keys changed; it will be a bit faster, but in general, simply use[`DumbLineByLineScreen::refresh`] to refresh the whole "screen"
     pub fn refresh_for_keys<T: LBLScreenMapValueTrait>(&self, keys: &Vec<&str>, value_mapper: &T) {
         if !self.initialized {
             panic!("must call init_screen() once first");

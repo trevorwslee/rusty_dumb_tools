@@ -25,13 +25,13 @@ fn test_ltemp_fit() {
     let mut map = HashMap::new();
     map.insert("key1", String::from("value1"));
     map.insert("key2", String::from("value2"));
-    let formatted = ltemp.format(map).unwrap();
+    let formatted = ltemp.format(&map).unwrap();
     assert_eq!(formatted, "|abc>value1_def_value2<ghi|");
 
     let map = HashMap::from([("key1", "value1")]);
     //let mut map = HashMap::new();
     //map.insert("key1", String::from("value1"));
-    let formatted = ltemp.format(HashMap::from([("key1", "value1")])).unwrap();
+    let formatted = ltemp.format(&HashMap::from([("key1", "value1")])).unwrap();
     assert_eq!(formatted, "|abc>value1_def_<ghi|");
 }
 
@@ -49,7 +49,7 @@ fn test_ltemp_over() {
     let mut map = HashMap::new();
     map.insert("key1", String::from("value1"));
     map.insert("key2", String::from("value2"));
-    let formatted = ltemp.format(map).unwrap();
+    let formatted = ltemp.format(&map).unwrap();
     assert!(formatted.len() >= 5 && formatted.len() <= 22);
     assert_eq!(formatted, "|abc>val_def_valu<ghi|");
 
@@ -57,7 +57,7 @@ fn test_ltemp_over() {
     // let mut map = HashMap::new();
     // map.insert("key1", String::from("value1"));
     let formatted = ltemp
-        .format(HashMap::from([("key1", String::from("value1"))]))
+        .format(&HashMap::from([("key1", String::from("value1"))]))
         .unwrap();
     assert!(
         formatted.len() >= ltemp.min_width() as usize
@@ -68,7 +68,7 @@ fn test_ltemp_over() {
     let ltemp = DumbLineTemplate::new(5, 10, &lt_comps);
     let mut map = HashMap::new();
     map.insert("key1", String::from("value1"));
-    let formatted = ltemp.format(map);
+    let formatted = ltemp.format(&map);
     assert!(formatted.is_err());
     assert_eq!(
         formatted.err().unwrap(),
@@ -90,7 +90,7 @@ fn test_ltemp_under() {
     let mut map = HashMap::new();
     map.insert("key1", String::from("value1"));
     map.insert("key2", String::from("value2"));
-    let formatted = ltemp.format(map).unwrap();
+    let formatted = ltemp.format(&map).unwrap();
     assert!(formatted.len() >= 30 && formatted.len() <= 100);
     if FLEXIBLE_WIDTH_EX {
         assert_eq!(formatted, "|abc>value1  _def_value2 <ghi|");
@@ -103,14 +103,14 @@ fn test_ltemp_under() {
     let ltemp = DumbLineTemplate::new(25, 100, &lt_comps);
     let mut map = HashMap::new();
     map.insert("key1", String::from("value1"));
-    let formatted = ltemp.format(map).unwrap();
+    let formatted = ltemp.format(&map).unwrap();
     assert!(formatted.len() >= 25 && formatted.len() <= 100);
     assert_eq!(formatted, "|abc>value1    _def_<ghi|");
 
     let ltemp = DumbLineTemplate::new(50, 100, &lt_comps);
     let mut map = HashMap::new();
     map.insert("key1", String::from("value1"));
-    let formatted = ltemp.format(map);
+    let formatted = ltemp.format(&map);
     assert!(formatted.is_err());
     assert_eq!(
         formatted.err().unwrap(),
@@ -132,7 +132,7 @@ fn test_ltemp_align() {
 
     let ltemp = DumbLineTemplate::new(37, 100, &lt_comps);
     let map = HashMap::from([("key1", "value1"), ("key2", "value2"), ("key3", "value3")]);
-    let formatted = ltemp.format(map).unwrap();
+    let formatted = ltemp.format(&map).unwrap();
     assert!(formatted.len() >= 37 && formatted.len() <= 100);
     if FLEXIBLE_WIDTH_EX {
         //assert_eq!(formatted, "|abc>value1   | value2 |  value3<ghi|");
@@ -152,7 +152,7 @@ fn test_ltemp_escaped() {
     ];
     let ltemp = DumbLineTemplate::new(0, 100, &lt_comps);
     let map = HashMap::<&str, String>::new();
-    let formatted = ltemp.format(map).unwrap();
+    let formatted = ltemp.format(&map).unwrap();
     assert_eq!(formatted, "\u{1b}[7mABC\u{1b}[0m");
     assert_eq!(formatted.len(), 11);
     //println!("*** {}({}) ***", formatted, formatted.len());
@@ -171,14 +171,14 @@ fn test_ltemp_escaped() {
 fn test_ltemp_truncate() {
     let lt_comps = dlt_comps![dltc!("key", fixed_width = 10)];
     let ltemp = DumbLineTemplate::new(0, 100, &lt_comps);
-    let formatted = ltemp.format(HashMap::from([("key", "abc")])).unwrap();
+    let formatted = ltemp.format(&HashMap::from([("key", "abc")])).unwrap();
     //println!("*** {}({}) ***", formatted, formatted.len());
     assert_eq!(formatted, "abc       ");
 
     let lt_comps = dlt_comps![dltc!("key", fixed_width = 15, align = 'C')];
     let ltemp = DumbLineTemplate::new(0, 100, &lt_comps);
     let formatted = ltemp
-        .format(HashMap::from([("key", "0123456789")]))
+        .format(&HashMap::from([("key", "0123456789")]))
         .unwrap();
     //println!("*** {}({}) ***", formatted, formatted.len());
     assert_eq!(formatted, "   0123456789  ");
@@ -186,7 +186,7 @@ fn test_ltemp_truncate() {
     let lt_comps = dlt_comps![dltc!("key", fixed_width = 6)];
     let ltemp = DumbLineTemplate::new(0, 100, &lt_comps);
     let formatted = ltemp
-        .format(HashMap::from([("key", "0123456789")]))
+        .format(&HashMap::from([("key", "0123456789")]))
         .unwrap();
     //println!("*** {}({}) ***", formatted, formatted.len());
     assert_eq!(formatted, "012345");
@@ -194,7 +194,7 @@ fn test_ltemp_truncate() {
     let lt_comps = dlt_comps![dltc!("key", fixed_width = 6).set_truncate_indicator("...")];
     let ltemp = DumbLineTemplate::new(0, 100, &lt_comps);
     let formatted = ltemp
-        .format(HashMap::from([("key", "0123456789")]))
+        .format(&HashMap::from([("key", "0123456789")]))
         .unwrap();
     //println!("*** {}({}) ***", formatted, formatted.len());
     assert_eq!(formatted, "012...");
@@ -202,7 +202,7 @@ fn test_ltemp_truncate() {
     let lt_comps = dlt_comps![dltc!("key", fixed_width = 3).set_truncate_indicator("...")];
     let ltemp = DumbLineTemplate::new(0, 100, &lt_comps);
     let formatted = ltemp
-        .format(HashMap::from([("key", "0123456789")]))
+        .format(&HashMap::from([("key", "0123456789")]))
         .unwrap();
     //println!("*** {}({}) ***", formatted, formatted.len());
     assert_eq!(formatted, "...");
@@ -210,21 +210,21 @@ fn test_ltemp_truncate() {
     let lt_comps = dlt_comps![dltc!("key", fixed_width = 6).set_truncate_indicator(">>:...")];
     let ltemp = DumbLineTemplate::new(0, 100, &lt_comps);
     let formatted = ltemp
-        .format(HashMap::from([("key", "0123456789")]))
+        .format(&HashMap::from([("key", "0123456789")]))
         .unwrap();
     assert_eq!(formatted, "012...");
 
     let lt_comps = dlt_comps![dltc!("key", fixed_width = 6).set_truncate_indicator("...:<<")];
     let ltemp = DumbLineTemplate::new(0, 100, &lt_comps);
     let formatted = ltemp
-        .format(HashMap::from([("key", "0123456789")]))
+        .format(&HashMap::from([("key", "0123456789")]))
         .unwrap();
     assert_eq!(formatted, "...789");
 
     let lt_comps = dlt_comps![dltc!("key", fixed_width = 6).set_truncate_indicator("…")];
     let ltemp = DumbLineTemplate::new(0, 100, &lt_comps);
     let formatted = ltemp
-        .format(HashMap::from([("key", "0123456789")]))
+        .format(&HashMap::from([("key", "0123456789")]))
         .unwrap();
     assert_eq!(formatted, "01234…");
 }

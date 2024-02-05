@@ -9,9 +9,8 @@ A collection of simple tools in ***Rust*** as ***Rust*** modules:
   It can be used to implement a simple calculator UI in **Rust**.
 * `crate::ltemp::DumbLineTemplate`: A simple line template for formatting a line.
   It can be usee for printing values as a line with some template.
-* `crate::lblscreen::DumbLineByLineScreen`: A terminal / text-based "screen" update helper.  
-  It is extended from `crate::ltemp::DumbLineTemplate`, and should be helpful in managing the updates of the formatted lines 
-   that acts as a "screen".
+* `crate::lblscreen::DumbLineByLineScreen`: A terminal / text-based "screen" update helper.
+It is extended from `crate::ltemp::DumbLineTemplate`, and should be helpful in managing the updates of the formatted lines that acts as a "screen".
   
   
 
