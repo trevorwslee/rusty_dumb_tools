@@ -49,10 +49,10 @@ fn main() {
         test_chars();
         return;
     }
-    if false {
-        demo::demo_calculator_gui::handle_demo_calculator_gui();
-        return;
-    }
+    // if false {
+    //     demo::demo_calculator_gui::handle_demo_calculator_gui();
+    //     return;
+    // }
     if false {
         demo::run_demo(Some(vec!["calculator", "rich"]));
         //demo::demo_calculator::debug_demo_calculator(true);

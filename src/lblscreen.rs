@@ -283,16 +283,16 @@ impl DumbLineByLineScreen {
                     if let Some(line_prefix) = &self.line_prefix {
                         print!("{}", line_prefix);
                     }
-                    print!("{}", line); // | is the line prefix and suffix
+                    print!("{}", line);
                     if let Some(line_suffix) = &self.line_suffix {
                         print!("{}", line_suffix);
                     }
                 }
             }
-            println!()
+            println!("\r")
         }
         for i in 0..self.bottom_line_height {
-            println!();
+            println!("\r");
         }
         // if let Some(bottom_line) = &self.bottom_line {
         //     println!("{}", bottom_line);
