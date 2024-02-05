@@ -9,7 +9,7 @@ use crossterm::{
     event::{read, Event, KeyCode},
     style::Colorize, terminal::{disable_raw_mode, enable_raw_mode},
 };
-use iced::{color, futures::future::OrElse};
+//use iced::{color, futures::future::OrElse};
 
 use crate::{
     arg::DumbArgBuilder,

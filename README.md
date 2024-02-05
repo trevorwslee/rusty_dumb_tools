@@ -1,4 +1,4 @@
-# RustyDumbTools (v0.1.2)
+# RustyDumbTools (v0.1.3)
 
 A collection of simple tools in ***Rust*** as ***Rust*** modules:
 * `crate::arg::DumbArgParser`: A simple argument parser.
