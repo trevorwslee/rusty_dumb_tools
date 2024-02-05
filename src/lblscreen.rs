@@ -292,7 +292,7 @@ impl DumbLineByLineScreen {
             println!("\r")
         }
         for i in 0..self.bottom_line_height {
-            println!("\r");
+            println!();
         }
         // if let Some(bottom_line) = &self.bottom_line {
         //     println!("{}", bottom_line);

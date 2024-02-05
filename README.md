@@ -1,4 +1,4 @@
-# RustyDumbTools (v0.1.3)
+# RustyDumbTools (v0.1.4)
 
 A collection of simple tools in ***Rust*** as ***Rust*** modules:
 * `crate::arg::DumbArgParser`: A simple argument parser.
@@ -156,15 +156,20 @@ MIT
 
 # Change History:
 
+* v0.1.4
+  - bug fix
+
 * v0.1.3
+  - bug fix
   - added richer text-based calculator demo 
 
 * v0.1.2
+  - bug fix
   - added `DumbLineTemplate`, `DumbLineByLineScreen` and `DumbLineByLineScreen`
 
 * v0.1.1
+  - bug fix
   - added more documentations, and via `run_demo` function
-
 
 * v0.1.0
   - initial release
