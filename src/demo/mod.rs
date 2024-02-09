@@ -5,7 +5,7 @@
 pub mod demo_arg;
 pub mod demo_calc;
 pub mod demo_calculator;
-pub mod demo_calculator_gui;
+//pub mod demo_calculator_gui;
 pub mod demo_lblscreen;
 pub mod demo_ltemp;
 
@@ -62,7 +62,7 @@ pub fn create_demo_parser() -> DumbArgParser {
             "calc:DumbCalcProcessor command-line input demo",
             "calc-repl:DumbCalcProcessor REPL demo",
             "calculator:DumbCalculator text-based UI demo",
-            "calculator-gui:DumbCalculator GUI demo",
+            //"calculator-gui:DumbCalculator GUI demo",
             "ltemp:DumbLineTemplate demo",
             "lblscreen:DumbLineByLineScreen demo",
             "arg:DumbArgParser demo (more like debugging)",

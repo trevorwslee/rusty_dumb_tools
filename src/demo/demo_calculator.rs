@@ -7,7 +7,8 @@ use std::{collections::HashMap, fmt, io, thread, time::Duration};
 
 use crossterm::{
     event::{read, Event, KeyCode},
-    style::Colorize, terminal::{disable_raw_mode, enable_raw_mode},
+    style::Colorize,
+    terminal::{disable_raw_mode, enable_raw_mode},
 };
 //use iced::{color, futures::future::OrElse};
 
@@ -33,7 +34,7 @@ pub fn create_demo_parser_calculator() -> DumbArgParser {
         .set_with_desc_enums(vec![
             "text:text based",
             "rich:richer text-based",
-            "gui: graphical",
+            //"gui: graphical",
         ])
         .add_to(&mut parser)
         .unwrap();

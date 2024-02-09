@@ -37,7 +37,7 @@ pub struct DumbCalculator {
 ///
 /// for a fuller sample code, please refer to the "calculator" sub-demo of [`crate::demo::run_demo`]
 impl DumbCalculator {
-    /// create a new [`DumbCalculator`] instance with default settings (i.e. no uodo etc)
+    /// create a new [`DumbCalculator`] instance with default settings (i.e. no undo etc)
     pub fn new() -> Self {
         DumbCalculator::new_ex(DumbCalculatorSettings::default())
     }

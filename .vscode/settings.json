@@ -1,5 +1,14 @@
 {
-  "editor.formatOnSave": true
-  // "files.autoSave": "afterDelay",
-  // "editor.formatOnSaveTimeout": 5000
+     "editor.formatOnSave": true,
+     "terminal.integrated.defaultProfile.windows": "Cygwin",
+     "terminal.integrated.profiles.windows": {
+          "Cygwin": {
+               "path": "C:\\cygwin64\\bin\\bash.exe",
+               "env": {"CHERE_INVOKING": "1"},
+               "args": [
+                    "--login"
+               ],
+               "icon": "code"
+       }
+     }
 }

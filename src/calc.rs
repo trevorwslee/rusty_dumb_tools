@@ -163,7 +163,7 @@ impl DumbCalcProcessor {
     /// * an unary operator: "neg", "sin", "cos", "tan", "asin", "acos", "atan", "log", "ln", "sqrt", "exp", "inv"
     ///   <br>notes:
     ///   - an unary operator should come after the operand that it operates on;
-    ///   - these unary operators have the same highest precedence
+    ///   - these unary operators have the same highest precedence (basically operation will be performed, with the operand that comes before it, immediately)
     /// * a constant: "PI", "E"
     /// * a "=", which will evaluate the pushed "calculation units"
     ///

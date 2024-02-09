@@ -1,4 +1,4 @@
-//#![deny(warnings)]
+#![deny(warnings)]
 #![allow(unused)]
 
 mod debug;
@@ -39,6 +39,9 @@ use rusty_dumb_tools::{
 // }
 
 fn main() {
+    let version = env!("CARGO_PKG_VERSION");
+    println!("The version of this crate is: {}", version);
+
     if false {
         println!("ABC…XYZ...({})", "…".len());
         println!("ABCD?YZ");

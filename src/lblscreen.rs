@@ -181,8 +181,15 @@ impl DumbLineByLineScreen {
         }
         self.initialized = true;
     }
-    /// refresh the screen; since lines are cached, refresh will not re-reprint any lines not changed;
+    /// refresh the screen; since lines are cached, refresh will not reprint any lines not changed;
     /// nevertheless, for a bit better performance, you can use [`DumbLineByLineScreen::refresh_for_keys`] to refresh only the lines that are affected by the given keys
+    ///
+    /// e.g.
+    /// ```_no_run
+    /// let mut state = HashMap::<&str, String>::new();
+    /// ...
+    /// lbl_demo_screen.refresh(&state);
+    /// ````
     pub fn refresh<T: LBLScreenMapValueTrait>(&self, value_mapper: &T) {
         if !self.initialized {
             panic!("must call init_screen() once first");

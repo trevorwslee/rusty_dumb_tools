@@ -188,7 +188,7 @@ fn debug_ltemp() {
 ///   - require a mapped value for key `label` when calling [`DumbLineTemplate::format`]
 ///   - also see the macros [`dlt_comps!`] and [`dltc!`]
 ///
-/// you may want to consider the helper [`crate::lblscreen::DumbLineByLineScreen`] for coding a simple terminal / text-based "screen";
+/// you may want to consider the helper [`crate::lblscreen::DumbLineByLineScreen`] for coding a simple terminal / text-based "screen"
 #[derive(Debug)]
 pub struct DumbLineTemplate {
     min_width: WIDTH,
@@ -205,12 +205,12 @@ impl DumbLineTemplate {
     pub fn new(
         min_width: WIDTH,
         max_width: WIDTH,
-        components: &Vec<LineTempComp>,
+        components: &[LineTempComp],
     ) -> DumbLineTemplate {
         DumbLineTemplate {
             min_width,
             max_width,
-            components: components.clone(),
+            components: components.to_owned(),
         }
     }
     /// the same as [`DumbLineTemplate::new`] but with fixed width
@@ -231,12 +231,15 @@ impl DumbLineTemplate {
     pub fn scan_for_keys(&self) -> HashSet<String> {
         let mut keys = HashSet::new();
         for comp in self.components.iter() {
-            match comp {
-                LineTempComp::Mapped(mapped_comp) => {
-                    keys.insert(mapped_comp.get_map_key().to_string());
-                }
-                _ => {}
+            if let LineTempComp::Mapped(mapped_comp) = comp {
+                keys.insert(mapped_comp.get_map_key().to_string());
             }
+            // match comp {
+            //     LineTempComp::Mapped(mapped_comp) => {
+            //         keys.insert(mapped_comp.get_map_key().to_string());
+            //     }
+            //     _ => {}
+            // }
         }
         keys
     }
@@ -257,6 +260,14 @@ impl DumbLineTemplate {
     // }
     /// based on the template and the input map of values, format and return a line;
     /// for a more flexible way of formatting, try [`DumbLineTemplate::format_ex`]
+    ///
+    /// e.g.
+    /// ```_no_run
+    /// let map = HashMap::from([
+    ///    ...
+    /// ]);
+    /// let line = ltemp.format(&map).unwrap();
+    /// ```
     pub fn format<T: LineTempCompMapValueTrait>(&self, value_mapper: &T) -> Result<String, String> {
         let map_value_fn = |key: &str| -> Option<(T::VALUE, WIDTH)> {
             let mapped_value = value_mapper.map_value(key);
@@ -835,10 +846,11 @@ impl MappedLineTempComp {
             if let Some(truncate_indicator) = &self.truncate_indicator {
                 let (truncate_left, truncate_indicator) = {
                     let truncate_right = false;
-                    if truncate_indicator.starts_with(">>:") {
-                        (false, &truncate_indicator[3..])
-                    } else if truncate_indicator.ends_with(":<<") {
-                        (true, &truncate_indicator[..truncate_indicator.len() - 3])
+                    if let Some(truncate_indicator) = truncate_indicator.strip_prefix(">>:") {
+                        (false, truncate_indicator)
+                    } else if let Some(truncate_indicator) = truncate_indicator.strip_suffix(":<<")
+                    {
+                        (true, truncate_indicator)
                     } else {
                         (false, truncate_indicator.as_str())
                     }
@@ -911,13 +923,13 @@ impl MappedLineTempComp {
             'L' => {
                 let mut formatted = mapped_value.to_string();
                 formatted.push_str(&" ".repeat(
-                    (assigned_width as usize - mapped_value_width as usize/*value_width*/) as usize,
+                    assigned_width as usize - mapped_value_width as usize, /*value_width*/
                 ));
                 formatted
             }
             'R' => {
                 let mut formatted = " ".repeat(
-                    (assigned_width as usize - mapped_value_width as usize/*value_width*/) as usize,
+                    assigned_width as usize - mapped_value_width as usize, /*value_width*/
                 );
                 formatted.push_str(mapped_value);
                 formatted

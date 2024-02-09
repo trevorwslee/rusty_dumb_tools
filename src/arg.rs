@@ -195,6 +195,7 @@ fn debug_arg_sap() {
 /// notes:
 /// * -h and --help are reserved for showing help message; after showing the help message, the program will exit
 /// * in case of invalid input argument, will show the error message as well as the help message, then the program will exit
+/// * arguments are typed; the default is [`String`]; others are [`std::i32`], [`std::i64`], [`std::f32`], [`std::f64`] and [`bool`]
 /// * also see the macro [`dap_arg`]
 ///
 /// you may want to refer to [`crate::demo::run_demo`] for a demo program that uses [`DumbArgParser`].
@@ -311,6 +312,14 @@ impl DumbArgParser {
     /// * `arg_name` - the argument name of which the value is to be retrieved; it can be a positional argument name,
     ///                or can be a flag argument name (including `flag2`, which is just an alias to the flag argument)
     ///
+    /// e.g.
+    /// ```_no_run
+    /// let param: i32 = parser.get("i32-arg").unwrap();
+    /// ```
+    /// or
+    /// ```_no_run
+    /// let param = parser.get::<i32>("i32-arg").unwrap();
+    /// ```
     /// note: except that all types can be implicitly converted to [`String`], no other implicit type conversion; if type does not agree, will panic
     pub fn get<T: ArgValueTrait>(&self, arg_name: &str) -> Option<T> {
         let arg_idx = match self.input_arg_index_map.get(arg_name) {
@@ -1218,7 +1227,7 @@ impl DumbArgBuilder {
         Ok(())
     }
     fn _to_key(&self) -> Result<ArgKey, String> {
-        if self.name_or_flags.len() == 0 {
+        if self.name_or_flags.is_empty() {
             return Err("must provide a name or some flags".to_string());
         }
         if self.name_or_flags.len() == 1 {
@@ -1230,7 +1239,7 @@ impl DumbArgBuilder {
         let mut s_name: Option<String> = None;
         let mut d_name: Option<String> = None;
         for flag in self.name_or_flags.iter() {
-            if !flag.starts_with("-") {
+            if !flag.starts_with('-') {
                 return Err(format!("flag [{}] must start with '-'", flag));
             }
             if flag.starts_with("--") {
