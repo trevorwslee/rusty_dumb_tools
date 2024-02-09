@@ -1,7 +1,7 @@
 #![deny(warnings)]
 #![allow(unused)]
 
-use crate::calc::{self, CalcResult, DumbCalcProcessor};
+use crate::prelude::*;
 
 macro_rules! test_calc_push {
     ($units:expr, $res:expr) => {

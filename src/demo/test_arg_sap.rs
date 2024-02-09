@@ -1,10 +1,8 @@
 #![deny(warnings)]
 #![allow(unused)]
 
-use crate::{
-    arg::{DumbArgBuilder, DumbArgParser},
-    sap_arg,
-};
+use crate::prelude::*;
+
 
 #[test]
 fn test_missing_args() {

@@ -1,7 +1,7 @@
 #![deny(warnings)]
 #![allow(unused)]
 
-use crate::calculator::{DumbCalculator, DumbCalculatorSettings};
+use crate::prelude::*;
 
 #[test]
 fn test_calculator_push() {

@@ -3,7 +3,9 @@
 #![deny(warnings)]
 #![allow(unused)]
 
-use std::{fmt, num::ParseFloatError};
+use std::{error::Error, fmt, num::ParseFloatError};
+
+use crate::shared::DumbError;
 
 #[test]
 pub fn test_calc() {}
@@ -168,7 +170,7 @@ impl DumbCalcProcessor {
     /// * a "=", which will evaluate the pushed "calculation units"
     ///
     /// please use [`DumbCalcProcessor::parse_and_push`] if you want to push multiple "calculation units" in a string, like a string of a complete infix expression
-    pub fn push(&mut self, unit: &str) -> Result<(), String> {
+    pub fn push(&mut self, unit: &str) -> Result<(), DumbError> {
         let unit = unit.trim();
         if unit == "=" {
             self.evaluate();
@@ -181,7 +183,7 @@ impl DumbCalcProcessor {
                     Ok(operand) => Unit::Operand(operand),
                     Err(_) => {
                         let err_msg = format!("'{}' is not a valid unit", unit);
-                        return Err(err_msg);
+                        return Err(err_msg.into());
                     }
                 },
             };
@@ -193,7 +195,7 @@ impl DumbCalcProcessor {
     /// each parsed "calculation unit" will be pushed one by one with [`DumbCalcProcessor::push`]
     ///
     /// note: please consider unary operators as ***not parsable***
-    pub fn parse_and_push<T: AsRef<str>>(&mut self, units: T) -> Result<(), String> {
+    pub fn parse_and_push<T: AsRef<str>>(&mut self, units: T) -> Result<(), DumbError> {
         let units = _parse_units_from_str(units.as_ref())?;
         for unit in units {
             self.push(&unit)?;
@@ -207,12 +209,12 @@ impl DumbCalcProcessor {
         self.calc_impl.eval();
     }
     /// like [`DumbCalcProcessor::evaluate`], evaluate the pushed "calculation units" and return the result
-    pub fn eval(&mut self) -> Result<f64, String> {
+    pub fn eval(&mut self) -> Result<f64, DumbError> {
         self.calc_impl.eval();
         match self.get_result() {
             CalcResult::Final(result) => Ok(result),
             CalcResult::Intermediate(result) => panic!("unexpected intermediate result {}", result),
-            CalcResult::Error(err_msg) => Err(err_msg),
+            CalcResult::Error(err_msg) => Err(err_msg.into()),
         }
     }
     /// return the calculation result so far; call [`DumbCalcProcessor::evaluate`] to evaluate the pushed "calculation units", and assign the result to it (as final result)

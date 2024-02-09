@@ -5,16 +5,7 @@
 
 use std::{collections::HashMap, thread, time::Duration};
 
-use crate::{
-    arg::{DumbArgBuilder, DumbArgParser},
-    dap_arg,
-    lblscreen::{DumbLineByLineScreen, LBLScreenSettings},
-};
-
-use crate::{
-    dlt_comps, dltc,
-    ltemp::{DumbLineTemplate, LineTempComp, LineTempCompTrait, MappedLineTempCompBuilder},
-};
+use crate::prelude::*;
 
 pub fn handle_demo_lblscreen() {
     let mut lbl_demo_screen = {

@@ -14,17 +14,11 @@ pub mod test_calc;
 pub mod test_calculator;
 pub mod test_ltemp;
 
-use crate::{
-    arg::{DumbArgBuilder, DumbArgParser},
-    dap_arg,
-};
-
-use crate::demo::{
-    demo_arg::handle_demo_arg,
-    demo_calc::{create_demo_parser_calc, handle_demo_calc, handle_demo_calc_repl},
-};
+use crate::prelude::*;
 
 use self::{
+    demo_arg::handle_demo_arg,
+    demo_calc::{create_demo_parser_calc, handle_demo_calc, handle_demo_calc_repl},
     demo_calculator::{create_demo_parser_calculator, handle_demo_calculator},
     demo_lblscreen::handle_demo_lblscreen,
     demo_ltemp::handle_demo_ltemp,

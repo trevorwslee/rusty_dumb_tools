@@ -47,15 +47,7 @@ impl Default for LBLScreenSettings {
 /// for example:
 /// ```
 /// use std::collections::HashMap;
-/// use rusty_dumb_tools::{
-///     arg::{DumbArgBuilder, DumbArgParser},
-///     dap_arg,
-///     lblscreen::{DumbLineByLineScreen, LBLScreenSettings},
-/// };
-/// use rusty_dumb_tools::{
-///    dlt_comps, dltc,
-///    ltemp::{DumbLineTemplate, LineTempComp, LineTempCompMapValueTrait, LineTempCompTrait, MappedLineTempCompBuilder},
-/// };
+/// use rusty_dumb_tools::prelude::*;
 /// let mut lbl_demo_screen = {
 ///     /// template for the line that ends up like "|     ... wait ... loading 100% ...    |"
 ///     let mut comps = dlt_comps![

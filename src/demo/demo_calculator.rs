@@ -10,21 +10,8 @@ use crossterm::{
     style::Colorize,
     terminal::{disable_raw_mode, enable_raw_mode},
 };
-//use iced::{color, futures::future::OrElse};
 
-use crate::{
-    arg::DumbArgBuilder,
-    arg::DumbArgParser,
-    calc::DumbCalcProcessor,
-    calculator::{self, DumbCalculator, DumbCalculatorSettings},
-    dlt_comps, dltc,
-    lblscreen::{DumbLineByLineScreen, LBLScreenMapValueTrait, LBLScreenSettings},
-    ltemp::{
-        DumbLineTemplate, EscapedLineTempComp, LineTempComp, LineTempCompMapValueTrait,
-        LineTempCompTrait, MappedLineTempComp, MappedLineTempCompBuilder,
-        MappedLineTempCompSettings, FLEXIBLE_WIDTH_EX,
-    },
-};
+use crate::prelude::*;
 
 pub fn create_demo_parser_calculator() -> DumbArgParser {
     let mut parser = DumbArgParser::new();

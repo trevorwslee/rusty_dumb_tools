@@ -3,13 +3,7 @@
 
 use std::{collections::HashMap, fmt};
 
-use crate::{
-    dlt_comps, dltc,
-    ltemp::{
-        DumbLineTemplate, EscapedLineTempComp, LineTempComp, LineTempCompTrait,
-        MappedLineTempCompBuilder, FLEXIBLE_WIDTH_EX,
-    },
-};
+use crate::prelude::*;
 
 #[test]
 fn test_ltemp_fit() {

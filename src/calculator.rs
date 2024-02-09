@@ -3,7 +3,12 @@
 #![deny(warnings)]
 #![allow(unused)]
 
-use crate::calc::{self, CalcProcessorBackup, CalcResult, DumbCalcProcessor};
+use std::error::Error;
+
+use crate::{
+    calc::{self, CalcProcessorBackup, CalcResult, DumbCalcProcessor},
+    shared::DumbError,
+};
 
 #[test]
 fn test_calculator() {}
@@ -67,7 +72,7 @@ impl DumbCalculator {
     ///   - unary operators; e.g. "neg", "sin", "cos", "tan", "asin", "acos", "atan", "sqrt", "ln", "log
     ///   - constants; e.g. "PI", "E"
     ///   - "="
-    pub fn push(&mut self, key: &str) -> Result<(), String> {
+    pub fn push(&mut self, key: &str) -> Result<(), DumbError> {
         if key == "." {
             self._record_undo(key, false);
             self.entering = match &self.entering {
@@ -127,7 +132,7 @@ impl DumbCalculator {
         Ok(())
     }
     /// like [`DumbCalculator::push`] but each characters of the input will be pushed individually one by one
-    pub fn push_chars(&mut self, keys: &str) -> Result<(), String> {
+    pub fn push_chars(&mut self, keys: &str) -> Result<(), DumbError> {
         for key in keys.chars() {
             if key != ' ' {
                 self.push(key.to_string().as_str())?;

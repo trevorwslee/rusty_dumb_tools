@@ -23,10 +23,7 @@ type WIDTH = u16;
 ///
 /// for example that also involve ASCII escaped strings:
 /// ```
-/// use rusty_dumb_tools::{
-///    dlt_comps, dltc,
-///    ltemp::*,
-/// };
+/// use rusty_dumb_tools::prelude::*;
 /// use std::collections::HashMap;
 /// let name = "Trevor Lee";
 /// let lt_comps = dlt_comps![
@@ -146,10 +143,7 @@ fn debug_ltemp() {
 ///
 /// example:
 /// ```
-/// use rusty_dumb_tools::{
-///    dlt_comps, dltc,
-///    ltemp::*,
-/// };
+/// use rusty_dumb_tools::prelude::*;
 /// use std::collections::HashMap;
 ///
 /// // create the template components
@@ -244,21 +238,6 @@ impl DumbLineTemplate {
         }
         keys
     }
-    // /// based on the template and the input map of values, format and return a line;
-    // /// for a more flexible way of formatting, try [`DumbLineTemplate::format_ex`]
-    // pub fn format<T: fmt::Display>(&self, map: &HashMap<&str, T>) -> Result<String, String> {
-    //     let map = map
-    //         .iter()
-    //         .map(|(k, v)| (k.to_string(), v.to_string()))
-    //         .collect::<HashMap<String, String>>();
-    //     let map_value_fn = |key: &str| -> Option<(&str, WIDTH)> {
-    //         match map.get(key) {
-    //             Some(value) => Some((value, value.len() as WIDTH)),
-    //             None => None,
-    //         }
-    //     };
-    //     return self.format_ex(map_value_fn);
-    // }
     /// based on the template and the input map of values, format and return a line;
     /// for a more flexible way of formatting, try [`DumbLineTemplate::format_ex`]
     ///
@@ -546,15 +525,6 @@ impl DumbLineTemplate {
         }
         Ok(formatted)
     }
-    // /// like [`format`] but accept a map of "boxed" [`fmt::Display`] values;
-    // /// and therefore, the map of values can be of different types that implement the trait [`fmt::Display`]
-    // pub fn format_ex(&self, map: &HashMap<String, Box<dyn fmt::Display>>) -> Result<String, String> {
-    //     let mut new_map: HashMap<String, String> = HashMap::new();
-    //     for (key, value) in map.iter() {
-    //         new_map.insert(key.clone(), value.to_string());
-    //     }
-    //     self.format(&new_map)
-    // }
 }
 
 // pub trait LineTempCompMapValueTrait {
@@ -586,16 +556,16 @@ impl DumbLineTemplate {
 //     }
 // }
 
-#[derive(Debug)]
-pub struct LineTemplateError {
-    message: String,
-}
-impl Error for LineTemplateError {}
-impl fmt::Display for LineTemplateError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.message)
-    }
-}
+// #[derive(Debug)]
+// pub struct LineTemplateError {
+//     message: String,
+// }
+// impl Error for LineTemplateError {}
+// impl fmt::Display for LineTemplateError {
+//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+//         write!(f, "{}", self.message)
+//     }
+// }
 
 pub trait LineTempCompMapValueTrait {
     type VALUE: fmt::Display;

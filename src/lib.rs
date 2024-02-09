@@ -39,6 +39,7 @@
 //! > ***Peace be with you! May God bless you! Jesus loves you! Amazing Grace!***
 
 #[macro_use]
+pub mod shared;
 pub mod arg;
 pub mod calc;
 pub mod lblscreen;
@@ -47,3 +48,17 @@ pub mod ltemp;
 pub mod calculator;
 
 pub mod demo;
+
+pub mod prelude {
+    //! All the common 'uses' of this crate -- ```use rusty_dumb_tools::prelude::*;```
+    pub use crate::arg::*;
+    pub use crate::calc::*;
+    pub use crate::calculator::*;
+    pub use crate::dap_arg;
+    pub use crate::dlt_comps;
+    pub use crate::dltc;
+    pub use crate::lblscreen::*;
+    pub use crate::ltemp::*;
+    pub use crate::sap_arg;
+    pub use crate::shared::*;
+}

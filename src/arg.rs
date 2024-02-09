@@ -14,14 +14,14 @@ use std::{
     path::Path,
 };
 
-use crate::arg;
+use crate::{arg, shared::DumbError};
 
 /// ***please consider using the macro [`crate::dap_arg!`] instead, since this macro will be deprecated***
 ///
 /// use this macro to create a [`DumbArgBuilder`] instance to build argument object (argument specification) to be added to [`DumbArgParser`] with [`DumbArgBuilder::add_to`]
 /// the macro accepts one for more strings (positional argument name or flags) like
 /// ```
-/// use rusty_dumb_tools::{arg::*, sap_arg};
+/// use rusty_dumb_tools::prelude::*;
 /// let mut parser = DumbArgParser::new();
 /// sap_arg!("-f", "--flag").add_to(&mut parser); // e.g. ... -f flag-value ...
 /// sap_arg!("-v", "--verbose").fixed(true).add_to(&mut parser); // e.g. ... -v ... -- this will turn "on" -v with value true
@@ -44,7 +44,7 @@ macro_rules! sap_arg {
 /// use this macro to create a [`DumbArgBuilder`] instance to build argument object (argument specification) to be added to [`DumbArgParser`] with [`DumbArgBuilder::add_to`]
 /// the macro accepts one for more strings (positional argument name or flags) like
 /// ```
-/// use rusty_dumb_tools::{arg::{DumbArgParser, DumbArgBuilder}, dap_arg};
+/// use rusty_dumb_tools::prelude::*;
 /// let mut parser = DumbArgParser::new();
 /// dap_arg!("-f", flag2="--flag").add_to(&mut parser); // e.g. ... -f flag-value ...
 /// dap_arg!("-v", flag2="--verbose", fixed=true).add_to(&mut parser); // e.g. ... -v ... -- this will turn "on" -v with value true
@@ -416,7 +416,7 @@ impl DumbArgParser {
         arg_name: &str,
         parser: &mut DumbArgParser,
         show_help_if_needed: bool,
-    ) -> Result<bool, Box<dyn Error>> {
+    ) -> Result<bool, DumbError> {
         let rest = self.get_rest(arg_name);
         if rest.is_none() {
             panic!("no \"rest\" multi-argument for [{}] found", arg_name);
@@ -433,7 +433,7 @@ impl DumbArgParser {
         self.process_args(in_args);
     }
     /// like [`DumbArgParser::parse_args`] but returns a [`Result`] instead of exiting the program
-    pub fn check_parse_args(&mut self, show_help_if_needed: bool) -> Result<bool, Box<dyn Error>> {
+    pub fn check_parse_args(&mut self, show_help_if_needed: bool) -> Result<bool, DumbError> {
         let in_args = self._prepare_in_args_from_os();
         let in_args = in_args.iter().map(|s| s.as_str()).collect();
         return self.check_process_args(in_args, show_help_if_needed);
@@ -476,7 +476,7 @@ impl DumbArgParser {
         &mut self,
         in_args: Vec<&str>,
         show_help_if_needed: bool,
-    ) -> Result<bool, Box<dyn Error>> {
+    ) -> Result<bool, DumbError> {
         self.input_arg_values.clear();
         self.input_arg_index_map.clear();
         self.input_multi_arg_data = None;
@@ -516,7 +516,7 @@ impl DumbArgParser {
             Ok(true)
         }
     }
-    fn _exit_program_after_check_parse(&self, check_parse_result: Result<bool, Box<dyn Error>>) {
+    fn _exit_program_after_check_parse(&self, check_parse_result: Result<bool, DumbError>) {
         match check_parse_result {
             Ok(ok) => {
                 if ok {
@@ -667,7 +667,7 @@ impl DumbArgParser {
         arg_idx: usize,
         arg_value: ArgValue,
         in_rest_args: Option<Vec<String>>,
-    ) -> Result<(), Box<dyn Error>> {
+    ) -> Result<(), String> {
         let arg = &self.args[arg_idx];
         DumbArgParser::_verify_arg_range(arg, &arg_value)?;
         // match &arg.range {
@@ -755,7 +755,7 @@ impl DumbArgParser {
         }
         Ok(())
     }
-    fn _verify_arg_range(arg: &Arg, arg_value: &ArgValue) -> Result<(), Box<dyn Error>> {
+    fn _verify_arg_range(arg: &Arg, arg_value: &ArgValue) -> Result<(), String> {
         match &arg.constraint {
             ArgConstraint::Enums(enum_values) => {
                 let mut found = false;
@@ -979,16 +979,16 @@ impl DumbArgParser {
     }
 }
 
-#[derive(Debug)]
-pub struct DumbArgError {
-    message: String,
-}
-impl Error for DumbArgError {}
-impl fmt::Display for DumbArgError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.message)
-    }
-}
+// #[derive(Debug)]
+// pub struct DumbArgError {
+//     message: String,
+// }
+// impl Error for DumbArgError {}
+// impl fmt::Display for DumbArgError {
+//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+//         write!(f, "{}", self.message)
+//     }
+// }
 
 #[derive(Debug, Clone)]
 enum ArgKey {
@@ -1231,7 +1231,7 @@ impl DumbArgBuilder {
         self
     }
     /// add the argument object (argument specification) to the [`DumbArgParser`].
-    pub fn add_to(&self, parser: &mut DumbArgParser) -> Result<(), String> {
+    pub fn add_to(&self, parser: &mut DumbArgParser) -> Result<(), DumbError> {
         let key = self._to_key()?;
         parser.add_arg(Arg::new(
             key,
@@ -1277,7 +1277,7 @@ impl DumbArgBuilder {
         } else {
             s_name.unwrap()
         };
-        return Ok(ArgKey::Flags(name, self.name_or_flags.clone()));
+        Ok(ArgKey::Flags(name, self.name_or_flags.clone()))
     }
 }
 
