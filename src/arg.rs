@@ -6,7 +6,10 @@
 use core::panic;
 use std::{
     collections::{btree_map::Values, HashMap},
-    env, fmt, i32,
+    env,
+    error::Error,
+    fmt::{self, Formatter},
+    i32,
     num::ParseIntError,
     path::Path,
 };
@@ -413,7 +416,7 @@ impl DumbArgParser {
         arg_name: &str,
         parser: &mut DumbArgParser,
         show_help_if_needed: bool,
-    ) -> Result<bool, String> {
+    ) -> Result<bool, Box<dyn Error>> {
         let rest = self.get_rest(arg_name);
         if rest.is_none() {
             panic!("no \"rest\" multi-argument for [{}] found", arg_name);
@@ -430,7 +433,7 @@ impl DumbArgParser {
         self.process_args(in_args);
     }
     /// like [`DumbArgParser::parse_args`] but returns a [`Result`] instead of exiting the program
-    pub fn check_parse_args(&mut self, show_help_if_needed: bool) -> Result<bool, String> {
+    pub fn check_parse_args(&mut self, show_help_if_needed: bool) -> Result<bool, Box<dyn Error>> {
         let in_args = self._prepare_in_args_from_os();
         let in_args = in_args.iter().map(|s| s.as_str()).collect();
         return self.check_process_args(in_args, show_help_if_needed);
@@ -440,7 +443,8 @@ impl DumbArgParser {
         self._show_help(&flag_args, &position_args, &err_msg);
         if (and_exit) {
             let check_parse_result = match err_msg {
-                Some(err) => Err(err.clone()),
+                //Some(err) => Err(err.clone()),
+                Some(err) => Err(err.into()),
                 None => Ok(false),
             };
             self._exit_program_after_check_parse(check_parse_result);
@@ -472,7 +476,7 @@ impl DumbArgParser {
         &mut self,
         in_args: Vec<&str>,
         show_help_if_needed: bool,
-    ) -> Result<bool, String> {
+    ) -> Result<bool, Box<dyn Error>> {
         self.input_arg_values.clear();
         self.input_arg_index_map.clear();
         self.input_multi_arg_data = None;
@@ -497,14 +501,14 @@ impl DumbArgParser {
         }
         let (need_help, err_msg) = match self._scan_args(in_args) {
             Ok((show_help, err_msg)) => (show_help, err_msg),
-            Err(err_msg) => (false, Some(err_msg)),
+            Err(err_msg) => (false, Some(err_msg.to_string())),
         };
         if need_help || err_msg.is_some() {
             if show_help_if_needed {
                 self._show_help(&flag_args, &position_args, &err_msg);
             }
             if let Some(err_msg) = err_msg {
-                return Err(err_msg);
+                return Err(err_msg.into());
             } else {
                 return Ok(false);
             }
@@ -512,7 +516,7 @@ impl DumbArgParser {
             Ok(true)
         }
     }
-    fn _exit_program_after_check_parse(&self, check_parse_result: Result<bool, String>) {
+    fn _exit_program_after_check_parse(&self, check_parse_result: Result<bool, Box<dyn Error>>) {
         match check_parse_result {
             Ok(ok) => {
                 if ok {
@@ -536,7 +540,7 @@ impl DumbArgParser {
             }
         }
     }
-    fn _scan_args(&mut self, in_args: Vec<&str>) -> Result<(bool, Option<String>), String> {
+    fn _scan_args(&mut self, in_args: Vec<&str>) -> Result<(bool, Option<String>), Box<dyn Error>> {
         let mut err_msg: Option<String> = None;
         let mut pos_idx: usize = 0;
         let in_args_len = in_args.len(); // if nothing provided, show help
@@ -663,7 +667,7 @@ impl DumbArgParser {
         arg_idx: usize,
         arg_value: ArgValue,
         in_rest_args: Option<Vec<String>>,
-    ) -> Result<(), String> {
+    ) -> Result<(), Box<dyn Error>> {
         let arg = &self.args[arg_idx];
         DumbArgParser::_verify_arg_range(arg, &arg_value)?;
         // match &arg.range {
@@ -712,7 +716,7 @@ impl DumbArgParser {
                     let rest_arg_value = match arg.from_value(in_rest_arg) {
                         Ok(rest_arg_value) => rest_arg_value,
                         Err(err) => {
-                            return Err(err);
+                            return Err(err.into());
                         }
                     };
                     DumbArgParser::_verify_arg_range(arg, &rest_arg_value)?;
@@ -751,7 +755,7 @@ impl DumbArgParser {
         }
         Ok(())
     }
-    fn _verify_arg_range(arg: &Arg, arg_value: &ArgValue) -> Result<(), String> {
+    fn _verify_arg_range(arg: &Arg, arg_value: &ArgValue) -> Result<(), Box<dyn Error>> {
         match &arg.constraint {
             ArgConstraint::Enums(enum_values) => {
                 let mut found = false;
@@ -774,7 +778,8 @@ impl DumbArgParser {
                         "[{}] doesn't match any of the enum values [{}]",
                         arg_value.to_string(),
                         values
-                    ));
+                    )
+                    .into());
                 }
             }
             ArgConstraint::Range(min, max) => {
@@ -784,7 +789,8 @@ impl DumbArgParser {
                         arg_value.to_string(),
                         min,
                         max
-                    ));
+                    )
+                    .into());
                 }
             }
             ArgConstraint::None => {}
@@ -970,6 +976,17 @@ impl DumbArgParser {
         } else {
             "<program>".to_string()
         }
+    }
+}
+
+#[derive(Debug)]
+pub struct DumbArgError {
+    message: String,
+}
+impl Error for DumbArgError {}
+impl fmt::Display for DumbArgError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.message)
     }
 }
 

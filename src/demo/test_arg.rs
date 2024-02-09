@@ -13,7 +13,10 @@ fn test_missing_args() {
     dap_arg!("i32", value = 0).add_to(&mut parser).unwrap();
     dap_arg!("miss", value = 0).add_to(&mut parser).unwrap();
     let process_res = parser.check_process_args(vec!["123"], true);
-    assert_eq!("argument [miss] not provided", process_res.unwrap_err());
+    assert_eq!(
+        "argument [miss] not provided",
+        process_res.unwrap_err().to_string()
+    );
 }
 #[test]
 fn test_missing_arg_flags() {
@@ -22,7 +25,10 @@ fn test_missing_arg_flags() {
     dap_arg!("-miss", value = 0).add_to(&mut parser);
     dap_arg!("i32", value = 0).add_to(&mut parser);
     let process_res = parser.check_process_args(vec!["123"], true);
-    assert_eq!("argument [-miss] not provided", process_res.unwrap_err());
+    assert_eq!(
+        "argument [-miss] not provided",
+        process_res.unwrap_err().to_string()
+    );
 }
 #[test]
 fn test_allow_missing_arg_flags() {
@@ -43,11 +49,14 @@ fn test_invalid_arg() {
         let mut parser = DumbArgParser::new();
         dap_arg!("i32", value = 0).add_to(&mut parser);
         let process_res = parser.check_process_args(vec!["abc"], true);
-        assert_eq!("failed to parse \"abc\" as i32", process_res.unwrap_err());
+        assert_eq!(
+            "failed to parse \"abc\" as i32",
+            process_res.unwrap_err().to_string()
+        );
         let process_res = parser.check_process_args(vec!["123", "456"], true);
         assert_eq!(
             "unacceptable input argument [456]",
-            process_res.unwrap_err()
+            process_res.unwrap_err().to_string()
         );
     }
 }
@@ -167,10 +176,13 @@ fn test_arg_range() {
         let process_res = parser.check_process_args(vec!["-f", "1000"], true);
         assert_eq!(
             "[1000] is out of range [100, 200]",
-            process_res.unwrap_err()
+            process_res.unwrap_err().to_string()
         );
         let process_res = parser.check_process_args(vec!["-f", "50"], true);
-        assert_eq!("[50] is out of range [100, 200]", process_res.unwrap_err());
+        assert_eq!(
+            "[50] is out of range [100, 200]",
+            process_res.unwrap_err().to_string()
+        );
     }
 }
 #[test]
@@ -182,9 +194,15 @@ fn test_arg_string_range() {
     assert_eq!("ccc", parser.get::<String>("-f").unwrap());
     if true {
         let process_res = parser.check_process_args(vec!["-f", "aaa"], true);
-        assert_eq!("[aaa] is out of range [bbb, ddd]", process_res.unwrap_err());
+        assert_eq!(
+            "[aaa] is out of range [bbb, ddd]",
+            process_res.unwrap_err().to_string()
+        );
         let process_res = parser.check_process_args(vec!["-f", "eee"], true);
-        assert_eq!("[eee] is out of range [bbb, ddd]", process_res.unwrap_err());
+        assert_eq!(
+            "[eee] is out of range [bbb, ddd]",
+            process_res.unwrap_err().to_string()
+        );
     }
 }
 #[test]
@@ -200,7 +218,7 @@ fn test_arg_enum() {
         let process_res = parser.check_process_args(vec!["-f", "1000"], true);
         assert_eq!(
             "[1000] doesn't match any of the enum values [100, 200]",
-            process_res.unwrap_err()
+            process_res.unwrap_err().to_string()
         );
     }
 }
@@ -215,7 +233,7 @@ fn test_arg_string_enum() {
         let process_res = parser.check_process_args(vec!["-f", "aaa"], true);
         assert_eq!(
             "[aaa] doesn't match any of the enum values [A, B]",
-            process_res.unwrap_err()
+            process_res.unwrap_err().to_string()
         );
     }
 }
@@ -257,7 +275,7 @@ fn test_multi_arg() {
         let process_res = parser.check_process_args(vec!["-f", "20", "123", "300"], true);
         assert_eq!(
             "[123] doesn't match any of the enum values [1, 20, 300]",
-            process_res.unwrap_err()
+            process_res.unwrap_err().to_string()
         );
     }
 }

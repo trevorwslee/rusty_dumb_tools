@@ -7,6 +7,7 @@ use core::fmt;
 use std::{
     cmp,
     collections::{HashMap, HashSet},
+    error::Error,
     path::Display,
 };
 
@@ -268,7 +269,10 @@ impl DumbLineTemplate {
     /// ]);
     /// let line = ltemp.format(&map).unwrap();
     /// ```
-    pub fn format<T: LineTempCompMapValueTrait>(&self, value_mapper: &T) -> Result<String, String> {
+    pub fn format<T: LineTempCompMapValueTrait>(
+        &self,
+        value_mapper: &T,
+    ) -> Result<String, Box<dyn Error>> {
         let map_value_fn = |key: &str| -> Option<(T::VALUE, WIDTH)> {
             let mapped_value = value_mapper.map_value(key);
             match mapped_value {
@@ -283,7 +287,7 @@ impl DumbLineTemplate {
     pub fn format_ex<T: fmt::Display, F: Fn(&str) -> Option<(T, WIDTH)>>(
         &self,
         map_value_fn: F,
-    ) -> Result<String, String> {
+    ) -> Result<String, Box<dyn Error>> {
         // let map = map
         // .iter()
         // .map(|(k, v)| (k.to_string(), v.to_string()))
@@ -312,7 +316,8 @@ impl DumbLineTemplate {
                                 return Err(format!(
                                     "missing required key: {}",
                                     mapped_comp.get_map_key()
-                                ));
+                                )
+                                .into());
                             }
                         }
                     };
@@ -383,7 +388,8 @@ impl DumbLineTemplate {
                             return Err(format!(
                                 "too big a line ... {} extra, on top of min {}",
                                 remain_width_to_add, self.min_width
-                            ));
+                            )
+                            .into());
                         }
                         loop_total_mapped_room -=
                             (loop_total_width_to_add - remain_width_to_add) as u64;
@@ -412,7 +418,8 @@ impl DumbLineTemplate {
                         return Err(format!(
                             "too big a line ... {} extra, on top of min {}",
                             remain_width_to_add, self.min_width
-                        ));
+                        )
+                        .into());
                     }
                 }
             } else if total_need_width > self.max_width {
@@ -459,7 +466,8 @@ impl DumbLineTemplate {
                             return Err(format!(
                                 "too small a line ... still need {}, on top of max {}",
                                 remain_width_to_reduce, self.max_width
-                            ));
+                            )
+                            .into());
                         }
                         loop_total_mapped_room -=
                             (loop_total_width_to_reduce - remain_width_to_reduce) as u64;
@@ -489,7 +497,8 @@ impl DumbLineTemplate {
                         return Err(format!(
                             "too small a line ... still need {}, on top of max {}",
                             remain_width_to_reduce, self.max_width
-                        ));
+                        )
+                        .into());
                     }
                 }
             }
@@ -576,6 +585,17 @@ impl DumbLineTemplate {
 //         }
 //     }
 // }
+
+#[derive(Debug)]
+pub struct LineTemplateError {
+    message: String,
+}
+impl Error for LineTemplateError {}
+impl fmt::Display for LineTemplateError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.message)
+    }
+}
 
 pub trait LineTempCompMapValueTrait {
     type VALUE: fmt::Display;

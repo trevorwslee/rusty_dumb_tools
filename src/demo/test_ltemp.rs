@@ -71,7 +71,7 @@ fn test_ltemp_over() {
     let formatted = ltemp.format(&map);
     assert!(formatted.is_err());
     assert_eq!(
-        formatted.err().unwrap(),
+        formatted.err().unwrap().to_string(),
         "too small a line ... still need 8, on top of max 10"
     );
 }
@@ -113,7 +113,7 @@ fn test_ltemp_under() {
     let formatted = ltemp.format(&map);
     assert!(formatted.is_err());
     assert_eq!(
-        formatted.err().unwrap(),
+        formatted.err().unwrap().to_string(),
         "too big a line ... 25 extra, on top of min 50"
     );
 }
