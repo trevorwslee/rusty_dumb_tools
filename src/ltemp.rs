@@ -48,7 +48,7 @@ type WIDTH = u16;
 ///   - also see the macro [`crate::dltc!`]
 #[macro_export]
 macro_rules! dlt_comps {
-  ($($x:expr),*$(,)?) => {{
+  ($($x:expr$(,)?)*) => {{
     let mut comps: Vec<LineTempComp> = Vec::new();
     $(
       let comp = $x.to_line_temp_comp();
@@ -209,11 +209,11 @@ impl DumbLineTemplate {
         }
     }
     /// the same as [`DumbLineTemplate::new`] but with fixed width
-    pub fn new_fixed_width(fixed_width: WIDTH, components: &Vec<LineTempComp>) -> DumbLineTemplate {
+    pub fn new_fixed_width(fixed_width: WIDTH, components: &[LineTempComp]) -> DumbLineTemplate {
         DumbLineTemplate {
             min_width: fixed_width,
             max_width: fixed_width,
-            components: components.clone(),
+            components: components.to_vec(),
         }
     }
     pub fn min_width(&self) -> WIDTH {
@@ -571,30 +571,42 @@ pub trait LineTempCompMapValueTrait {
     type VALUE: fmt::Display;
     fn map_value(&self, key: &str) -> Option<(Self::VALUE, WIDTH)>;
 }
-impl LineTempCompMapValueTrait for HashMap<&str, String> {
+impl<T: AsRef<str>> LineTempCompMapValueTrait for HashMap<&str, T> {
     type VALUE = String;
     fn map_value(&self, key: &str) -> Option<(String, WIDTH)> {
         let value = self.get(key);
         if let Some(value) = value {
-            //let value = value.unwrap();
-            Some((value.clone(), value.len() as WIDTH))
-        } else {
-            None
-        }
-    }
-}
-impl LineTempCompMapValueTrait for HashMap<&str, &str> {
-    type VALUE = String;
-    fn map_value(&self, key: &str) -> Option<(String, WIDTH)> {
-        let value = self.get(key);
-        if let Some(value) = value {
-            //let value = value.unwrap();
+            let value = value.as_ref();
             Some((value.to_string(), value.len() as WIDTH))
         } else {
             None
         }
     }
 }
+// impl LineTempCompMapValueTrait for HashMap<&str, String> {
+//     type VALUE = String;
+//     fn map_value(&self, key: &str) -> Option<(String, WIDTH)> {
+//         let value = self.get(key);
+//         if let Some(value) = value {
+//             //let value = value.unwrap();
+//             Some((value.clone(), value.len() as WIDTH))
+//         } else {
+//             None
+//         }
+//     }
+// }
+// impl LineTempCompMapValueTrait for HashMap<&str, &str> {
+//     type VALUE = String;
+//     fn map_value(&self, key: &str) -> Option<(String, WIDTH)> {
+//         let value = self.get(key);
+//         if let Some(value) = value {
+//             //let value = value.unwrap();
+//             Some((value.to_string(), value.len() as WIDTH))
+//         } else {
+//             None
+//         }
+//     }
+// }
 
 // trait LineTempCompTrait {
 //     fn get_min_width(&self) -> u32 {
@@ -963,18 +975,6 @@ impl MappedLineTempComp {
 pub trait LineTempCompTrait {
     fn to_line_temp_comp(&self) -> LineTempComp;
 }
-// impl LineTempCompTrait for Option<LineTempComp> {
-//     fn to_line_temp_comp(&self) -> LineTempComp {
-//         let temp_line_comp = self.take();
-//         temp_line_comp.unwrap()
-//     }
-// }
-// impl LineTempCompTrait for Box<LineTempComp> {
-//     fn to_line_temp_comp(&self) -> LineTempComp {
-//         let temp_line_comp = **self;
-//         temp_line_comp
-//     }
-// }
 impl LineTempCompTrait for MappedLineTempCompBuilder {
     fn to_line_temp_comp(&self) -> LineTempComp {
         let mapped_line_temp_comp = self.build();
@@ -986,7 +986,6 @@ impl LineTempCompTrait for String {
         LineTempComp::Fixed(self.clone(), self.len() as WIDTH)
     }
 }
-
 impl LineTempCompTrait for &'static str {
     fn to_line_temp_comp(&self) -> LineTempComp {
         LineTempComp::Fixed(self.to_string(), self.len() as WIDTH)
@@ -1002,51 +1001,3 @@ impl LineTempCompTrait for (&'static str, usize) {
         LineTempComp::Fixed(self.0.to_string(), self.1 as WIDTH)
     }
 }
-
-// impl LineTempCompTrait for MappedLineTempComp {
-//     fn get_min_width(&self) -> u32 {
-//         self.min_width
-//     }
-//     fn get_max_width(&self) -> u32 {
-//         self.max_width
-//     }
-// }
-// impl MappedLineTempCompTrait for MappedLineTempComp {
-//     fn is_optional(&self) -> bool {
-//         self.optional
-//     }
-//     fn get_map_key(&self) -> &str {
-//         &self.key
-//     }
-//     fn get_needed_width(&self, map_value: &str) -> u32 {
-//         unimplemented!("get_needed_width");
-//     }
-// }
-
-// impl LineTempCompTrait for String {
-//     fn get_min_width(&self) -> u32 {
-//         self.len() as u32
-//     }
-//     fn get_max_width(&self) -> u32 {
-//         self.len() as u32
-//     }
-// }
-// impl FixedLineTempCompTrait for String {
-//     fn get_fixed_width(&self) -> u32 {
-//         self.len() as u32
-//     }
-// }
-
-// impl LineTempCompTrait for &'static str {
-//   fn get_min_width(&self) -> u32 {
-//       self.len() as u32
-//   }
-//   fn get_max_width(&self) -> u32 {
-//       self.len() as u32
-//   }
-// }
-// impl FixedLineTempCompTrait for &'static str {
-//   fn get_fixed_width(&self) -> u32 {
-//       self.len() as u32
-//   }
-// }

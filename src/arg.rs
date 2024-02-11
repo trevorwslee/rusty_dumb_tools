@@ -1455,9 +1455,5 @@ impl ArgValueTrait for &'static str {
     }
     fn from_arg_value(arg_value: ArgValue) -> Result<Box<&'static str>, String> {
         panic!("not expected to be called");
-        // match arg_value {
-        //     ArgValue::StaticStr(v) => Ok(Box::new(v)),
-        //     _ => Err(format!("value {:?} is not of type &str", arg_value)),
-        // }
     }
 }

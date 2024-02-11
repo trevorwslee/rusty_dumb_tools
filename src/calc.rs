@@ -174,7 +174,7 @@ impl DumbCalcProcessor {
         let unit = unit.trim();
         if unit == "=" {
             self.evaluate();
-            return Ok(());
+            Ok(())
         } else {
             let push_unit = DumbCalcProcessor::_to_unit(unit);
             let push_unit = match push_unit {
@@ -233,7 +233,7 @@ impl DumbCalcProcessor {
             } else {
                 //println!("!!!!! {:?}", stack.last());
                 let scanned = &self.calc_impl.scanned;
-                if scanned.len() > 0 {
+                if !scanned.is_empty() {
                     let intermediate_result = scanned.last().unwrap();
                     CalcResult::Intermediate(*intermediate_result)
                 } else {
@@ -244,11 +244,11 @@ impl DumbCalcProcessor {
     }
     /// return the last input "calculation unit", only if it is an operator
     pub fn get_last_operator(&self) -> Option<String> {
-        return self.calc_impl.get_last_operator();
+        self.calc_impl.get_last_operator()
     }
     /// count and return the number of opened brackets
     pub fn count_opened_brackets(&self) -> u16 {
-        return self.calc_impl.count_opened_brackets();
+        self.calc_impl.count_opened_brackets()
     }
     /// reset for new input
     pub fn reset(&mut self) {
@@ -395,11 +395,12 @@ fn _to_next_unit_token(mut idx: usize, s: &Vec<char>) -> Option<(usize, usize)> 
     }
     if start_idx == -1 {
         if idx == end_idx {
-            return Some((end_idx, idx));
+            Some((end_idx, idx))
+        } else {
+            None
         }
-        return None;
     } else {
-        return Some((start_idx as usize, end_idx));
+        Some((start_idx as usize, end_idx))
     }
 }
 
@@ -422,7 +423,7 @@ impl CalcImpl {
     fn push(&mut self, push_unit: Unit) {
         //println!("* {:?}", push_unit);
         let last_pushed = self.last_pushed;
-        self.last_pushed = Some(push_unit.clone());
+        self.last_pushed = Some(push_unit);
         match last_pushed {
             Some(last_pushed_unit) => match last_pushed_unit {
                 Unit::Operand(_) => {
@@ -467,7 +468,7 @@ impl CalcImpl {
         match push_unit {
             Unit::OpenBracket => {
                 // if the scanned character is a left parenthesis, push it onto the stack
-                self.stack.push(push_unit.clone());
+                self.stack.push(push_unit);
             }
             Unit::CloseBracket => {
                 // if the scanned character is a right parenthesis, pop operators from the stack and append them to the postfix expression until a left parenthesis is found
@@ -482,7 +483,7 @@ impl CalcImpl {
             }
             Unit::Operator(op) => {
                 let order = op.get_order();
-                while self.stack.len() > 0 {
+                while !self.stack.is_empty() {
                     let stack_unit = self.stack.last().unwrap();
                     match stack_unit {
                         Unit::Operator(stack_unit_op) => {
@@ -510,7 +511,7 @@ impl CalcImpl {
     fn eval(&mut self) {
         self.last_pushed = None;
         self._push_all_to_scanned(false);
-        self.result = if self.scanned.len() > 0 {
+        self.result = if !self.scanned.is_empty() {
             if self.scanned.len() != 1 {
                 panic!("'scanned' should have a single element ... self={:?}", self);
             }
@@ -698,7 +699,7 @@ impl Op {
         }
     }
     fn is_unary(&self) -> bool {
-        return *self == Op::NEGATE
+        *self == Op::NEGATE
             || *self == Op::COS
             || *self == Op::SIN
             || *self == Op::TAN
@@ -713,10 +714,10 @@ impl Op {
             || *self == Op::EXP
             || *self == Op::MOD
             || *self == Op::ABS
-            || *self == Op::PERCENT;
+            || *self == Op::PERCENT
     }
     fn is_binary(&self) -> bool {
-        return !self.is_unary();
+        !self.is_unary()
     }
     fn evaluate_unary(&self, operand: f64) -> f64 {
         match *self {

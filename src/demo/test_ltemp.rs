@@ -222,3 +222,53 @@ fn test_ltemp_truncate() {
         .unwrap();
     assert_eq!(formatted, "01234…");
 }
+#[test]
+fn test_ltemp_multi_line() {
+    let lt_comps = dlt_comps!["ABC"];
+    let ltemp = DumbLineTemplate::new(0, 100, &lt_comps);
+    let formatted = ltemp.format(&HashMap::<&str, &str>::new()).unwrap();
+    assert_eq!(formatted, "ABC");
+ 
+    let lt_comps = dlt_comps!["ABC   \
+            DEF"];
+    let ltemp = DumbLineTemplate::new(0, 100, &lt_comps);
+    let formatted = ltemp.format(&HashMap::<&str, &str>::new()).unwrap();
+    assert_eq!(formatted, "ABC   DEF");
+    let lt_comps = dlt_comps!["ABC
+   \tDEF"];
+    let ltemp = DumbLineTemplate::new(0, 100, &lt_comps);
+    let formatted = ltemp.format(&HashMap::<&str, &str>::new()).unwrap();
+    assert_eq!(formatted, "ABC\n   \tDEF");
+
+    let lt_comps = dlt_comps![dltc!("key")];
+    let ltemp = DumbLineTemplate::new(0, 100, &lt_comps);
+    let formatted = ltemp.format(&HashMap::from([("key", "abc  \
+  def")])).unwrap();
+    assert_eq!(formatted, "abc  def");
+
+    let lt_comps = dlt_comps![dltc!("key")];
+    let ltemp = DumbLineTemplate::new(0, 100, &lt_comps);
+    let formatted = ltemp.format(&HashMap::from([("key", "abc
+  \tdef")])).unwrap();
+    assert_eq!(formatted, "abc\n  \tdef");
+
+    let lt_comps = dlt_comps!["ABC
+  \tDEF" dltc!("key"), "GHI"];
+    let ltemp = DumbLineTemplate::new(0, 100, &lt_comps);
+    let formatted = ltemp.format(&HashMap::from([("key", "abc
+  \tdef")])).unwrap();
+    assert_eq!(formatted, "ABC\n  \tDEFabc\n  \tdefGHI");
+}
+#[test]
+fn test_ltemp_macro() {
+    let lt_comps = dlt_comps!["ABC" , "DEF" , dltc!("key") , "GHI",];
+    let ltemp = DumbLineTemplate::new(0, 100, &lt_comps);
+    let formatted = ltemp.format(&HashMap::from([("key", "abc")])).unwrap();
+    assert_eq!(formatted, "ABCDEFabcGHI");
+
+    let lt_comps = dlt_comps!["ABC" "DEF" dltc!("key") "GHI"];
+    let ltemp = DumbLineTemplate::new(0, 100, &lt_comps);
+    let formatted = ltemp.format(&HashMap::from([("key", "abc")])).unwrap();
+    assert_eq!(formatted, "ABCDEFabcGHI");
+}
+

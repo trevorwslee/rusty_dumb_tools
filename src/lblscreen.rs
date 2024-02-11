@@ -303,30 +303,42 @@ pub trait LBLScreenMapValueTrait {
     type VALUE: fmt::Display;
     fn map_value(&self, key: &str) -> Option<(Self::VALUE, u16)>;
 }
-impl LBLScreenMapValueTrait for HashMap<&str, String> {
+impl<T: AsRef<str>> LBLScreenMapValueTrait for HashMap<&str, T> {
     type VALUE = String;
     fn map_value(&self, key: &str) -> Option<(String, u16)> {
         let value = self.get(key);
         if let Some(value) = value {
-            //let value = value.unwrap();
-            Some((value.clone(), value.len() as u16))
-        } else {
-            None
-        }
-    }
-}
-impl LBLScreenMapValueTrait for HashMap<&str, &str> {
-    type VALUE = String;
-    fn map_value(&self, key: &str) -> Option<(String, u16)> {
-        let value = self.get(key);
-        if let Some(value) = value {
-            //let value = value.unwrap();
+            let value = value.as_ref();
             Some((value.to_string(), value.len() as u16))
         } else {
             None
         }
     }
 }
+// impl LBLScreenMapValueTrait for HashMap<&str, String> {
+//     type VALUE = String;
+//     fn map_value(&self, key: &str) -> Option<(String, u16)> {
+//         let value = self.get(key);
+//         if let Some(value) = value {
+//             //let value = value.unwrap();
+//             Some((value.clone(), value.len() as u16))
+//         } else {
+//             None
+//         }
+//     }
+// }
+// impl LBLScreenMapValueTrait for HashMap<&str, &str> {
+//     type VALUE = String;
+//     fn map_value(&self, key: &str) -> Option<(String, u16)> {
+//         let value = self.get(key);
+//         if let Some(value) = value {
+//             //let value = value.unwrap();
+//             Some((value.to_string(), value.len() as u16))
+//         } else {
+//             None
+//         }
+//     }
+// }
 
 // use crossterm::cursor;
 

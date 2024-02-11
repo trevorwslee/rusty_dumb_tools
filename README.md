@@ -156,6 +156,9 @@ MIT
 
 # Change History:
 
+* v0.1.5
+  - bug fix
+
 * v0.1.4
   - bug fix
 
