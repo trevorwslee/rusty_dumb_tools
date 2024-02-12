@@ -9,10 +9,16 @@ pub mod demo_calculator;
 pub mod demo_lblscreen;
 pub mod demo_ltemp;
 
+#[cfg(test)]
 pub mod test_arg;
+#[cfg(test)]
 pub mod test_calc;
+#[cfg(test)]
 pub mod test_calculator;
+#[cfg(test)]
 pub mod test_ltemp;
+#[cfg(test)]
+pub mod test_lblscreen;
 
 use crate::prelude::*;
 

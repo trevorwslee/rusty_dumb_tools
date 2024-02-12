@@ -28,7 +28,7 @@ pub struct LBLScreenSettings {
     pub line_suffix: Option<String>,
     pub top_line: Option<String>,
     pub bottom_line: Option<String>,
-    //pub screen_height_adjustment: i32,
+    pub enable_line_cache: bool,
 }
 impl Default for LBLScreenSettings {
     fn default() -> Self {
@@ -37,7 +37,7 @@ impl Default for LBLScreenSettings {
             line_suffix: None,
             top_line: None,
             bottom_line: None,
-            //screen_height_adjustment: 0,
+            enable_line_cache: true,
         }
     }
 }
@@ -112,7 +112,7 @@ pub struct DumbLineByLineScreen {
     //line_start: usize,
     //screen_height: usize,
     line_keys: Vec<HashSet<String>>,
-    line_cache: RefCell<Vec<Option<String>>>,
+    line_cache: Option<RefCell<Vec<Option<String>>>>,
     initialized: bool,
 }
 impl DumbLineByLineScreen {
@@ -120,12 +120,15 @@ impl DumbLineByLineScreen {
     /// note that printing will start at the current cursor position (likely should be start of a line); as long as the cursor position is not changed externally,
     /// [`DumbLineByLineScreen`] will know where to update which "screen" lines when [`DumbLineByLineScreen::refresh`] / [`DumbLineByLineScreen::refresh_for_keys`] is called
     pub fn new(line_temps: Vec<DumbLineTemplate>, settings: LBLScreenSettings) -> Self {
+        let enable_line_cache = settings.enable_line_cache;
         let mut line_keys = Vec::new();
         let mut line_cache = Vec::new();
         for line_temp in &line_temps {
             let keys = line_temp.scan_for_keys();
             line_keys.push(keys);
-            line_cache.push(None::<String>);
+            if enable_line_cache {
+                line_cache.push(None::<String>);
+            }
         }
         let bottom_line_height = if let Some(bottom_line) = &settings.bottom_line {
             DumbLineByLineScreen::calc_line_height(bottom_line)
@@ -149,7 +152,11 @@ impl DumbLineByLineScreen {
             top_line: settings.top_line,
             bottom_line: settings.bottom_line,
             line_keys: line_keys,
-            line_cache: RefCell::new(line_cache),
+            line_cache: if enable_line_cache {
+                Some(RefCell::new(line_cache))
+            } else {
+                None
+            },
             bottom_line_height: bottom_line_height,
             //line_start: line_start,
             //screen_height: screen_height,
@@ -182,7 +189,9 @@ impl DumbLineByLineScreen {
     /// ...
     /// lbl_demo_screen.refresh(&state);
     /// ````
-    pub fn refresh<T: LBLScreenMapValueTrait>(&self, value_mapper: &T) {
+    ///
+    /// It returns the number of lines updated
+    pub fn refresh<T: LBLScreenMapValueTrait>(&self, value_mapper: &T) -> usize {
         if !self.initialized {
             panic!("must call init_screen() once first");
         }
@@ -195,14 +204,22 @@ impl DumbLineByLineScreen {
         };
         self.refresh_ex(map_value_fn)
     }
-    pub fn refresh_ex<T: fmt::Display, F: Fn(&str) -> Option<(T, u16)>>(&self, map_value_fn: F) {
+    /// the same as [`DumbLineByLineScreen::refresh`] but with a 'value mapper' function
+    pub fn refresh_ex<T: fmt::Display, F: Fn(&str) -> Option<(T, u16)>>(
+        &self,
+        map_value_fn: F,
+    ) -> usize {
         if !self.initialized {
             panic!("must call init_screen() once first");
         }
         self._update(None, map_value_fn)
     }
     /// refresh the screen assuming only the values of the given keys changed; it will be a bit faster, but in general, simply use[`DumbLineByLineScreen::refresh`] to refresh the whole "screen"
-    pub fn refresh_for_keys<T: LBLScreenMapValueTrait>(&self, keys: &Vec<&str>, value_mapper: &T) {
+    pub fn refresh_for_keys<T: LBLScreenMapValueTrait>(
+        &self,
+        keys: &Vec<&str>,
+        value_mapper: &T,
+    ) -> usize {
         if !self.initialized {
             panic!("must call init_screen() once first");
         }
@@ -219,7 +236,7 @@ impl DumbLineByLineScreen {
         &self,
         keys: &Vec<&str>,
         map_value_fn: F,
-    ) {
+    ) -> usize {
         if !self.initialized {
             panic!("must call init_screen() once first");
         }
@@ -238,7 +255,7 @@ impl DumbLineByLineScreen {
         &self,
         keys: Option<&Vec<&str>>,
         map_value_fn: F,
-    ) {
+    ) -> usize {
         if self.initialized {
             //print!("\x1B[{}A", self.screen_height);
             print!("\x1B[{}A", self.line_temps.len() + self.bottom_line_height);
@@ -251,6 +268,7 @@ impl DumbLineByLineScreen {
         // if let Some(top_line) = &self.top_line {
         //     println!("{}", top_line);
         // }
+        let mut updated_line_count = 0;
         for (index, line_temp) in self.line_temps.iter().enumerate() {
             let refresh_line = if let Some(keys) = keys {
                 let line_keys = &self.line_keys[index];
@@ -269,13 +287,18 @@ impl DumbLineByLineScreen {
                 let line = line_temp
                     .format_ex(map_value_fn)
                     .expect(format!("line[{}]", index).as_str());
-                let cache = &mut self.line_cache.borrow_mut();
-                let cached_line = cache.get_mut(index).unwrap();
-                let line = if cached_line.is_none() || cached_line.as_ref().unwrap() != &line {
-                    cached_line.replace(line.clone());
-                    Some(line)
-                } else {
-                    None
+                let line = match &self.line_cache {
+                    Some(line_cache) => {
+                        let cache = &mut line_cache.borrow_mut();
+                        let cached_line = cache.get_mut(index).unwrap();
+                        if cached_line.is_none() || cached_line.as_ref().unwrap() != &line {
+                            cached_line.replace(line.clone());
+                            Some(line)
+                        } else {
+                            None
+                        }
+                    }
+                    None => Some(line),
                 };
                 if let Some(line) = line {
                     print!("\x1B[0K");
@@ -286,6 +309,7 @@ impl DumbLineByLineScreen {
                     if let Some(line_suffix) = &self.line_suffix {
                         print!("{}", line_suffix);
                     }
+                    updated_line_count += 1;
                 }
             }
             println!("\r")
@@ -296,6 +320,7 @@ impl DumbLineByLineScreen {
         // if let Some(bottom_line) = &self.bottom_line {
         //     println!("{}", bottom_line);
         // }
+        updated_line_count
     }
 }
 

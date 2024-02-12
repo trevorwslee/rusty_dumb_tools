@@ -1,4 +1,4 @@
-# RustyDumbTools (v0.1.4)
+# RustyDumbTools (v0.1.5)
 
 A collection of simple tools in ***Rust*** as ***Rust*** modules:
 * `crate::arg::DumbArgParser`: A simple argument parser.
@@ -43,8 +43,6 @@ the demo can be ***cargo*** run like
   which in turn will show how to use `DumbCalcProcessor` for performing calculation of the sub-command arguments
 * `cargo run -- calc-repl`
   <br>the above demonstrates how to invoke the sub-command `calc-repl`, which in turn show how `DumbCalcProcessor` like a REPL
-* `cargo run -- calculator` or `cargo run -- calculator rich` 
-  <br>the above demonstrate to use `DumbCalculator` and `DumbLineByLineScreen` to implement a simple text-based calculator (UI)
 * `cargo run -- ltemp Trevor`
   <br>the above demonstrates how to use `DumbLineTemplate` to format lines to show data
 * `cargo run -- lblscreen`
@@ -122,22 +120,12 @@ after 20 seconds, when 100% done, the screen will be like
 ----------------------------------------
 ```
 
-After running `cargo run -- calculator`, the simple text-based calculator UI will be like
+# Additional Demos
 
-```
-* arrow keys to move selected key
-* space key to commit selected key
-* can press corresponding keys directly
-* note that 'c' is the same as 'C' and the enter key is the same as '='
+* [DumbCalculator Text-based Demo](demos/text_based_calculator/README.md)
+* [DumbCalculator Web-based Demo](demos/web_based_calculator/README.md)
 
-        ===============
-        |           0 |                                                                                                                                                          
-        | 7 8 9 |  C  |                                                                                                                                                          
-        | 4 5 6 | * / |                                                                                                                                                          
-        | 1 2 3 | + - |                                                                                                                                                          
-        | % 0 . |  =  |                                                                                                                                                          
-        ===============
-```
+
 
 # Thank You!
 
@@ -158,6 +146,8 @@ MIT
 
 * v0.1.5
   - bug fix
+  - moved demo code around
+  - added web-based calculator 
 
 * v0.1.4
   - bug fix

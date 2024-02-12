@@ -338,7 +338,7 @@ impl DumbArgParser {
             Err(err) => panic!("{}", err),
         }
     }
-    // like [`DumbArgParser::get`] but returns a [`String`]
+    /// like [`DumbArgParser::get`] but returns a [`String`]
     pub fn get_string(&self, arg_name: &str) -> Option<String> {
         self.get::<String>(arg_name)
     }

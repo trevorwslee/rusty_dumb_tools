@@ -1,10 +1,10 @@
 use rusty_dumb_tools::demo;
 
-use crate::{arg::DumbArgBuilder, arg::DumbArgParser, calc, sap_arg};
+use rusty_dumb_tools::prelude::*;
 
 pub fn debug_calc_processor() {
     println!("DumbCalc:");
-    let mut calc = calc::DumbCalcProcessor::new();
+    let mut calc = DumbCalcProcessor::new();
 
     println!("2");
     calc.push("2").unwrap();

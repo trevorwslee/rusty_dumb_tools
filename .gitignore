@@ -1,5 +1,6 @@
-/target
+target
 
+.vscode
 /venv
-test.py
-test.ipynb
+/test.py
+/test.ipynb

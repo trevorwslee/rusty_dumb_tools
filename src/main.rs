@@ -8,14 +8,9 @@ mod debug;
 
 use std::{collections::HashMap, env, vec};
 
-use crossterm::style::Colorize;
-use rusty_dumb_tools::{
-    arg::{self, DumbArgBuilder, DumbArgParser},
-    calc::{self, DumbCalcProcessor},
-    demo, dlt_comps, dltc,
-    ltemp::{LineTempComp, LineTempCompTrait, MappedLineTempCompBuilder},
-    sap_arg,
-};
+//use crossterm::style::Colorize;
+use rusty_dumb_tools::{demo, prelude::*};
+
 
 // fn test_ltemp_align() {
 //     let lt_comps = dlt_comps![
@@ -166,15 +161,6 @@ fn test_chars() {
 
     // [dependencies]
     // unicode-segmentation = "1.8.0"
-    if false {
-        println!("{} :({}):{} ", "1️⃣", "1️⃣".len(), "123".red());
-        for i in 0..=9 {
-            let v = i + 0x277f;
-            let char1 = std::char::from_u32(v).unwrap();
-            print!("{} ", char1);
-        }
-        println!();
-    }
 
     if false {
         // ➕➖✖️➗🟰🇦🇨▪%±

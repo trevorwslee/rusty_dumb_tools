@@ -1,44 +1,34 @@
-//! core [`crate::calculator`] sub-demo code
-
 #![deny(warnings)]
 #![allow(unused)]
 
 use std::{collections::HashMap, fmt, io, thread, time::Duration};
 
-// use crossterm::{
-//     event::{read, Event, KeyCode},
-//     style::Colorize,
-//     terminal::{disable_raw_mode, enable_raw_mode},
-// };
+use crossterm::{
+    event::{read, Event, KeyCode},
+    style::Colorize,
+    terminal::{disable_raw_mode, enable_raw_mode},
+};
 
-use crate::prelude::*;
+use rusty_dumb_tools::prelude::*;
 
-pub fn create_demo_parser_calculator() -> DumbArgParser {
-    let mut parser = DumbArgParser::new();
-    parser.set_description("DumbCalculator demo.");
-    dap_arg!("mode", default = "text")
-        .set_description("calculator mode")
-        .set_with_desc_enums(vec![
-            "text:text based",
-            "rich:richer text-based",
-            //"gui: graphical",
-        ])
-        .add_to(&mut parser)
-        .unwrap();
-    parser
-}
+// pub fn create_parser_calculator() -> DumbArgParser {
+//     let mut parser = DumbArgParser::new();
+//     parser.set_description("DumbCalculator demo.");
+//     dap_arg!("mode", default = "text")
+//         .set_description("calculator mode")
+//         .set_with_desc_enums(vec![
+//             "text:text based",
+//             "rich:richer text-based",
+//             //"gui: graphical",
+//         ])
+//         .add_to(&mut parser)
+//         .unwrap();
+//     parser
+// }
 
-pub fn handle_demo_calculator(parser: DumbArgParser) {
-    let mode = parser.get::<String>("mode").unwrap();
-    let richer = mode == "rich";
-    if richer {
-        CalculatorUI::<true>::new_and_init().run()
-    } else {
-        CalculatorUI::<false>::new_and_init().run()
-    };
-}
-
-// pub fn debug_demo_calculator(richer: bool) {
+// pub fn handle_calculator(parser: DumbArgParser) {
+//     let mode = parser.get::<String>("mode").unwrap();
+//     let richer = mode == "rich";
 //     if richer {
 //         CalculatorUI::<true>::new_and_init().run()
 //     } else {
@@ -59,15 +49,15 @@ const RICHER_TEXT_FIXED_WIDTH: u16 = FIXED_WIDTH + RICH_WIDTH_ADJUST;
 
 const INDICATORS_WIDTH: u16 = 4;
 
-struct CalculatorUI<const RICHER: bool> {
+pub struct Calculator<const RICHER: bool> {
     calculator: DumbCalculator,
     screen: DumbLineByLineScreen,
     key_map: Vec<Vec<char>>,
     selected_key_rc: (usize, usize),
     refresh_state: RefreshState<RICHER>,
 }
-impl<const RICHER: bool> CalculatorUI<RICHER> {
-    fn new_and_init() -> Self {
+impl<const RICHER: bool> Calculator<RICHER> {
+    pub fn new_and_init() -> Self {
         let result_fixed_width = if RICHER {
             RICHER_TEXT_RESULT_WIDTH
         } else {
@@ -105,65 +95,65 @@ impl<const RICHER: bool> CalculatorUI<RICHER> {
 
         let mut comps = dlt_comps![
             " ",
-            CalculatorUI::<RICHER>::_create_key('7', false),
+            Calculator::<RICHER>::_create_key('7', false),
             " ",
-            CalculatorUI::<RICHER>::_create_key('8', false),
+            Calculator::<RICHER>::_create_key('8', false),
             " ",
-            CalculatorUI::<RICHER>::_create_key('9', false),
+            Calculator::<RICHER>::_create_key('9', false),
             if RICHER { (" 🚪 ", 4) } else { (" | ", 3) },
-            CalculatorUI::<RICHER>::_create_key('C', true),
+            Calculator::<RICHER>::_create_key('C', true),
             " ",
         ];
-        let keys_8 = CalculatorUI::<RICHER>::_scan_for_keys(&comps);
+        let keys_8 = Calculator::<RICHER>::_scan_for_keys(&comps);
         let temp = DumbLineTemplate::new_fixed_width(template_fixed_width, &comps);
         line_temps.push(temp);
 
         let mut comps = dlt_comps![
             " ",
-            CalculatorUI::<RICHER>::_create_key('4', false),
+            Calculator::<RICHER>::_create_key('4', false),
             " ",
-            CalculatorUI::<RICHER>::_create_key('5', false),
+            Calculator::<RICHER>::_create_key('5', false),
             " ",
-            CalculatorUI::<RICHER>::_create_key('6', false),
+            Calculator::<RICHER>::_create_key('6', false),
             if RICHER { (" 🚪 ", 4) } else { (" | ", 3) },
-            CalculatorUI::<RICHER>::_create_key('*', false),
+            Calculator::<RICHER>::_create_key('*', false),
             " ",
-            CalculatorUI::<RICHER>::_create_key('/', false),
+            Calculator::<RICHER>::_create_key('/', false),
             " ",
         ];
-        let keys_5 = CalculatorUI::<RICHER>::_scan_for_keys(&comps);
+        let keys_5 = Calculator::<RICHER>::_scan_for_keys(&comps);
         let temp = DumbLineTemplate::new_fixed_width(template_fixed_width, &comps);
         line_temps.push(temp);
 
         let mut comps = dlt_comps![
             " ",
-            CalculatorUI::<RICHER>::_create_key('1', false),
+            Calculator::<RICHER>::_create_key('1', false),
             " ",
-            CalculatorUI::<RICHER>::_create_key('2', false),
+            Calculator::<RICHER>::_create_key('2', false),
             " ",
-            CalculatorUI::<RICHER>::_create_key('3', false),
+            Calculator::<RICHER>::_create_key('3', false),
             if RICHER { (" 🚪 ", 4) } else { (" | ", 3) },
-            CalculatorUI::<RICHER>::_create_key('+', false),
+            Calculator::<RICHER>::_create_key('+', false),
             " ",
-            CalculatorUI::<RICHER>::_create_key('-', false),
+            Calculator::<RICHER>::_create_key('-', false),
             " ",
         ];
-        let keys_2 = CalculatorUI::<RICHER>::_scan_for_keys(&comps);
+        let keys_2 = Calculator::<RICHER>::_scan_for_keys(&comps);
         let temp = DumbLineTemplate::new_fixed_width(template_fixed_width, &comps);
         line_temps.push(temp);
 
         let mut comps = dlt_comps![
             " ",
-            CalculatorUI::<RICHER>::_create_key('%', false),
+            Calculator::<RICHER>::_create_key('%', false),
             " ",
-            CalculatorUI::<RICHER>::_create_key('0', false),
+            Calculator::<RICHER>::_create_key('0', false),
             " ",
-            CalculatorUI::<RICHER>::_create_key('.', false),
+            Calculator::<RICHER>::_create_key('.', false),
             if RICHER { ("  🚪 ", 4) } else { (" | ", 3) },
-            CalculatorUI::<RICHER>::_create_key('=', true),
+            Calculator::<RICHER>::_create_key('=', true),
             " ",
         ];
-        let keys_0 = CalculatorUI::<RICHER>::_scan_for_keys(&comps);
+        let keys_0 = Calculator::<RICHER>::_scan_for_keys(&comps);
         let temp = DumbLineTemplate::new_fixed_width(template_fixed_width, &comps);
         line_temps.push(temp);
 
@@ -213,7 +203,7 @@ impl<const RICHER: bool> CalculatorUI<RICHER> {
 
         let key_map = vec![keys_8, keys_5, keys_2, keys_0];
         let key = '0';
-        let key_pressed_coor = CalculatorUI::<RICHER>::_get_key_coor(key, &key_map).unwrap();
+        let key_pressed_coor = Calculator::<RICHER>::_get_key_coor(key, &key_map).unwrap();
         let calculator = if RICHER {
             DumbCalculator::new_ex(DumbCalculatorSettings {
                 enable_undo: true,
@@ -266,47 +256,47 @@ impl<const RICHER: bool> CalculatorUI<RICHER> {
         }
         keys
     }
-    fn run(mut self) {
+    pub fn run(mut self) {
         self._refresh();
         let key = self.refresh_state.selected_key.unwrap();
         self.refresh_state.selected_key = Some(key);
         self._refresh_for_keys(&vec![key.to_string().as_ref()]);
-        // enable_raw_mode().unwrap();
-        // loop {
-        //     if let Event::Key(event) = read().unwrap() {
-        //         match event.code {
-        //             KeyCode::Up => {
-        //                 self._move_key_selected(MoveDir::Up);
-        //             }
-        //             KeyCode::Down => {
-        //                 self._move_key_selected(MoveDir::Down);
-        //             }
-        //             KeyCode::Left => {
-        //                 self._move_key_selected(MoveDir::Left);
-        //             }
-        //             KeyCode::Right => {
-        //                 self._move_key_selected(MoveDir::Right);
-        //             }
-        //             KeyCode::Char(' ') => {
-        //                 self._commit_key_selected();
-        //             }
-        //             KeyCode::Char(c) => {
-        //                 self._select_and_enter_key(c);
-        //             }
-        //             KeyCode::Enter => {
-        //                 self._select_and_enter_key('=');
-        //             }
-        //             KeyCode::Backspace => {
-        //                 self._undo_commit();
-        //             }
-        //             KeyCode::Esc => {
-        //                 break;
-        //             }
-        //             _ => {}
-        //         }
-        //     }
-        // }
-        // disable_raw_mode().unwrap();
+        enable_raw_mode().unwrap();
+        loop {
+            if let Event::Key(event) = read().unwrap() {
+                match event.code {
+                    KeyCode::Up => {
+                        self._move_key_selected(MoveDir::Up);
+                    }
+                    KeyCode::Down => {
+                        self._move_key_selected(MoveDir::Down);
+                    }
+                    KeyCode::Left => {
+                        self._move_key_selected(MoveDir::Left);
+                    }
+                    KeyCode::Right => {
+                        self._move_key_selected(MoveDir::Right);
+                    }
+                    KeyCode::Char(' ') => {
+                        self._commit_key_selected();
+                    }
+                    KeyCode::Char(c) => {
+                        self._select_and_enter_key(c);
+                    }
+                    KeyCode::Enter => {
+                        self._select_and_enter_key('=');
+                    }
+                    KeyCode::Backspace => {
+                        self._undo_commit();
+                    }
+                    KeyCode::Esc => {
+                        break;
+                    }
+                    _ => {}
+                }
+            }
+        }
+        disable_raw_mode().unwrap();
     }
     fn _refresh(&mut self) {
         let map_value_fn = |key: &str| -> Option<(String, u16)> {
@@ -364,7 +354,7 @@ impl<const RICHER: bool> CalculatorUI<RICHER> {
     fn _select_and_enter_key(&mut self, key: char) {
         let key: char = key.to_ascii_uppercase();
         let key = if key == 'X' { '*' } else { key };
-        let key_coor = CalculatorUI::<RICHER>::_get_key_coor(key, &self.key_map);
+        let key_coor = Calculator::<RICHER>::_get_key_coor(key, &self.key_map);
         if let Some((row_idx, col_idx)) = key_coor {
             let key = self.key_map[self.selected_key_rc.0][self.selected_key_rc.1];
             self.refresh_state.selected_key = None;
