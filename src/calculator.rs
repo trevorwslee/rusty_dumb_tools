@@ -3,6 +3,7 @@
 #![deny(warnings)]
 #![allow(unused)]
 
+use core::panic;
 use std::error::Error;
 
 use crate::{
@@ -259,6 +260,32 @@ impl DumbCalculator {
         self._get_display(Some(result_width))
     }
     fn _get_display(&self, result_width: Option<usize>) -> String {
+        let mut display_result = self.__get_display(result_width);
+        if let Some(result_width) = result_width {
+            if result_width == 0 {
+                panic!("result_width is zero")
+            }
+            if display_result != "Error" {
+                if display_result.len() != result_width {
+                    // normally should not be the case
+                    display_result = "Error".to_string();
+                }
+            }
+            if display_result == "Error" {
+                if result_width < 5 {
+                    if result_width < 3 {
+                        display_result = format!("{}E", " ".repeat(result_width - 1))
+                    } else {
+                        display_result = format!("{}Err", " ".repeat(result_width - 3))
+                    }
+                } else {
+                    display_result = format!("{}Error", " ".repeat(result_width - 5))
+                }
+            }
+        }
+        display_result
+    }
+    fn __get_display(&self, result_width: Option<usize>) -> String {
         let (mut display_result, result) = match &self.entering {
             EnteringMode::Not => {
                 let result = match self.calc.get_result() {
@@ -307,11 +334,16 @@ impl DumbCalculator {
                 display_result = format!("{}{}", " ".repeat(room), display_result);
             } else {
                 //let room = result_width - (if result < 0.0 { 5 } else { 4 });
-                let room = result_width - (if result < 0.0 { 3 } else { 2 });
-                display_result = format!("{:.*}", room, result);
+                let room: i32 = result_width as i32 - (if result < 0.0 { 3 } else { 2 });
+                if room > 0 {
+                    display_result = format!("{:.*}", room as usize, result);
+                }
                 if display_result.len() > result_width {
-                    let room = result_width - (if result < 0.0 { 8 } else { 7 });
-                    display_result = format!("{:.*e}", room, result);
+                    //let room = result_width as i32 - (if result < 0.0 { 8 } else { 7 });
+                    let room = result_width as i32 - (if result < 0.0 { 5 } else { 4 });
+                    if room > 0 {
+                        display_result = format!("{:.*e}", room as usize, result);
+                    }
                 }
             }
         }

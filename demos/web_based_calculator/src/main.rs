@@ -30,7 +30,7 @@ fn App() -> impl IntoView {
                     let pressed_chars = pressed_key.get();
                     if pressed_chars == "ac" {
                         calculator.reset();
-                    } else {
+                    } else if !pressed_chars.is_empty(){
                         calculator.push(pressed_chars.as_str());
                     }
                     let display = calculator.get_display_sized(DISPLAY_LEN);

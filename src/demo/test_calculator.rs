@@ -134,12 +134,37 @@ fn test_calculator_display() {
     let mut calculator = DumbCalculator::new();
     assert_eq!(calculator.get_display_sized(5), "    0");
 
-    calculator.push_chars(".123");   
+    calculator.push_chars(".123");
     assert_eq!(calculator.get_display_sized(5), "0.123");
 
-    calculator.push_chars("45");   
+    calculator.push_chars("45");
     assert_eq!(calculator.get_display_sized(5), "0.123");
 
     calculator.push("neg");
     assert_eq!(calculator.get_display_sized(5), "-0.12");
+}
+#[test]
+fn test_calculator_display_e() {
+    let mut calculator = DumbCalculator::new();
+    assert_eq!(calculator.get_display_sized(5), "    0");
+
+    calculator.push_chars("99.1234567891234567890");
+    assert_eq!(calculator.get_display_sized(5), "9.9e1");
+    
+    calculator.push("neg");
+    assert_eq!(calculator.get_display_sized(6), "-9.9e1");
+}
+#[test]
+fn test_calculator_display_error() {
+    let mut calculator = DumbCalculator::new();
+    assert_eq!(calculator.get_display_sized(5), "    0");
+
+    calculator.push_chars("1/0=");
+    assert_eq!(calculator.get_display_sized(1), "E");
+    assert_eq!(calculator.get_display_sized(2), " E");
+    assert_eq!(calculator.get_display_sized(3), "Err");
+    assert_eq!(calculator.get_display_sized(4), " Err");
+    assert_eq!(calculator.get_display_sized(5), "Error");
+    assert_eq!(calculator.get_display_sized(6), " Error");
+
 }
