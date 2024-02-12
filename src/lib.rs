@@ -27,11 +27,11 @@
 //! * `cargo run -- calc -h`
 //! * `cargo run -- calc 1.1 + 2.2 * (4.3 - 2.4) + 5`
 //! * `cargo run -- calc-repl`
-//! * `cargo run -- calculator`
-//! * `cargo run -- calculator rich`
 //! * `cargo run -- ltemp Trevor`
 //! * `cargo run -- lblscreen`
 //! * `cargo run -- arg -f 0.2 5 --string2 VAL1 false 1 2 3`
+//!
+//! You may also want to visit the source in [*rusty_dumb_tools* GitHub repo](https://github.com/trevorwslee/rusty_dumb_tools)
 //!
 //! Enjoy!
 //!

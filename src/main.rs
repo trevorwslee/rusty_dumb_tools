@@ -11,7 +11,6 @@ use std::{collections::HashMap, env, vec};
 //use crossterm::style::Colorize;
 use rusty_dumb_tools::{demo, prelude::*};
 
-
 // fn test_ltemp_align() {
 //     let lt_comps = dlt_comps![
 //         "|abc>",

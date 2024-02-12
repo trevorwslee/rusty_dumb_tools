@@ -16,9 +16,9 @@ pub mod test_calc;
 #[cfg(test)]
 pub mod test_calculator;
 #[cfg(test)]
-pub mod test_ltemp;
-#[cfg(test)]
 pub mod test_lblscreen;
+#[cfg(test)]
+pub mod test_ltemp;
 
 use crate::prelude::*;
 
