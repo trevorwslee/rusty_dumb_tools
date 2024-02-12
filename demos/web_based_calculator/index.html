@@ -1,5 +1,14 @@
 <style>
-  .display_digit {
+  .display_td {
+    font-family: "Courier New", Courier, monospace;
+    font-size: 50px;
+    text-align: center;
+    border: 1px solid black;
+    border-radius: 5px;
+    padding: 10px;
+    cursor: pointer;
+  }
+  .display_digit_span {
     color: red;
     font-family: "Courier New", Courier, monospace;
     font-size: 50px;
@@ -8,14 +17,25 @@
     border-radius: 5px;
     padding: 1px;
   }
-  .key_digit {
-    color: blue;
+  .key_td {
     font-family: "Courier New", Courier, monospace;
     font-size: 50px;
     text-align: center;
     border: 1px solid black;
     border-radius: 5px;
     padding: 1px;
+    cursor: pointer;
+  }
+  .key_td:active {
+    background-color: lightgray;
+  }
+  .digit_span {
+    font-family: inherit;
+    font-size: inherit;
+    color: blue;
+    text-align: inherit;
+    border: 0;
+    background-color: inherit;
   }
 </style>
 

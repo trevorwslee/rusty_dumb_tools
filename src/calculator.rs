@@ -276,7 +276,7 @@ impl DumbCalculator {
             }
             EnteringMode::Decimal(i, d) => {
                 if d.is_empty() {
-                    let display_result = format!("{}.0", i);
+                    let display_result = format!("{}.", i);
                     let result = *i as f64;
                     (display_result, result)
                 } else {
@@ -306,7 +306,8 @@ impl DumbCalculator {
                 let room = result_width - display_result.len();
                 display_result = format!("{}{}", " ".repeat(room), display_result);
             } else {
-                let room = result_width - (if result < 0.0 { 5 } else { 4 });
+                //let room = result_width - (if result < 0.0 { 5 } else { 4 });
+                let room = result_width - (if result < 0.0 { 3 } else { 2 });
                 display_result = format!("{:.*}", room, result);
                 if display_result.len() > result_width {
                     let room = result_width - (if result < 0.0 { 8 } else { 7 });
