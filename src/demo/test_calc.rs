@@ -201,7 +201,13 @@ pub fn test_calc_const() {
     test_calc_prase_and_push!(" 2 * PI ", 2.0 * std::f64::consts::PI);
     test_calc_prase_and_push!(" 3 * E ", 3.0 * std::f64::consts::E);
 }
-
+#[test]
+pub fn test_calc_underscore() {
+    test_calc_prase_and_push!("1_2_3", 123.0);
+    test_calc_prase_and_push!("1_2_3_+_4_5_6", 579.0);
+    test_calc_prase_and_push!("1_2_3_neg_", -123.0);
+    test_calc_prase_and_push!("1_2_3_neg_*_2_", -246.0);
+}
 #[test]
 pub fn test_calc_backup_and_restore() {
     let mut calc = DumbCalcProcessor::new();

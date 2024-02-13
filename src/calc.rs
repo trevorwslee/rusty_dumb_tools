@@ -342,8 +342,11 @@ fn _parse_units_from_chars(units: &Vec<char>) -> Result<Vec<String>, String> {
                     continue;
                 }
                 let unit: String = units[start_idx..end_idx].iter().collect();
+                let unit = unit.replace('_', ""); // ignore _
                 idx = end_idx;
-                parsed_units.push(unit)
+                if !unit.is_empty() {
+                    parsed_units.push(unit)
+                }
             }
             None => {
                 return Err("failed to extract token".to_string());
@@ -357,8 +360,10 @@ fn _to_next_unit_token(mut idx: usize, s: &Vec<char>) -> Option<(usize, usize)> 
     let max_idx = s.len();
     let mut start_idx: i32 = -1;
     let mut end_idx = max_idx;
+    //let mut all_digits = true;
     while idx < max_idx {
         let c = s[idx];
+        //all_digits = all_digits && (c == '_' || c.is_numeric());
         if start_idx == -1 {
             if c == '('
                 || c == ')'
@@ -367,6 +372,7 @@ fn _to_next_unit_token(mut idx: usize, s: &Vec<char>) -> Option<(usize, usize)> 
                 || c == '*'
                 || c == '/'
                 || c == '%'
+                || c == '^'
                 || c == '='
             {
                 return Some((idx, idx + 1));
@@ -379,13 +385,21 @@ fn _to_next_unit_token(mut idx: usize, s: &Vec<char>) -> Option<(usize, usize)> 
             idx += 1;
             continue;
         }
-        if c.is_whitespace()
+        if c == '_' {
+            if _check_followed_by_digit(idx + 1, s) {
+                idx += 1;
+                continue;
+            }
+        }
+        if c == '_'
+            || c.is_whitespace()
             || c == '('
             || c == ')'
             || c == '+'
             || c == '-'
             || c == '*'
             || c == '/'
+            || c == '^'
             || c == '%'
             || c == '='
         {
@@ -404,6 +418,24 @@ fn _to_next_unit_token(mut idx: usize, s: &Vec<char>) -> Option<(usize, usize)> 
     } else {
         Some((start_idx as usize, end_idx))
     }
+}
+fn _check_followed_by_digit(mut idx: usize, s: &Vec<char>) -> bool {
+    let max_idx = s.len();
+    let mut start_idx: i32 = -1;
+    let mut end_idx = max_idx;
+    let mut followed_by_digit = false;
+    while idx < max_idx {
+        let c = s[idx];
+        if c == '_' {
+            idx += 1;
+            continue;
+        }
+        if c.is_numeric() {
+            followed_by_digit = true;
+        }
+        break;
+    }
+    followed_by_digit
 }
 
 #[derive(Debug, Clone)]

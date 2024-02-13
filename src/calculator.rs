@@ -72,7 +72,7 @@ impl DumbCalculator {
     /// * an operator accepted by [`crate::calc::DumbCalcProcessor::push`] like:
     ///   - binary operators; e.g. "+", "-", "*", "/", etc
     ///   - unary operators; e.g. "neg", "sin", "cos", "tan", etc
-    /// * a constant accepted by [`crate::calc::DumbCalcProcessor::push`] like; e.g. "PI", etc
+    /// * a constant accepted by [`crate::calc::DumbCalcProcessor::push`] like "PI", etc
     /// * "="
     pub fn push(&mut self, key: &str) -> Result<(), DumbError> {
         if key == "." {
