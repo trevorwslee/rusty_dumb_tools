@@ -160,9 +160,9 @@ impl DumbCalcProcessor {
     /// push a "calculation unit":
     /// * a bracket: "(", ")"
     /// * a number: e.g. "0", "1", "2.3", "-4", "-5.67"
-    /// * a binary operator: "+", "-", "*", "/"
+    /// * a binary operator: "+", "-", "*", "/", "^"
     ///   <br>note that these binary operators have the usual precedence
-    /// * an unary operator: "neg", "sin", "cos", "tan", "asin", "acos", "atan", "log", "ln", "sqrt", "exp", "inv"
+    /// * an unary operator: "neg", "sin", "cos", "tan", "asin", "acos", "atan", "log", "ln", "sqrt", "square", "pow10", "inv", "exp", "abs", "%"
     ///   <br>notes:
     ///   - an unary operator should come after the operand that it operates on;
     ///   - these unary operators have the same highest precedence (basically operation will be performed, with the operand that comes before it, immediately)
@@ -295,6 +295,7 @@ impl DumbCalcProcessor {
             "-" => Some(Unit::Operator(Op::SUBTRACT)),
             "*" => Some(Unit::Operator(Op::MULTIPLY)),
             "/" => Some(Unit::Operator(Op::DIVIDE)),
+            "^" => Some(Unit::Operator(Op::TOPOW)),
             "neg" => Some(Unit::Operator(Op::NEGATE)),
             "sin" => Some(Unit::Operator(Op::SIN)),
             "cos" => Some(Unit::Operator(Op::COS)),
@@ -306,9 +307,10 @@ impl DumbCalcProcessor {
             "ln" => Some(Unit::Operator(Op::LN)),
             "sqrt" => Some(Unit::Operator(Op::SQRT)),
             "square" => Some(Unit::Operator(Op::SQUARE)),
+            "pow10" => Some(Unit::Operator(Op::POW10)),
             "inv" => Some(Unit::Operator(Op::INVERSE)),
             "exp" => Some(Unit::Operator(Op::EXP)),
-            "mod" => Some(Unit::Operator(Op::MOD)),
+            //"mod" => Some(Unit::Operator(Op::MOD)),
             "abs" => Some(Unit::Operator(Op::ABS)),
             "%" => Some(Unit::Operator(Op::PERCENT)),
             "PI" => Some(Unit::Operand(std::f64::consts::PI)),
@@ -637,7 +639,8 @@ impl fmt::Display for CalcResult {
 enum OpPriority {
     BINARY_AM = 1,
     BINARY_MD = 2,
-    UNARY = 3,
+    BINARY_FN = 3,
+    UNARY = 4,
 }
 
 #[derive(PartialEq, Copy, Clone, Debug)]
@@ -646,6 +649,7 @@ enum Op {
     SUBTRACT,
     MULTIPLY,
     DIVIDE,
+    TOPOW,
     NEGATE,
     SIN,
     COS,
@@ -657,9 +661,10 @@ enum Op {
     LN,
     SQRT,
     SQUARE,
+    POW10,
     INVERSE,
     EXP,
-    MOD,
+    //MOD,
     ABS,
     PERCENT,
 }
@@ -668,6 +673,7 @@ impl Op {
         match self {
             Op::ADD | Op::SUBTRACT => OpPriority::BINARY_AM,
             Op::MULTIPLY | Op::DIVIDE => OpPriority::BINARY_MD,
+            Op::TOPOW => OpPriority::BINARY_FN,
             Op::NEGATE
             | Op::SIN
             | Op::COS
@@ -679,9 +685,10 @@ impl Op {
             | Op::LN
             | Op::SQRT
             | Op::SQUARE
+            | Op::POW10
             | Op::INVERSE
             | Op::EXP
-            | Op::MOD
+            //| Op::MOD
             | Op::ABS
             | Op::PERCENT => OpPriority::UNARY,
         }
@@ -695,6 +702,7 @@ impl Op {
             Op::SUBTRACT => left - right,
             Op::MULTIPLY => left * right,
             Op::DIVIDE => left / right,
+            Op::TOPOW => left.powf(right),
             _ => panic!("{:?} non-binary operator", self),
         }
     }
@@ -710,9 +718,10 @@ impl Op {
             || *self == Op::LN
             || *self == Op::SQRT
             || *self == Op::SQUARE
+            || *self == Op::POW10
             || *self == Op::INVERSE
             || *self == Op::EXP
-            || *self == Op::MOD
+            //|| *self == Op::MOD
             || *self == Op::ABS
             || *self == Op::PERCENT
     }
@@ -732,9 +741,10 @@ impl Op {
             Op::LN => operand.ln(),
             Op::SQRT => operand.sqrt(),
             Op::SQUARE => operand * operand,
+            Op::POW10 => 10.0_f64.powf(operand),
             Op::INVERSE => 1.0 / operand,
             Op::EXP => operand.exp(),
-            Op::MOD => operand % 1.0,
+            //Op::MOD => operand % 1.0,
             Op::ABS => operand.abs(),
             Op::PERCENT => operand / 100.0,
             _ => panic!("{:?} non-unary operator", self),
@@ -748,6 +758,7 @@ impl fmt::Display for Op {
             Op::SUBTRACT => write!(f, "-"),
             Op::MULTIPLY => write!(f, "*"),
             Op::DIVIDE => write!(f, "/"),
+            Op::TOPOW => write!(f, "^"),
             Op::NEGATE => write!(f, "neg"),
             Op::SIN => write!(f, "sin"),
             Op::COS => write!(f, "cos"),
@@ -759,9 +770,10 @@ impl fmt::Display for Op {
             Op::LN => write!(f, "ln"),
             Op::SQRT => write!(f, "sqrt"),
             Op::SQUARE => write!(f, "square"),
+            Op::POW10 => write!(f, "pow10"),
             Op::INVERSE => write!(f, "inv"),
             Op::EXP => write!(f, "exp"),
-            Op::MOD => write!(f, "mod"),
+            //Op::MOD => write!(f, "mod"),
             Op::ABS => write!(f, "abs"),
             Op::PERCENT => write!(f, "%"),
         }

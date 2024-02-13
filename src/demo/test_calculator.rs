@@ -150,7 +150,7 @@ fn test_calculator_display_e() {
 
     calculator.push_chars("99.1234567891234567890");
     assert_eq!(calculator.get_display_sized(5), "9.9e1");
-    
+
     calculator.push("neg");
     assert_eq!(calculator.get_display_sized(6), "-9.9e1");
 }
@@ -166,5 +166,4 @@ fn test_calculator_display_error() {
     assert_eq!(calculator.get_display_sized(4), " Err");
     assert_eq!(calculator.get_display_sized(5), "Error");
     assert_eq!(calculator.get_display_sized(6), " Error");
-
 }

@@ -167,25 +167,31 @@ pub fn test_calc_unary() {
     }
     if true {
         test_calc_prase_and_push!(" --2.5 ", -2.5);
-        test_calc_prase_and_push!("0 cos", 1.0);
-        test_calc_prase_and_push!("0 sin", 0.0);
-        test_calc_prase_and_push!("0 tan", 0.0);
-        test_calc_prase_and_push!("1 acos", 0.0);
-        test_calc_prase_and_push!("0 asin", 0.0);
-        test_calc_prase_and_push!("0 atan", 0.0);
-        test_calc_prase_and_push!("1 log", 0.0);
-        test_calc_prase_and_push!("1 ln", 0.0);
-        test_calc_prase_and_push!("4 sqrt", 2.0);
-        test_calc_prase_and_push!("4 square", 16.0);
-        test_calc_prase_and_push!("2 inv", 0.5);
-        test_calc_prase_and_push!("0 exp", 1.0);
-        test_calc_prase_and_push!("1 exp", 1.0_f64.exp());
-        test_calc_prase_and_push!("50%", 0.5);
-    }
-    if true {
         test_calc_prase_and_push!("0 cos * 3", 3.0);
         test_calc_prase_and_push!("50% + 5", 5.5);
     }
+}
+#[test]
+pub fn test_calc_op() {
+    test_calc_prase_and_push!("1 neg", -1.0);
+    test_calc_prase_and_push!("1 neg abs", 1.0);
+    test_calc_prase_and_push!("0 cos", 1.0);
+    test_calc_prase_and_push!("0 sin", 0.0);
+    test_calc_prase_and_push!("0 tan", 0.0);
+    test_calc_prase_and_push!("1 acos", 0.0);
+    test_calc_prase_and_push!("0 asin", 0.0);
+    test_calc_prase_and_push!("0 atan", 0.0);
+    test_calc_prase_and_push!("1 log", 0.0);
+    test_calc_prase_and_push!("1 ln", 0.0);
+    test_calc_prase_and_push!("4 sqrt", 2.0);
+    test_calc_prase_and_push!("4 square", 16.0);
+    test_calc_prase_and_push!("2 pow10", 100.0);
+    test_calc_prase_and_push!("2 inv", 0.5);
+    test_calc_prase_and_push!("0 exp", 1.0);
+    test_calc_prase_and_push!("1 exp", 1.0_f64.exp());
+    test_calc_prase_and_push!("50%", 0.5);
+
+    test_calc_prase_and_push!("10 ^ 2", 100.0);
 }
 #[test]
 pub fn test_calc_const() {

@@ -68,11 +68,12 @@ impl DumbCalculator {
     }
     /// push a "key input":
     /// * a digit, including a "."
-    /// * operators accepted by [`crate::calc::DumbCalcProcessor::push`] like:
-    ///   - binary operators; e.g. "+", "-", "*", "/"
-    ///   - unary operators; e.g. "neg", "sin", "cos", "tan", "asin", "acos", "atan", "sqrt", "ln", "log
-    ///   - constants; e.g. "PI", "E"
-    ///   - "="
+    /// * a bracket: “(”, “)”
+    /// * an operator accepted by [`crate::calc::DumbCalcProcessor::push`] like:
+    ///   - binary operators; e.g. "+", "-", "*", "/", etc
+    ///   - unary operators; e.g. "neg", "sin", "cos", "tan", etc
+    /// * a constant accepted by [`crate::calc::DumbCalcProcessor::push`] like; e.g. "PI", etc
+    /// * "="
     pub fn push(&mut self, key: &str) -> Result<(), DumbError> {
         if key == "." {
             self._record_undo(key, false);
