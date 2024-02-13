@@ -1,4 +1,8 @@
 <style>
+  .ss_span {
+    vertical-align: super;
+    font-size: 50%;    
+  }
   .display_td {
     font-family: "Courier New", Courier, monospace;
     font-size: 40px;
@@ -8,13 +12,13 @@
     padding: 10px;
 
   }
-  .display_digit_span {
+  .display_digit_button {
     display: inline-block;
     width:1ch;
     height:1.7ch;
     vertical-align: middle;
     color: darkblue;
-    background-color: lightgreen;
+    background-color: lightgrey;
     font-family: "Courier New", Courier, monospace;
     font-size: 50px;
     text-align: center;
@@ -28,12 +32,9 @@
     text-align: center;
     border: 1px solid black;
     border-radius: 5px;
-    padding: 1px;
   }
-  .key_td:active {
-    background-color: lightgray;
-  }
-  .digit_span {
+  .digit_button {
+    width: 100%;
     font-family: inherit;
     font-size: inherit;
     color: blue;
@@ -42,6 +43,9 @@
     background-color: inherit;
     cursor: hand;
     letter-spacing: -1px;
+  }
+  .digit_button:active {
+    background-color: lightgray;
   }
 </style>
 
