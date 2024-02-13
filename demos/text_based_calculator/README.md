@@ -17,10 +17,10 @@ cargo run -- rich
 After running `cargo run`, the simple text-based calculator UI will be like
 
 ```
-* arrow keys to move selected key
-* space key to commit selected key
+* arrow keys to move selected key; space key to commit selected key
 * can press corresponding keys directly
 * note that 'c' is the same as 'C' and the enter key is the same as '='
+* === to end, press ESC ===
 
         ===============
         |           0 |                                                                                                                                                          
