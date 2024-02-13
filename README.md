@@ -123,8 +123,7 @@ after 20 seconds, when 100% done, the screen will be like
 # Additional Demos
 
 * [DumbCalculator Text-based Demo](demos/text_based_calculator/README.md)
-* [DumbCalculator Web-based Demo](demos/web_based_calculator/README.md)
-  - [https://trevorwslee.github.io/DumbCalculator/](https://trevorwslee.github.io/DumbCalculator/)
+* [DumbCalculator Web-based Demo](demos/web_based_calculator/README.md) -- [https://trevorwslee.github.io/DumbCalculator/](https://trevorwslee.github.io/DumbCalculator/)
 
 
 

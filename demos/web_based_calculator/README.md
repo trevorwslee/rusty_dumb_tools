@@ -1,6 +1,7 @@
 # DumbCalculator Web-based Demo (work in progress)
 
-Simple web-based Calculator demo for `DumbCalculator` of `rusty_dumb_tools` **_Rust_** crate.
+Simple web-based Calculator demo for `DumbCalculator` of `rusty_dumb_tools` **_Rust_** crate -- [https://trevorwslee.github.io/DumbCalculator/](https://trevorwslee.github.io/DumbCalculator/)
+
 
 The Web framework used is [Leptos](https://github.com/leptos-rs/leptos)
 
