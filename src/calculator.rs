@@ -4,7 +4,7 @@
 #![allow(unused)]
 
 use core::panic;
-use std::error::Error;
+use std::{error::Error, ops::Index};
 
 use crate::{
     calc::{self, CalcProcessorBackup, CalcResult, DumbCalcProcessor},
@@ -266,12 +266,12 @@ impl DumbCalculator {
             if result_width == 0 {
                 panic!("result_width is zero")
             }
-            if display_result != "Error" {
-                if display_result.len() != result_width {
-                    // normally should not be the case
-                    display_result = "Error".to_string();
-                }
-            }
+            // if display_result != "Error" {
+            //     if display_result.len() != result_width {
+            //         // normally should not be the case
+            //         display_result = "Error".to_string();
+            //     }
+            // }
             if display_result == "Error" {
                 if result_width < 5 {
                     if result_width < 3 {
@@ -281,6 +281,21 @@ impl DumbCalculator {
                     }
                 } else {
                     display_result = format!("{}Error", " ".repeat(result_width - 5))
+                }
+            }
+            if display_result.len() <= result_width {
+                let room = result_width - display_result.len();
+                display_result = format!("{}{}", " ".repeat(room), display_result);
+            } else {
+                if true {
+                    display_result = format!("{}", "~".repeat(result_width))
+                } else {
+                    panic!(
+                        "cannot fit display_result [{}] ({}) to fixed width {}",
+                        display_result,
+                        display_result.len(),
+                        result_width
+                    );
                 }
             }
         }
@@ -329,21 +344,70 @@ impl DumbCalculator {
         //let result = -0.123456789123456789;
         //let result = -1234567891234.0;
         if let Some(result_width) = result_width {
-            //let result_width = result_width.unwrap();
-            if display_result.len() < result_width {
-                let room = result_width - display_result.len();
-                display_result = format!("{}{}", " ".repeat(room), display_result);
-            } else {
-                //let room = result_width - (if result < 0.0 { 5 } else { 4 });
-                let room: i32 = result_width as i32 - (if result < 0.0 { 3 } else { 2 });
-                if room > 0 {
-                    display_result = format!("{:.*}", room as usize, result);
-                }
+            if true {
+                // let need_reformat = if display_result.len() == result_width {
+                //     let dr = display_result.replace('-', "");
+                //     let dr = dr.replace(".", "");
+                //     let dr = dr.replace('0', "");
+                //     let dr = dr.trim();
+                //     dr.is_empty()
+                // } else {
+                //     display_result.len() > result_width
+                // };
                 if display_result.len() > result_width {
-                    //let room = result_width as i32 - (if result < 0.0 { 8 } else { 7 });
-                    let room = result_width as i32 - (if result < 0.0 { 5 } else { 4 });
+                    if display_result.contains(".") {
+                        let dot_idx = display_result.find('.').unwrap();
+                        let places: i32 = result_width as i32 - dot_idx as i32 - 1;
+                        if places > 0 {
+                            display_result = format!("{:.*}", places as usize, result);
+                        }
+                    }
+                    if display_result.len() > result_width {
+                        let places = result_width as i32 - (if result < 0.0 { 5 } else { 4 });
+                        if places > 0 {
+                            display_result = format!("{:.*e}", places as usize, result);
+                        }
+                    }
+                }
+                if true {
+                    let is_zero = if display_result.len() == result_width {
+                        let dr = display_result.replace('-', "");
+                        let dr = dr.replace(".", "");
+                        let dr = dr.replace('0', "");
+                        let dr = dr.trim();
+                        dr.is_empty()
+                    } else {
+                        false
+                    };
+                    if is_zero {
+                        let places = result_width as i32 - (if result < 0.0 { 6 } else { 5 });
+                        if places > 0 {
+                            display_result = format!("{:.*e}", places as usize, result);
+                        }
+                    }
+                }
+            } else {
+                if display_result.len() <= result_width {
+                    let room = result_width - display_result.len();
+                    display_result = format!("{}{}", " ".repeat(room), display_result);
+                } else {
+                    //let room = result_width - (if result < 0.0 { 5 } else { 4 });
+                    let room: i32 = result_width as i32 - (if result < 0.0 { 3 } else { 2 });
                     if room > 0 {
-                        display_result = format!("{:.*e}", room as usize, result);
+                        display_result = format!("{:.*}", room as usize, result);
+                    }
+                    if display_result.len() > result_width {
+                        println!(
+                            "display_result: {} ({}) ... room={}",
+                            display_result,
+                            display_result.len(),
+                            room
+                        );
+                        //let room = result_width as i32 - (if result < 0.0 { 8 } else { 7 });
+                        let room = result_width as i32 - (if result < 0.0 { 5 } else { 4 });
+                        if room > 0 {
+                            display_result = format!("{:.*e}", room as usize, result);
+                        }
                     }
                 }
             }

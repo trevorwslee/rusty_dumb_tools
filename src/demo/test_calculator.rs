@@ -148,11 +148,47 @@ fn test_calculator_display_e() {
     let mut calculator = DumbCalculator::new();
     assert_eq!(calculator.get_display_sized(5), "    0");
 
-    calculator.push_chars("99.1234567891234567890");
-    assert_eq!(calculator.get_display_sized(5), "9.9e1");
+    calculator.push_chars("99.123");
+    assert_eq!(calculator.get_display_sized(5), "99.12");
+    assert_eq!(calculator.get_display_sized(6), "99.123");
+    assert_eq!(calculator.get_display_sized(7), " 99.123");
 
     calculator.push("neg");
-    assert_eq!(calculator.get_display_sized(6), "-9.9e1");
+    assert_eq!(calculator.get_display_sized(5), "-99.1");
+    assert_eq!(calculator.get_display_sized(6), "-99.12");
+    assert_eq!(calculator.get_display_sized(7), "-99.123");
+    assert_eq!(calculator.get_display_sized(8), " -99.123");
+
+    calculator.reset();
+    calculator.push_chars("123456.7");
+    assert_eq!(calculator.get_display_sized(4), "~~~~");
+    assert_eq!(calculator.get_display_sized(5), "1.2e5");
+    assert_eq!(calculator.get_display_sized(6), "1.23e5");
+    assert_eq!(calculator.get_display_sized(7), "1.235e5");
+    assert_eq!(calculator.get_display_sized(8), "123456.7");
+    assert_eq!(calculator.get_display_sized(9), " 123456.7");
+
+    calculator.reset();
+    calculator.push_chars("123456.7");
+    calculator.push("neg");
+    assert_eq!(calculator.get_display_sized(6), "-1.2e5");
+    assert_eq!(calculator.get_display_sized(7), "-1.23e5");
+    assert_eq!(calculator.get_display_sized(8), "-1.235e5");
+    assert_eq!(calculator.get_display_sized(9), "-123456.7");
+    assert_eq!(calculator.get_display_sized(10), " -123456.7");
+
+    calculator.reset();
+    calculator.push_chars("0.00001");
+    assert_eq!(calculator.get_display_sized(6), "1.0e-5");
+    assert_eq!(calculator.get_display_sized(7), "0.00001");
+    assert_eq!(calculator.get_display_sized(8), " 0.00001");
+
+    calculator.reset();
+    calculator.push_chars("0.00001");
+    calculator.push("neg");
+    assert_eq!(calculator.get_display_sized(7), "-1.0e-5");
+    assert_eq!(calculator.get_display_sized(8), "-0.00001");
+    assert_eq!(calculator.get_display_sized(9), " -0.00001");
 }
 #[test]
 fn test_calculator_display_error() {

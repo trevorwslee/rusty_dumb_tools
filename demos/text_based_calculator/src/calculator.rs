@@ -11,31 +11,6 @@ use crossterm::{
 
 use rusty_dumb_tools::prelude::*;
 
-// pub fn create_parser_calculator() -> DumbArgParser {
-//     let mut parser = DumbArgParser::new();
-//     parser.set_description("DumbCalculator demo.");
-//     dap_arg!("mode", default = "text")
-//         .set_description("calculator mode")
-//         .set_with_desc_enums(vec![
-//             "text:text based",
-//             "rich:richer text-based",
-//             //"gui: graphical",
-//         ])
-//         .add_to(&mut parser)
-//         .unwrap();
-//     parser
-// }
-
-// pub fn handle_calculator(parser: DumbArgParser) {
-//     let mode = parser.get::<String>("mode").unwrap();
-//     let richer = mode == "rich";
-//     if richer {
-//         CalculatorUI::<true>::new_and_init().run()
-//     } else {
-//         CalculatorUI::<false>::new_and_init().run()
-//     };
-// }
-
 const RESULT_WIDTH: u16 = 11;
 const DISPLAY_WIDTH: u16 = RESULT_WIDTH + 2;
 const FIXED_WIDTH: u16 = DISPLAY_WIDTH;
@@ -375,6 +350,9 @@ impl<const RICHER: bool> Calculator<RICHER> {
                     need_update_display = true;
                 } else if key == 'N' {
                     self.calculator.push("neg");
+                    need_update_display = true;
+                } else if key == 'P' {
+                    self.calculator.push("PI");
                     need_update_display = true;
                 }
                 if need_update_display {
