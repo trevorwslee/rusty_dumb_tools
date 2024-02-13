@@ -1,56 +1,9 @@
-<html><head><style>
-  .display_td {
-    font-family: "Courier New", Courier, monospace;
-    font-size: 50px;
-    text-align: center;
-    border: 1px solid black;
-    border-radius: 5px;
-    padding: 10px;
-    cursor: pointer;
-  }
-  .display_digit_span {
-    color: red;
-    font-family: "Courier New", Courier, monospace;
-    font-size: 50px;
-    text-align: center;
-    border: 1px solid black;
-    border-radius: 5px;
-    padding: 1px;
-  }
-  .key_td {
-    font-family: "Courier New", Courier, monospace;
-    font-size: 50px;
-    text-align: center;
-    border: 1px solid black;
-    border-radius: 5px;
-    padding: 1px;
-    cursor: pointer;
-  }
-  .key_td:active {
-    background-color: lightgray;
-  }
-  .digit_span {
-    font-family: inherit;
-    font-size: inherit;
-    color: blue;
-    text-align: inherit;
-    border: 0;
-    background-color: inherit;
-  }
-</style>
-
-
-
-
-
-  <meta charset="UTF-8">
-<link rel="preload" href="/rusty_dumb_calculator_web-f4712043518c5fca_bg.wasm" as="fetch" type="application/wasm" crossorigin="anonymous" integrity="sha384-KJ6_8a9LKKwL2S8JZwQGAKkBgMbzunfKq_XJT3JaYvFOYmpR0KFSTnEY6nfBiGVu">
-<link rel="modulepreload" href="/rusty_dumb_calculator_web-f4712043518c5fca.js" crossorigin="anonymous" integrity="sha384-lwVQXJuiudD0oUeNTrTRAvG3i31MBfpWJzbNkPdf1sXcNNeYHE-7imfcqIDdfU8n"></head>
-  <body><h3>— DumbCalculator —</h3>
-
+<html><head>
+<link rel="preload" href="/rusty_dumb_tools-5114adb57b05ccda_bg.wasm" as="fetch" type="application/wasm" crossorigin="anonymous" integrity="sha384-hmjVAL8gVCjtRAEmiKNsefccwizmx7h1RJM2Ha8ahU-N2Q9VZmY2rENcrFfg3xU5">
+<link rel="modulepreload" href="/rusty_dumb_tools-5114adb57b05ccda.js" crossorigin="anonymous" integrity="sha384-5234jmuoKRvMGgQsCfXUXjSjVBl3uxvjw1aVJ1F5ZAFzEP6I57vox34kXapnK1Dj"></head><body>Hello, World!
 <script type="module">
-import init, * as bindings from '/rusty_dumb_calculator_web-f4712043518c5fca.js';
-init('/rusty_dumb_calculator_web-f4712043518c5fca_bg.wasm');
+import init, * as bindings from '/rusty_dumb_tools-5114adb57b05ccda.js';
+init('/rusty_dumb_tools-5114adb57b05ccda_bg.wasm');
 window.wasmBindings = bindings;
 
 </script><script>"use strict";
