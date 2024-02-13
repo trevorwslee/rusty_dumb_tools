@@ -8,11 +8,13 @@ use leptos::*;
 use rusty_dumb_tools::{calculator, prelude::*};
 use web_sys::MouseEvent;
 
-const DISPLAY_LEN: usize = 15;
+const DISPLAY_LEN: usize = 12;
 
 fn main() {
     console_error_panic_hook::set_once();
-    mount_to_body(move || view! { <App/> });
+    mount_to_body(move || {
+        view! { <App/> }
+    });
 }
 
 fn App() -> impl IntoView {
@@ -24,7 +26,7 @@ fn App() -> impl IntoView {
     };
     view! {
         <table>
-            <tr><td class="display_td" colspan=5>{
+            <tr><td class="display_td" colspan=6>{
                 move || {
                     let mut calculator = calculator_ref.borrow_mut();
                     let pressed_chars = pressed_key.get();
@@ -36,7 +38,7 @@ fn App() -> impl IntoView {
                     let display = calculator.get_display_sized(DISPLAY_LEN);
                     view! {
                         {display.chars().map(|c| {
-                                let c = if c == ' ' { "_".to_string() } else { c.to_string() };
+                                let c = if c == ' ' { "".to_string() } else { c.to_string() };
                                 view! {
                                     <span class="display_digit_span">
                                         { c }
@@ -48,12 +50,22 @@ fn App() -> impl IntoView {
             }
             </td></tr>
             <tr>
+                <td class="key_td"><button class="digit_span" on:click=on_key_pressed value="square">x<span style="vertical-align: super; font-size: 50%">2</span></button></td>
+                <td class="key_td"><button class="digit_span" on:click=on_key_pressed value="sqrt"><span style="vertical-align: super; font-size: 50%">2</span>{"√"}</button></td>
+                <td class="key_td"><button class="digit_span" on:click=on_key_pressed value="inv">{"1/x"}</button></td>
+                <td class="key_td"><button class="digit_span" on:click=on_key_pressed value="abc">{"|x|"}</button></td>
+                <td class="key_td"><button class="digit_span" on:click=on_key_pressed value="(">{"("}</button></td>
+                <td class="key_td"><button class="digit_span" on:click=on_key_pressed value=")">{")"}</button></td>
+            </tr>
+            <tr>
+                <td class="key_td"><button class="digit_span" on:click=on_key_pressed value="pow10">10<span style="vertical-align: super; font-size: 50%">x</span></button></td>
                 <td class="key_td"><button class="digit_span" on:click=on_key_pressed value=7>{"7️⃣"}</button></td>
                 <td class="key_td"><button class="digit_span" on:click=on_key_pressed value=8>{"8️⃣"}</button></td>
                 <td class="key_td"><button class="digit_span" on:click=on_key_pressed value=9>{"9️⃣"}</button></td>
                 <td class="key_td" colspan=2><button class="digit_span" on:click=on_key_pressed value="ac">{"AC"}</button></td>
             </tr>
             <tr>
+                <td class="key_td"><button class="digit_span" on:click=on_key_pressed value="log">{"log"}</button></td>
                 <td class="key_td"><button class="digit_span" on:click=on_key_pressed value=4>{"4️⃣"}</button></td>
                 <td class="key_td"><button class="digit_span" on:click=on_key_pressed value=5>{"5️⃣"}</button></td>
                 <td class="key_td"><button class="digit_span" on:click=on_key_pressed value=6>{"6️⃣"}</button></td>
@@ -61,6 +73,7 @@ fn App() -> impl IntoView {
                 <td class="key_td"><button class="digit_span" on:click=on_key_pressed value="/">{"➗"}</button></td>
             </tr>
             <tr>
+                <td class="key_td"><button class="digit_span" on:click=on_key_pressed value="ln">{"ln"}</button></td>
                 <td class="key_td"><button class="digit_span" on:click=on_key_pressed value=1>{"1️⃣"}</button></td>
                 <td class="key_td"><button class="digit_span" on:click=on_key_pressed value=2>{"2️⃣"}</button></td>
                 <td class="key_td"><button class="digit_span" on:click=on_key_pressed value=3>{"3️⃣"}</button></td>
@@ -68,6 +81,7 @@ fn App() -> impl IntoView {
                 <td class="key_td"><button class="digit_span" on:click=on_key_pressed value="-">{"➖"}</button></td>
             </tr>
             <tr>
+                <td class="key_td"><button class="digit_span" on:click=on_key_pressed value="%">{"%"}</button></td>
                 <td class="key_td"><button class="digit_span" on:click=on_key_pressed value="neg">{"±"}</button></td>
                 <td class="key_td"><button class="digit_span" on:click=on_key_pressed value=0>{"0️⃣"}</button></td>
                 <td class="key_td"><button class="digit_span" on:click=on_key_pressed value=".">{"•"}</button></td>

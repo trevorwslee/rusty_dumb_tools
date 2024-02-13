@@ -144,6 +144,14 @@ fn test_calculator_display() {
     assert_eq!(calculator.get_display_sized(5), "-0.12");
 }
 #[test]
+fn test_calculator_display_roundoff() {
+    let mut calculator = DumbCalculator::new();
+    calculator.push_chars("5.00005/5.000001=");
+    assert_eq!(calculator.get_display_sized(5), "1.000");
+    assert_eq!(calculator.get_display_sized(6), "1.0000");
+    assert_eq!(calculator.get_display_sized(7), "1.00001");
+}
+#[test]
 fn test_calculator_display_e() {
     let mut calculator = DumbCalculator::new();
     assert_eq!(calculator.get_display_sized(5), "    0");

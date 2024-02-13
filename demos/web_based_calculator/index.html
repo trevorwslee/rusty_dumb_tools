@@ -1,15 +1,20 @@
 <style>
   .display_td {
     font-family: "Courier New", Courier, monospace;
-    font-size: 50px;
+    font-size: 40px;
     text-align: center;
     border: 1px solid black;
     border-radius: 5px;
     padding: 10px;
-    cursor: pointer;
+
   }
   .display_digit_span {
-    color: red;
+    display: inline-block;
+    width:1ch;
+    height:1.7ch;
+    vertical-align: middle;
+    color: darkblue;
+    background-color: lightgreen;
     font-family: "Courier New", Courier, monospace;
     font-size: 50px;
     text-align: center;
@@ -18,13 +23,12 @@
     padding: 1px;
   }
   .key_td {
-    font-family: "Courier New", Courier, monospace;
-    font-size: 50px;
+    font-family: sans-serif;
+    font-size: 30px;
     text-align: center;
     border: 1px solid black;
     border-radius: 5px;
     padding: 1px;
-    cursor: pointer;
   }
   .key_td:active {
     background-color: lightgray;
@@ -36,6 +40,8 @@
     text-align: inherit;
     border: 0;
     background-color: inherit;
+    cursor: hand;
+    letter-spacing: -1px;
   }
 </style>
 

@@ -382,7 +382,13 @@ impl DumbCalculator {
                     if is_zero {
                         let places = result_width as i32 - (if result < 0.0 { 6 } else { 5 });
                         if places > 0 {
+                            let ori_display_result = display_result;
                             display_result = format!("{:.*e}", places as usize, result);
+                            if display_result.len() > result_width {
+                                //println!("{}", display_result);
+                                // e more than 1 digits
+                                display_result = ori_display_result;
+                            }
                         }
                     }
                 }

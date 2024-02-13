@@ -5,3 +5,4 @@ dist
 /venv
 /test.py
 /test.ipynb
+/demos/web_based_calculator/build_release_to_ghp.sh
