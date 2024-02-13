@@ -32,19 +32,17 @@ fn App() -> impl IntoView {
                     let pressed_chars = pressed_key.get();
                     if pressed_chars == "ac" {
                         calculator.reset();
-                    } else if !pressed_chars.is_empty(){
+                    } else if !pressed_chars.is_empty() {
                         calculator.push(pressed_chars.as_str());
                     }
                     let display = calculator.get_display_sized(DISPLAY_LEN);
-                    view! {
-                        {display.chars().map(|c| {
-                                let c = if c == ' ' { "".to_string() } else { c.to_string() };
-                                view! {
-                                    <span class="display_digit_button">
-                                        { c }
-                                    </span>
-                                }
-                            }).collect_view()
+                    view! {{
+                        display.chars().map(|c| {
+                            let c = if c == ' ' { "".to_string() } else { c.to_string() };
+                            view! {
+                                <span class="display_digit_button">{c}</span>
+                            }
+                       }).collect_view()
                     }}
                 }
             }
