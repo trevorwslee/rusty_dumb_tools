@@ -213,13 +213,32 @@ impl DumbCalculator {
     //         }
     //     }
     // }
-    pub fn get_history<'a>(&'a self) -> Option<&'a Vec<String>> {
+    pub fn get_history(&self) -> Option<&Vec<String>> {
         if let Some(history_stack) = &self.history_stack {
             Some(history_stack)
         } else {
             None
         }
     }
+    pub fn get_history_string(&self) -> Option<String> {
+        let history = self.get_history();
+        if let Some(history) = history {
+            let mut hist: String = String::new();
+            for h in history {
+                if DumbCalcProcessor::is_unary_operator(h) {
+                    hist.push_str(format!("_{}_", h).as_str());
+                } else {
+                    let h = h.trim();
+                    if !h.is_empty() {
+                        hist.push_str(h);
+                    }
+                }
+            }
+            Some(hist)
+        } else {
+            None
+        }
+}
     // pub fn get_history_formatted(&self) -> Option<String> {
     //     if let Some(history_stack) = &self.history_stack {
     //         if true {

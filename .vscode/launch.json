@@ -13,7 +13,8 @@
       "stopAtEntry": false,
       "cwd": "${workspaceRoot}",
       "environment": [],
-      "externalConsole": false
+      "externalConsole": false,
+      "preLaunchTask": "rust: cargo build",
     },
     {
       "type": "lldb",

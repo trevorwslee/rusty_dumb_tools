@@ -211,3 +211,10 @@ fn test_calculator_display_error() {
     assert_eq!(calculator.get_display_sized(5), "Error");
     assert_eq!(calculator.get_display_sized(6), " Error");
 }
+#[test]
+fn test_history() {
+    let mut calculator = DumbCalculator::new_ex(DumbCalculatorSettings{ enable_history:true, ..DumbCalculatorSettings::default()});
+    calculator.push_chars("12.345");
+    assert_eq!(calculator.get_history_string().unwrap(), "12.345");
+
+}
