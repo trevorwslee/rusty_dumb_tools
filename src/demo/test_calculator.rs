@@ -213,8 +213,10 @@ fn test_calculator_display_error() {
 }
 #[test]
 fn test_history() {
-    let mut calculator = DumbCalculator::new_ex(DumbCalculatorSettings{ enable_history:true, ..DumbCalculatorSettings::default()});
+    let mut calculator = DumbCalculator::new_ex(DumbCalculatorSettings {
+        enable_history: true,
+        ..DumbCalculatorSettings::default()
+    });
     calculator.push_chars("12.345");
-    assert_eq!(calculator.get_history_string().unwrap(), "12.345");
-
+    assert_eq!(calculator.get_history_string(false).unwrap(), "12.345");
 }

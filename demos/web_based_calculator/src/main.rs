@@ -20,7 +20,8 @@ fn main() {
 fn App() -> impl IntoView {
     let settings = DumbCalculatorSettings {
         enable_undo: true,
-        enable_history: true
+        enable_history: true,
+        ..DumbCalculatorSettings::default()
     };
     let mut calculator_ref = RefCell::new(DumbCalculator::new_ex(settings));
     let (pressed_key, set_pressed_key) = create_signal(String::from(""));
@@ -30,8 +31,9 @@ fn App() -> impl IntoView {
         set_pressed_key.set(pressed_chars);
     };
     view! {
-        <table class="main_table">
-            <tr><td class="display_td" colspan=6> {
+        <div class="container">
+            // display row
+            <div class="item display"> {
                 move || {
                     let mut calculator = calculator_ref.borrow_mut();
                     let pressed_chars = pressed_key.get();
@@ -43,7 +45,7 @@ fn App() -> impl IntoView {
                         calculator.push(pressed_chars.as_str());
                     }
                     let display = calculator.get_display_sized(DISPLAY_LEN);
-                    let history = calculator.get_history_string();
+                    let history = calculator.get_history_string(true);
                     let op_indicator = get_op_indicator(&calculator);
                     let bracket_indicator = get_bracket_indicator(&calculator);
                     match &history {
@@ -51,22 +53,16 @@ fn App() -> impl IntoView {
                         None => set_history.set("".to_string()),
                     }
                     view! {
-                        // { match &history {
-                        //     Some(hist) => {
-                        //         view! { {format!("hist: {:?}", history)} }
-                        //     },
-                        //     None => view! { {"none".to_string()} },
-                        // } }
-                        <div class="display_indicator_div">
-                            <span class="display_indicator_span">{op_indicator}</span>
-                            <span class="display_indicator_span">{bracket_indicator}</span>
-                        </div>
-                        <div>
+                        <div class="display_digits_div">
+                            <div class="display_indicator_div">
+                                <span class="display_indicator_span">{op_indicator}</span>
+                                <span class="display_indicator_span">{bracket_indicator}</span>
+                            </div>
                             {
                                 display.chars().map(|c| {
                                     let c = if c == ' ' { "".to_string() } else { c.to_string() };
                                     view! {
-                                        <span class="display_digit_button">{c}</span>
+                                        <span class="display_digit_span">{c}</span>
                                     }
                                 }).collect_view()
                             }
@@ -74,62 +70,62 @@ fn App() -> impl IntoView {
                     }
                 }
             }
-            </td></tr>
-            <tr>
-                <td class="key_td"><button class="digit_button" on:click=on_key_pressed value="sin">{"sin"}</button></td>
-                <td class="key_td"><button class="digit_button" on:click=on_key_pressed value="cos">{"cos"}</button></td>
-                <td class="key_td"><button class="digit_button" on:click=on_key_pressed value="tan">{"tan"}</button></td>
-                <td class="key_td"><button class="digit_button" on:click=on_key_pressed value="asin">{"sin"}<span class="ss_span">-1</span></button></td>
-                <td class="key_td"><button class="digit_button" on:click=on_key_pressed value="acos">{"cos"}<span class="ss_span">-1</span></button></td>
-                <td class="key_td"><button class="digit_button" on:click=on_key_pressed value="atan">{"tan"}<span class="ss_span">-1</span></button></td>
-            </tr>
-            <tr>
-                <td class="key_td"><button class="digit_button" on:click=on_key_pressed value="square">x<span class="ss_span">2</span></button></td>
-                <td class="key_td"><button class="digit_button" on:click=on_key_pressed value="sqrt">{"√"}</button></td>
-                <td class="key_td"><button class="digit_button" on:click=on_key_pressed value="inv">{"1/x"}</button></td>
-                <td class="key_td"><button class="digit_button" on:click=on_key_pressed value="abc">{"|x|"}</button></td>
-                <td class="key_td" style="background-color:lightyellow"><button class="digit_button" on:click=on_key_pressed value="(">{"("}</button></td>
-                <td class="key_td" style="background-color:lightyellow"><button class="digit_button" on:click=on_key_pressed value=")">{")"}</button></td>
-            </tr>
-            <tr>
-                <td class="key_td"><button class="digit_button" on:click=on_key_pressed value="pow10">10<span class="ss_span">x</span></button></td>
-                <td class="key_td"><button class="digit_button" on:click=on_key_pressed value=7>{"7️⃣"}</button></td>
-                <td class="key_td"><button class="digit_button" on:click=on_key_pressed value=8>{"8️⃣"}</button></td>
-                <td class="key_td"><button class="digit_button" on:click=on_key_pressed value=9>{"9️⃣"}</button></td>
-                <td class="key_td" style="background-color:orange" colspan=2><button class="digit_button" on:click=on_key_pressed value="ac">{"AC"}</button></td>
-            </tr>
-            <tr>
-                <td class="key_td"><button class="digit_button" on:click=on_key_pressed value="log">{"log"}</button></td>
-                <td class="key_td"><button class="digit_button" on:click=on_key_pressed value=4>{"4️⃣"}</button></td>
-                <td class="key_td"><button class="digit_button" on:click=on_key_pressed value=5>{"5️⃣"}</button></td>
-                <td class="key_td"><button class="digit_button" on:click=on_key_pressed value=6>{"6️⃣"}</button></td>
-                <td class="key_td"><button class="digit_button" on:click=on_key_pressed value="*">{"✖️"}</button></td>
-                <td class="key_td"><button class="digit_button" on:click=on_key_pressed value="/">{"➗"}</button></td>
-            </tr>
-            <tr>
-                <td class="key_td"><button class="digit_button" on:click=on_key_pressed value="ln">{"ln"}</button></td>
-                <td class="key_td"><button class="digit_button" on:click=on_key_pressed value=1>{"1️⃣"}</button></td>
-                <td class="key_td"><button class="digit_button" on:click=on_key_pressed value=2>{"2️⃣"}</button></td>
-                <td class="key_td"><button class="digit_button" on:click=on_key_pressed value=3>{"3️⃣"}</button></td>
-                <td class="key_td"><button class="digit_button" on:click=on_key_pressed value="+">{"➕"}</button></td>
-                <td class="key_td"><button class="digit_button" on:click=on_key_pressed value="-">{"➖"}</button></td>
-            </tr>
-            <tr>
-                <td class="key_td"><button class="digit_button" on:click=on_key_pressed value="%">{"%"}</button></td>
-                <td class="key_td"><button class="digit_button" on:click=on_key_pressed value="neg">{"±"}</button></td>
-                <td class="key_td"><button class="digit_button" on:click=on_key_pressed value=0>{"0️⃣"}</button></td>
-                <td class="key_td"><button class="digit_button" on:click=on_key_pressed value=".">{"•"}</button></td>
-                <td class="key_td" style="background-color:lightgreen" colspan=2><button class="digit_button" on:click=on_key_pressed value="=">{"🟰"}</button></td>
-            </tr>
-            <tr>
-                <td class="history_td" colspan=5> {
-                    move || view! {
-                        <div class="history_div">{history.get()}</div>
-                    }
-                } </td>
-                <td class="key_td" style="background-color:tomato"><button class="digit_button" on:click=on_key_pressed value="<">{"⬅"}</button></td>
-            </tr>
-        </table>
+            </div>
+            
+            // keys row 1
+            <div class="item key"><button class="key_button" on:click=on_key_pressed value="sin">{"sin"}</button></div>
+            <div class="item key"><button class="key_button" on:click=on_key_pressed value="cos">{"cos"}</button></div>
+            <div class="item key"><button class="key_button" on:click=on_key_pressed value="tan">{"tan"}</button></div>
+            <div class="item key"><button class="key_button" on:click=on_key_pressed value="asin">{"sin"}<span class="ss_span">-1</span></button></div>
+            <div class="item key"><button class="key_button" on:click=on_key_pressed value="acos">{"cos"}<span class="ss_span">-1</span></button></div>
+            <div class="item key"><button class="key_button" on:click=on_key_pressed value="atan">{"tan"}<span class="ss_span">-1</span></button></div>
+            
+            // keys row 2
+            <div class="item key"><button class="key_button" on:click=on_key_pressed value="square">x<span class="ss_span">2</span></button></div>
+            <div class="item key"><button class="key_button" on:click=on_key_pressed value="sqrt">{"√"}</button></div>
+            <div class="item key"><button class="key_button" on:click=on_key_pressed value="inv">{"1/x"}</button></div>
+            <div class="item key"><button class="key_button" on:click=on_key_pressed value="abc">{"|x|"}</button></div>
+            <div class="item key" style="background-color:lightyellow"><button class="key_button" on:click=on_key_pressed value="(">{"("}</button></div>
+            <div class="item key" style="background-color:lightyellow"><button class="key_button" on:click=on_key_pressed value=")">{")"}</button></div>
+
+            // keys row 3
+            <div class="item key"><button class="key_button" on:click=on_key_pressed value="pow10">10<span class="ss_span">x</span></button></div>
+            <div class="item key"><button class="key_button" on:click=on_key_pressed value=7>{"7️⃣"}</button></div>
+            <div class="item key"><button class="key_button" on:click=on_key_pressed value=8>{"8️⃣"}</button></div>
+            <div class="item key"><button class="key_button" on:click=on_key_pressed value=9>{"9️⃣"}</button></div>
+            <div class="item key span2" style="background-color:orange"><button class="key_button" on:click=on_key_pressed value="ac">{"AC"}</button></div>
+
+            // keys row 4
+            <div class="item key"><button class="key_button" on:click=on_key_pressed value="log">{"log"}</button></div>
+            <div class="item key"><button class="key_button" on:click=on_key_pressed value=4>{"4️⃣"}</button></div>
+            <div class="item key"><button class="key_button" on:click=on_key_pressed value=5>{"5️⃣"}</button></div>
+            <div class="item key"><button class="key_button" on:click=on_key_pressed value=6>{"6️⃣"}</button></div>
+            <div class="item key"><button class="key_button" on:click=on_key_pressed value="*">{"✖️"}</button></div>
+            <div class="item key"><button class="key_button" on:click=on_key_pressed value="/">{"➗"}</button></div>
+
+            // keys row 5
+            <div class="item key"><button class="key_button" on:click=on_key_pressed value="ln">{"ln"}</button></div>
+            <div class="item key"><button class="key_button" on:click=on_key_pressed value=1>{"1️⃣"}</button></div>
+            <div class="item key"><button class="key_button" on:click=on_key_pressed value=2>{"2️⃣"}</button></div>
+            <div class="item key"><button class="key_button" on:click=on_key_pressed value=3>{"3️⃣"}</button></div>
+            <div class="item key"><button class="key_button" on:click=on_key_pressed value="+">{"➕"}</button></div>
+            <div class="item key"><button class="key_button" on:click=on_key_pressed value="-">{"➖"}</button></div>
+
+            // keys row 6
+            <div class="item key"><button class="key_button" on:click=on_key_pressed value="%">{"%"}</button></div>
+            <div class="item key"><button class="key_button" on:click=on_key_pressed value="neg">{"±"}</button></div>
+            <div class="item key"><button class="key_button" on:click=on_key_pressed value=0>{"0️⃣"}</button></div>
+            <div class="item key"><button class="key_button" on:click=on_key_pressed value=".">{"•"}</button></div>
+            <div class="item key span2" style="background-color:lightgreen"><button class="key_button" on:click=on_key_pressed value="=">{"🟰"}</button></div>
+
+            // history row 6
+            <div class="item history span5"> {
+                move || view! {
+                    {history.get()}
+                }
+            } </div>
+            <div class="item key" style="background-color:tomato"><button class="key_button" on:click=on_key_pressed value="<">{"⬅"}</button></div>
+        </div>
     }
 }
 

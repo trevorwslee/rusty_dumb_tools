@@ -183,6 +183,7 @@ impl<const RICHER: bool> Calculator<RICHER> {
             DumbCalculator::new_ex(DumbCalculatorSettings {
                 enable_undo: true,
                 enable_history: true,
+                ..DumbCalculatorSettings::default()
             })
         } else {
             DumbCalculator::new()
@@ -586,28 +587,39 @@ impl<const RICHER: bool> RefreshState<RICHER> {
             };
             Some((indicators, INDICATORS_WIDTH))
         } else if RICHER && key == "history" {
-            let history = calculator.get_history();
-            if let Some(history) = history {
-                if true {
-                    let mut hist = String::new();
-                    let mut hist_len = 0;
-                    for h in history {
-                        if DumbCalcProcessor::is_unary_operator(h) {
-                            hist_len += h.len() + 2;
-                            hist.push_str(format!("_{}_", h).as_str());
-                        } else {
-                            hist.push_str(h.as_str());
-                            hist_len += h.len();
-                        }
+            if true {
+                match calculator.get_history_string(false) {
+                    Some(history) => {
+                        let history = history.clone();
+                        let history_len = history.len();
+                        Some((history, history_len as u16))
                     }
-                    Some((hist, hist_len as u16))
-                } else {
-                    let history = history.join("");
-                    let history_len = history.len();
-                    Some((history, history_len as u16))
+                    None => None,
                 }
             } else {
-                None
+                let history = calculator.get_history();
+                if let Some(history) = history {
+                    if true {
+                        let mut hist = String::new();
+                        let mut hist_len = 0;
+                        for h in history {
+                            if DumbCalcProcessor::is_unary_operator(h) {
+                                hist_len += h.len() + 2;
+                                hist.push_str(format!("_{}_", h).as_str());
+                            } else {
+                                hist.push_str(h.as_str());
+                                hist_len += h.len();
+                            }
+                        }
+                        Some((hist, hist_len as u16))
+                    } else {
+                        let history = history.join("");
+                        let history_len = history.len();
+                        Some((history, history_len as u16))
+                    }
+                } else {
+                    None
+                }
             }
         } else {
             None

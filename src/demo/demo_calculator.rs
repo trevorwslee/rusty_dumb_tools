@@ -619,7 +619,7 @@ impl<const RICHER: bool> RefreshState<RICHER> {
             Some((indicators, INDICATORS_WIDTH))
         } else if RICHER && key == "history" {
             if true {
-                let history = calculator.get_history_string();
+                let history = calculator.get_history_string(true);
                 match history {
                     Some(history) => {
                         let history = history.clone();

@@ -220,16 +220,36 @@ impl DumbCalculator {
             None
         }
     }
-    pub fn get_history_string(&self) -> Option<String> {
+    pub fn get_history_string(&self, better_symbols: bool) -> Option<String> {
         let history = self.get_history();
         if let Some(history) = history {
             let mut hist: String = String::new();
             for h in history {
                 if DumbCalcProcessor::is_unary_operator(h) {
-                    hist.push_str(format!("_{}_", h).as_str());
+                    if true {
+                        let h = format!("_{}_", h);
+                        hist.push_str(h.as_str());
+                    } else {
+                        let h = match h.as_str() {
+                            "square" => "²".to_string(),
+                            _ => format!("_{}_", h),
+                        };
+                        hist.push_str(h.as_str());
+                    }
                 } else {
                     let h = h.trim();
                     if !h.is_empty() {
+                        let h = if better_symbols {
+                            match h {
+                                "+" => "+",
+                                "-" => "−",
+                                "*" => "×",
+                                "/" => "÷",
+                                _ => h,
+                            }
+                        } else {
+                            h
+                        };
                         hist.push_str(h);
                     }
                 }
@@ -238,7 +258,7 @@ impl DumbCalculator {
         } else {
             None
         }
-}
+    }
     // pub fn get_history_formatted(&self) -> Option<String> {
     //     if let Some(history_stack) = &self.history_stack {
     //         if true {

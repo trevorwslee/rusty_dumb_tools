@@ -277,6 +277,11 @@ fn test_ltemp_multi_line() {
         )]))
         .unwrap();
     assert_eq!(formatted, "ABC\n  \tDEFabc\n  \tdefGHI");
+
+    let lt_comps = dlt_comps![r#"ABC"DEF""#];
+    let ltemp = DumbLineTemplate::new(0, 100, &lt_comps);
+    let formatted = ltemp.format(&HashMap::<&str, &str>::new()).unwrap();
+    assert_eq!(formatted, "ABC\"DEF\"");
 }
 #[test]
 fn test_ltemp_macro() {
