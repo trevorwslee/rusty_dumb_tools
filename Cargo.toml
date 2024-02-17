@@ -5,7 +5,6 @@ edition = "2021"
 description = "A collection of simply tools Rust modules."
 repository = "https://github.com/trevorwslee/rusty_dumb_tools"
 license = "MIT"
-#keywords = ["arg_parser", "calc_processor"]
 categories = ["command-line-utilities"]
 readme = "README.md"
 exclude = [".vscode", ".ignore"]

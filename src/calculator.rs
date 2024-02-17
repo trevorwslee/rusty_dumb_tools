@@ -142,7 +142,7 @@ impl DumbCalculator {
         }
         Ok(())
     }
-    /// undo the last "key input" done by [`DumbCalculator::push`]
+    /// undo the last "key input" done by [`DumbCalculator::push`], if undo is enabled
     pub fn undo(&mut self) {
         if let Some(history_stack) = &mut self.history_stack {
             history_stack.pop();
@@ -185,6 +185,7 @@ impl DumbCalculator {
             undo_stack.push(undo);
         }
     }
+    /// reset the calculator
     pub fn reset(&mut self) {
         self.entering = EnteringMode::Not;
         self.calc.reset();
@@ -195,24 +196,7 @@ impl DumbCalculator {
             history_stack.clear();
         }
     }
-    // pub fn get_display(&self) -> CalculatorDisplay {
-    //     match self.entering {
-    //         EnteringMode::Not => {
-    //             match self.calc.get_result() {
-    //                 CalcResult::Final(r) => CalculatorDisplay::Normal(r),
-    //                 CalcResult::Intermediate(r) => CalculatorDisplay::Normal(r),
-    //                 CalcResult::Error(e) => CalculatorDisplay::Error(e),
-    //             }
-    //         }
-    //         EnteringMode::Integer(i) => CalculatorDisplay::Normal(i as f64),
-    //         EnteringMode::Decimal(i, d) => {
-    //             let d_str = d.to_string();
-    //             let divider = 10_f64.powf(d_str.len() as f64);
-    //             let r = i as f64 + d as f64 / divider;
-    //             CalculatorDisplay::Normal(r)
-    //         }
-    //     }
-    // }
+    /// get history of the "key input", if history is enabled
     pub fn get_history(&self) -> Option<&Vec<String>> {
         if let Some(history_stack) = &self.history_stack {
             Some(history_stack)
@@ -220,82 +204,164 @@ impl DumbCalculator {
             None
         }
     }
+    /// like [`DumbCalculator::get_history`] but returns a string instead
     pub fn get_history_string(&self, better_symbols: bool) -> Option<String> {
+        enum Marker {
+            NumberStart(usize),
+            OpenBracket(usize),
+            Finalized,
+        }
+        enum UnaryBracket {
+            No,
+            IfNeeded,
+            IfNeededNotNum,
+        }
         let history = self.get_history();
         if let Some(history) = history {
             let mut hist: String = String::new();
+            //let mut prev_h: Option<&str> = None;
+            let mut marker_stack: Vec<Marker> = Vec::new();
+            let mut prev_c = None::<char>;
+            let mut pop_marker = false;
             for h in history {
-                if DumbCalcProcessor::is_unary_operator(h) {
-                    if true {
-                        let h = format!("_{}_", h);
-                        hist.push_str(h.as_str());
-                    } else {
-                        let h = match h.as_str() {
-                            "square" => "²".to_string(),
-                            _ => format!("_{}_", h),
-                        };
-                        hist.push_str(h.as_str());
-                    }
-                } else {
-                    let h = h.trim();
-                    if !h.is_empty() {
-                        let h = if better_symbols {
-                            match h {
-                                "+" => "+",
-                                "-" => "−",
-                                "*" => "×",
-                                "/" => "÷",
-                                _ => h,
+                let mut new_prev_c = None::<char>;
+                let mut new_pop_marker = false;
+                if h == "=" {
+                    let mut new_hist = String::new();
+                    new_hist.push('{');
+                    new_hist.push_str(hist.as_str());
+                    new_hist.push('}');
+                    hist = new_hist;
+                    marker_stack.clear();
+                    marker_stack.push(Marker::Finalized);
+                    new_prev_c = None;
+                    new_pop_marker = false;
+                } else if DumbCalcProcessor::is_unary_operator(h) {
+                    let marker = marker_stack.last();
+                    let marker = match marker {
+                        Some(Marker::NumberStart(start)) => Some((*start, true)),
+                        Some(Marker::OpenBracket(start)) => Some((*start, false)),
+                        Some(Marker::Finalized) => Some((0, true)),
+                        _ => None,
+                    };
+                    if h == "%" && !better_symbols {
+                        hist.push_str("%");
+                    } else if let Some((start, bracket)) = marker {
+                        let prefix = hist[0..start].to_string();
+                        let inside = hist[start..].to_string();
+                        let (h1, h2, unary_bracket) = if better_symbols && h == "neg" {
+                            ("-", "", UnaryBracket::IfNeededNotNum)
+                        } else if better_symbols && h == "%" {
+                            if inside.parse::<f64>().is_err() {
+                                ("", "/100", UnaryBracket::IfNeeded)
+                            } else {
+                                ("", "%", UnaryBracket::No)
                             }
+                        } else if better_symbols && h == "square" {
+                            ("", "²", UnaryBracket::IfNeededNotNum)
+                        } else if better_symbols && h == "inv" {
+                            ("1/", "", UnaryBracket::IfNeededNotNum)
+                        } else if better_symbols && h == "sqrt" {
+                            ("√", "", UnaryBracket::IfNeededNotNum)
+                        } else if better_symbols && h == "abs" {
+                            ("|", "|", UnaryBracket::No)
+                        } else if better_symbols && h == "pow10" {
+                            ("10^", "", UnaryBracket::No)
+                        } else if better_symbols && h == "asin" {
+                            ("sin⁻¹", "", UnaryBracket::IfNeeded)
+                        } else if better_symbols && h == "acos" {
+                            ("cos⁻¹", "", UnaryBracket::IfNeeded)
+                        } else if better_symbols && h == "atan" {
+                            ("tan⁻¹", "", UnaryBracket::IfNeeded)
                         } else {
-                            h
+                            (h.as_str(), "", UnaryBracket::IfNeeded)
                         };
-                        hist.push_str(h);
+                        let bracket = match unary_bracket {
+                            UnaryBracket::No => false,
+                            UnaryBracket::IfNeeded => bracket,
+                            UnaryBracket::IfNeededNotNum => {
+                                bracket && inside.parse::<f64>().is_err()
+                            }
+                        };
+                        hist = prefix;
+                        hist.push_str(h1);
+                        if bracket {
+                            hist.push('(');
+                        }
+                        hist.push_str(inside.as_str());
+                        if bracket {
+                            hist.push(')');
+                        }
+                        hist.push_str(h2);
+                    } else {
+                        let h = format!("_{}_", h);
+                        hist.push_str(h.as_str()); // ²
                     }
+                    // if marker.is_some() {
+                    //     marker_stack.push(marker.unwrap());
+                    // }
+                } else {
+                    //let h = h.trim();
+                    if pop_marker {
+                        marker_stack.pop();
+                    }
+                    let h = if better_symbols {
+                        match h.as_str() {
+                            "+" => "+",
+                            "-" => "−",
+                            "*" => "×",
+                            "/" => "÷",
+                            _ => h,
+                        }
+                    } else {
+                        h
+                    };
+                    if h == "(" {
+                        marker_stack.push(Marker::OpenBracket(hist.len()));
+                    } else if h == ")" {
+                        loop {
+                            let marker = marker_stack.last();
+                            if marker.is_none() {
+                                break;
+                            }
+                            if let Marker::OpenBracket(start) = marker.unwrap() {
+                                break;
+                            } else {
+                                marker_stack.pop();
+                            }
+                        }
+                        new_pop_marker = true;
+                    } else if let Some(c) = h.chars().next() {
+                        if c == '.' || (c >= '0' && c <= '9') {
+                            new_prev_c = Some(c);
+                        }
+                        if prev_c.is_none() {
+                            let marker = marker_stack.last();
+                            if let Some(Marker::NumberStart(_)) = marker {
+                                marker_stack.pop();
+                            }
+                            marker_stack.push(Marker::NumberStart(hist.len()));
+                        }
+                    }
+                    hist.push_str(h);
+                    // if pop_marker {
+                    //     marker_stack.pop();
+                    // }
                 }
+                //prev_h = Some(h);
+                prev_c = new_prev_c;
+                pop_marker = new_pop_marker;
             }
             Some(hist)
         } else {
             None
         }
     }
-    // pub fn get_history_formatted(&self) -> Option<String> {
-    //     if let Some(history_stack) = &self.history_stack {
-    //         if true {
-    //             let mut formatted = String::new();
-    //             for history in history_stack.iter() {
-    //                 formatted.push_str(history);
-    //             }
-    //             Some(formatted)
-    //         } else {
-    //             let history: Vec<String> = history_stack.iter().map(|s| s.to_string()).collect();
-    //             let count = history.len();
-    //             let mut formatted = Vec::new();
-    //             let mut i = 0;
-    //             loop {
-    //                 if i >= count {
-    //                     break;
-    //                 }
-    //                 let hist = history.get(i).unwrap();
-    //                 if DumbCalcProcessor::is_unary_operator(hist) {
-    //                     let f = formatted.pop().unwrap();
-    //                     let f = format!(" {}({})", hist, f);
-    //                     formatted.push(f);
-    //                 } else {
-    //                     formatted.push(hist.clone());
-    //                 }
-    //                 i = i + 1;
-    //             }
-    //             let formatted = formatted.join("");
-    //             Some(formatted)
-    //         }
-    //     } else {
-    //         None
-    //     }
-    // }
+    /// get what to show on the calculator's display
     pub fn get_display(&self) -> String {
         self._get_display(None)
     }
+    /// get what to show on the calculator's display, but with a fixed display width
     pub fn get_display_sized(&self, result_width: usize) -> String {
         self._get_display(Some(result_width))
     }
@@ -305,12 +371,6 @@ impl DumbCalculator {
             if result_width == 0 {
                 panic!("result_width is zero")
             }
-            // if display_result != "Error" {
-            //     if display_result.len() != result_width {
-            //         // normally should not be the case
-            //         display_result = "Error".to_string();
-            //     }
-            // }
             if display_result == "Error" {
                 if result_width < 5 {
                     if result_width < 3 {
@@ -383,76 +443,39 @@ impl DumbCalculator {
         //let result = -0.123456789123456789;
         //let result = -1234567891234.0;
         if let Some(result_width) = result_width {
-            if true {
-                // let need_reformat = if display_result.len() == result_width {
-                //     let dr = display_result.replace('-', "");
-                //     let dr = dr.replace(".", "");
-                //     let dr = dr.replace('0', "");
-                //     let dr = dr.trim();
-                //     dr.is_empty()
-                // } else {
-                //     display_result.len() > result_width
-                // };
+            if display_result.len() > result_width {
+                if display_result.contains(".") {
+                    let dot_idx = display_result.find('.').unwrap();
+                    let places: i32 = result_width as i32 - dot_idx as i32 - 1;
+                    if places > 0 {
+                        display_result = format!("{:.*}", places as usize, result);
+                    }
+                }
                 if display_result.len() > result_width {
-                    if display_result.contains(".") {
-                        let dot_idx = display_result.find('.').unwrap();
-                        let places: i32 = result_width as i32 - dot_idx as i32 - 1;
-                        if places > 0 {
-                            display_result = format!("{:.*}", places as usize, result);
-                        }
-                    }
-                    if display_result.len() > result_width {
-                        let places = result_width as i32 - (if result < 0.0 { 5 } else { 4 });
-                        if places > 0 {
-                            display_result = format!("{:.*e}", places as usize, result);
-                        }
+                    let places = result_width as i32 - (if result < 0.0 { 5 } else { 4 });
+                    if places > 0 {
+                        display_result = format!("{:.*e}", places as usize, result);
                     }
                 }
-                if true {
-                    let is_zero = if display_result.len() == result_width {
-                        let dr = display_result.replace('-', "");
-                        let dr = dr.replace(".", "");
-                        let dr = dr.replace('0', "");
-                        let dr = dr.trim();
-                        dr.is_empty()
-                    } else {
-                        false
-                    };
-                    if is_zero {
-                        let places = result_width as i32 - (if result < 0.0 { 6 } else { 5 });
-                        if places > 0 {
-                            let ori_display_result = display_result;
-                            display_result = format!("{:.*e}", places as usize, result);
-                            if display_result.len() > result_width {
-                                //println!("{}", display_result);
-                                // e more than 1 digits
-                                display_result = ori_display_result;
-                            }
-                        }
-                    }
-                }
+            }
+            let is_zero = if display_result.len() == result_width {
+                let dr = display_result.replace('-', "");
+                let dr = dr.replace(".", "");
+                let dr = dr.replace('0', "");
+                let dr = dr.trim();
+                dr.is_empty()
             } else {
-                if display_result.len() <= result_width {
-                    let room = result_width - display_result.len();
-                    display_result = format!("{}{}", " ".repeat(room), display_result);
-                } else {
-                    //let room = result_width - (if result < 0.0 { 5 } else { 4 });
-                    let room: i32 = result_width as i32 - (if result < 0.0 { 3 } else { 2 });
-                    if room > 0 {
-                        display_result = format!("{:.*}", room as usize, result);
-                    }
+                false
+            };
+            if is_zero {
+                let places = result_width as i32 - (if result < 0.0 { 6 } else { 5 });
+                if places > 0 {
+                    let ori_display_result = display_result;
+                    display_result = format!("{:.*e}", places as usize, result);
                     if display_result.len() > result_width {
-                        println!(
-                            "display_result: {} ({}) ... room={}",
-                            display_result,
-                            display_result.len(),
-                            room
-                        );
-                        //let room = result_width as i32 - (if result < 0.0 { 8 } else { 7 });
-                        let room = result_width as i32 - (if result < 0.0 { 5 } else { 4 });
-                        if room > 0 {
-                            display_result = format!("{:.*e}", room as usize, result);
-                        }
+                        //println!("{}", display_result);
+                        // e more than 1 digits
+                        display_result = ori_display_result;
                     }
                 }
             }

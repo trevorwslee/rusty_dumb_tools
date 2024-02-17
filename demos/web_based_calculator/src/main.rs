@@ -4,10 +4,11 @@
 
 use std::{borrow::Borrow, cell::RefCell, rc::Rc};
 
-use leptos::*;
+use leptos::{logging::log, *};
 use rusty_dumb_tools::{calculator, prelude::*};
 use web_sys::MouseEvent;
 
+const ENABLE_LOGGING: bool = false;
 const DISPLAY_LEN: usize = 14;
 
 fn main() {
@@ -18,12 +19,14 @@ fn main() {
 }
 
 fn App() -> impl IntoView {
+    // DumbCalculator settings to enable undo and history
     let settings = DumbCalculatorSettings {
         enable_undo: true,
         enable_history: true,
         ..DumbCalculatorSettings::default()
     };
-    let mut calculator_ref = RefCell::new(DumbCalculator::new_ex(settings));
+    // create an instance of DumbCalculator and wrap it in a RefCell, so that it can be got back as mutable
+    let calculator_ref = RefCell::new(DumbCalculator::new_ex(settings));
     let (pressed_key, set_pressed_key) = create_signal(String::from(""));
     let (history, set_history) = create_signal(String::from(""));
     let on_key_pressed = move |ev: MouseEvent| {
@@ -34,8 +37,11 @@ fn App() -> impl IntoView {
         <div class="container">
             // display row
             <div class="item display"> {
+                // since not to re-render when "key pressed" signal changes, need to use a closure
                 move || {
+                    // get the calculator instance and make it mutable
                     let mut calculator = calculator_ref.borrow_mut();
+                    // get the "input key" from the signal
                     let pressed_chars = pressed_key.get();
                     if pressed_chars == "<" {
                         calculator.undo();
@@ -48,10 +54,14 @@ fn App() -> impl IntoView {
                     let history = calculator.get_history_string(true);
                     let op_indicator = get_op_indicator(&calculator);
                     let bracket_indicator = get_bracket_indicator(&calculator);
+                    if ENABLE_LOGGING {
+                        log!("* display:[{}] ... history:[{:?}]", display, history);
+                    }
                     match &history {
                         Some(history) => set_history.set(history.to_string()),
                         None => set_history.set("".to_string()),
                     }
+                    // return the view that represents the calculator display
                     view! {
                         <div class="display_digits_div">
                             <div class="display_indicator_div">
@@ -71,7 +81,7 @@ fn App() -> impl IntoView {
                 }
             }
             </div>
-            
+
             // keys row 1
             <div class="item key"><button class="key_button" on:click=on_key_pressed value="sin">{"sin"}</button></div>
             <div class="item key"><button class="key_button" on:click=on_key_pressed value="cos">{"cos"}</button></div>
@@ -79,12 +89,12 @@ fn App() -> impl IntoView {
             <div class="item key"><button class="key_button" on:click=on_key_pressed value="asin">{"sin"}<span class="ss_span">-1</span></button></div>
             <div class="item key"><button class="key_button" on:click=on_key_pressed value="acos">{"cos"}<span class="ss_span">-1</span></button></div>
             <div class="item key"><button class="key_button" on:click=on_key_pressed value="atan">{"tan"}<span class="ss_span">-1</span></button></div>
-            
+
             // keys row 2
             <div class="item key"><button class="key_button" on:click=on_key_pressed value="square">x<span class="ss_span">2</span></button></div>
             <div class="item key"><button class="key_button" on:click=on_key_pressed value="sqrt">{"√"}</button></div>
             <div class="item key"><button class="key_button" on:click=on_key_pressed value="inv">{"1/x"}</button></div>
-            <div class="item key"><button class="key_button" on:click=on_key_pressed value="abc">{"|x|"}</button></div>
+            <div class="item key"><button class="key_button" on:click=on_key_pressed value="abs">{"|x|"}</button></div>
             <div class="item key" style="background-color:lightyellow"><button class="key_button" on:click=on_key_pressed value="(">{"("}</button></div>
             <div class="item key" style="background-color:lightyellow"><button class="key_button" on:click=on_key_pressed value=")">{")"}</button></div>
 
@@ -120,6 +130,7 @@ fn App() -> impl IntoView {
 
             // history row 6
             <div class="item history span5"> {
+                // again, since the history portion will be updated when the "history" signal changes, need to use a closure
                 move || view! {
                     {history.get()}
                 }
