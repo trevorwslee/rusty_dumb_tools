@@ -94,10 +94,7 @@ fn test_calculator_special() {
 
 #[test]
 fn test_calculator_undo() {
-    let mut calculator = DumbCalculator::new_ex(DumbCalculatorSettings {
-        enable_undo: true,
-        ..DumbCalculatorSettings::default()
-    });
+    let mut calculator = DumbCalculator::new();
     if true {
         calculator.push_chars("1+2").unwrap();
         calculator.undo();
@@ -213,10 +210,7 @@ fn test_calculator_display_error() {
 }
 #[test]
 fn test_history_normal() {
-    let mut calculator = DumbCalculator::new_ex(DumbCalculatorSettings {
-        enable_history: true,
-        ..DumbCalculatorSettings::default()
-    });
+    let mut calculator = DumbCalculator::new();
     calculator.push_chars("12.345");
     assert_eq!(calculator.get_history_string(false).unwrap(), "12.345");
 
@@ -234,10 +228,7 @@ fn test_history_normal() {
 }
 #[test]
 fn test_history_unary() {
-    let mut calculator = DumbCalculator::new_ex(DumbCalculatorSettings {
-        enable_history: true,
-        ..DumbCalculatorSettings::default()
-    });
+    let mut calculator = DumbCalculator::new();
     calculator.push_chars("123.456%");
     assert_eq!(calculator.get_history_string(false).unwrap(), "123.456%");
 
@@ -287,10 +278,7 @@ fn test_history_unary() {
 }
 #[test]
 fn test_history_unary_2() {
-    let mut calculator = DumbCalculator::new_ex(DumbCalculatorSettings {
-        enable_history: true,
-        ..DumbCalculatorSettings::default()
-    });
+    let mut calculator = DumbCalculator::new();
     calculator.push_chars("(1)");
     calculator.push("neg");
     assert_eq!(calculator.get_history_string(false).unwrap(), "neg(1)");
@@ -304,9 +292,31 @@ fn test_history_unary_2() {
         calculator.get_history_string(false).unwrap(),
         "2*(3+sin(4))+cos(123)"
     );
+}
+#[test]
+fn test_history_unary_finalized() {
+    let mut calculator = DumbCalculator::new();
+    calculator.push_chars("(1)");
+    calculator.push("neg");
+    calculator.push("=");
+    assert_eq!(calculator.get_history_string(false).unwrap(), "{neg(1)}");
+    calculator.push("neg");
+    assert_eq!(
+        calculator.get_history_string(false).unwrap(),
+        "neg({neg(1)})"
+    );
+}
+#[test]
+fn test_history_unary_bug() {
+    let mut calculator = DumbCalculator::new();
+    calculator.push_chars("((2)");
+    calculator.push("neg");
+    calculator.push_chars(")");
+    calculator.push("neg");
+    assert_eq!(calculator.get_history_string(false).unwrap(), "neg(neg(2))");
 
     calculator.reset();
-    calculator.push_chars("((3+4)");
+    calculator.push_chars("(((3+4)");
     calculator.push("sin");
     calculator.push_chars(")+5");
     calculator.push("cos");
@@ -314,6 +324,6 @@ fn test_history_unary_2() {
     calculator.push("neg");
     assert_eq!(
         calculator.get_history_string(false).unwrap(),
-        "neg(sin(3+4))+cos(5))"
+        "neg((sin(3+4))+cos(5))"
     );
 }

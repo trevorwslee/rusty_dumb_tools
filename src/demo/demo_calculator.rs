@@ -215,12 +215,9 @@ impl<const RICHER: bool> CalculatorUI<RICHER> {
         let key = '0';
         let key_pressed_coor = CalculatorUI::<RICHER>::_get_key_coor(key, &key_map).unwrap();
         let calculator = if RICHER {
-            DumbCalculator::new_ex(DumbCalculatorSettings {
-                enable_undo: true,
-                enable_history: true,
-            })
-        } else {
             DumbCalculator::new()
+        } else {
+            DumbCalculator::new_min()
         };
         Self {
             calculator: calculator,

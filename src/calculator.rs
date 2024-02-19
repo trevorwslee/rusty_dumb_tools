@@ -43,12 +43,19 @@ pub struct DumbCalculator {
 ///
 /// for a fuller sample code, please refer to the "calculator" sub-demo of [`crate::demo::run_demo`]
 impl DumbCalculator {
-    /// create a new [`DumbCalculator`] instance with default settings (i.e. no undo etc)
+    /// create a new [`DumbCalculator`] instance with minimum feature (i.e. no undo etc)
+    pub fn new_min() -> Self {
+        DumbCalculator::new_with_settings(DumbCalculatorSettings {
+            enable_history: false,
+            enable_undo: false,
+        })
+    }
+    /// create a new [`DumbCalculator`] (with all the default features enabled)
     pub fn new() -> Self {
-        DumbCalculator::new_ex(DumbCalculatorSettings::default())
+        DumbCalculator::new_with_settings(DumbCalculatorSettings::default())
     }
     /// like [`DumbCalculator::new`] but with settings
-    pub fn new_ex(settings: DumbCalculatorSettings) -> Self {
+    pub fn new_with_settings(settings: DumbCalculatorSettings) -> Self {
         let undo_stack = if settings.enable_undo {
             Some(Vec::new())
         } else {
@@ -300,6 +307,9 @@ impl DumbCalculator {
                     // if marker.is_some() {
                     //     marker_stack.push(marker.unwrap());
                     // }
+                    if pop_marker {
+                        marker_stack.pop();
+                    }
                 } else {
                     //let h = h.trim();
                     if pop_marker {
@@ -499,8 +509,8 @@ pub struct DumbCalculatorSettings {
 impl Default for DumbCalculatorSettings {
     fn default() -> Self {
         Self {
-            enable_undo: false,
-            enable_history: false,
+            enable_undo: true,
+            enable_history: true,
         }
     }
 }

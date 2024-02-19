@@ -180,13 +180,9 @@ impl<const RICHER: bool> Calculator<RICHER> {
         let key = '0';
         let key_pressed_coor = Calculator::<RICHER>::_get_key_coor(key, &key_map).unwrap();
         let calculator = if RICHER {
-            DumbCalculator::new_ex(DumbCalculatorSettings {
-                enable_undo: true,
-                enable_history: true,
-                ..DumbCalculatorSettings::default()
-            })
-        } else {
             DumbCalculator::new()
+        } else {
+            DumbCalculator::new_min()
         };
         Self {
             calculator: calculator,
