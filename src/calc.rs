@@ -250,6 +250,16 @@ impl DumbCalcProcessor {
     pub fn count_opened_brackets(&self) -> u16 {
         self.calc_impl.count_opened_brackets()
     }
+    /// use the "angle mode" for trigonometric functions
+    /// * angle_mode: "deg" or "rad"
+    pub fn use_angle_mode(&mut self, angle_mode: &str) {
+        let angle_mode = match angle_mode {
+            "deg" => AngleMode::DEGREE,
+            "rad" => AngleMode::RADIAN,
+            _ => panic!("'{}' is not a valid angle mode", angle_mode),
+        };
+        self.calc_impl.use_angle_mode(angle_mode);
+    }
     /// reset for new input
     pub fn reset(&mut self) {
         self.calc_impl.reset();
@@ -444,6 +454,7 @@ struct CalcImpl {
     stack: Vec<Unit>, // can only be ) or Op
     last_pushed: Option<Unit>,
     result: f64,
+    angle_mode: AngleMode,
 }
 impl CalcImpl {
     fn new() -> CalcImpl {
@@ -452,6 +463,7 @@ impl CalcImpl {
             stack: Vec::new(),
             last_pushed: None,
             result: 0.0,
+            angle_mode: AngleMode::DEGREE,
         }
     }
     fn push(&mut self, push_unit: Unit) {
@@ -569,6 +581,9 @@ impl CalcImpl {
         }
         count
     }
+    fn use_angle_mode(&mut self, angle_mode: AngleMode) {
+        self.angle_mode = angle_mode;
+    }
     fn reset(&mut self) {
         self.scanned.clear();
         self.stack.clear();
@@ -594,7 +609,7 @@ impl CalcImpl {
                         Some(o) => o,
                         None => self.result,
                     };
-                    op.evaluate_unary(operand)
+                    op.evaluate_unary(operand, self.angle_mode)
                 } else {
                     let right = match self.scanned.pop() {
                         Some(r) => r,
@@ -665,6 +680,12 @@ impl fmt::Display for CalcResult {
             CalcResult::Error(ref err_msg) => write!(f, "Error: {}", err_msg),
         }
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Copy)]
+enum AngleMode {
+    DEGREE,
+    RADIAN,
 }
 
 #[allow(non_camel_case_types)]
@@ -760,15 +781,15 @@ impl Op {
     fn is_binary(&self) -> bool {
         !self.is_unary()
     }
-    fn evaluate_unary(&self, operand: f64) -> f64 {
+    fn evaluate_unary(&self, operand: f64, angle_mode: AngleMode) -> f64 {
         match *self {
             Op::NEGATE => -operand,
-            Op::SIN => operand.sin(),
-            Op::COS => operand.cos(),
-            Op::TAN => operand.tan(),
-            Op::ASIN => operand.asin(),
-            Op::ACOS => operand.acos(),
-            Op::ATAN => operand.atan(),
+            Op::SIN => Op::_to_rad_angle(operand, angle_mode).sin(),
+            Op::COS => Op::_to_rad_angle(operand, angle_mode).cos(),
+            Op::TAN => Op::_to_rad_angle(operand, angle_mode).tan(),
+            Op::ASIN => Op::_from_rad_angle(operand.asin(), angle_mode),
+            Op::ACOS => Op::_from_rad_angle(operand.acos(), angle_mode),
+            Op::ATAN => Op::_from_rad_angle(operand.atan(), angle_mode),
             Op::LOG => operand.log10(),
             Op::LN => operand.ln(),
             Op::SQRT => operand.sqrt(),
@@ -780,6 +801,20 @@ impl Op {
             Op::ABS => operand.abs(),
             Op::PERCENT => operand / 100.0,
             _ => panic!("{:?} non-unary operator", self),
+        }
+    }
+    fn _to_rad_angle(operand: f64, angle_mode: AngleMode) -> f64 {
+        if angle_mode == AngleMode::DEGREE {
+            operand.to_radians()
+        } else {
+            operand
+        }
+    }
+    fn _from_rad_angle(operand: f64, angle_mode: AngleMode) -> f64 {
+        if angle_mode == AngleMode::DEGREE {
+            operand.to_degrees()
+        } else {
+            operand
         }
     }
 }

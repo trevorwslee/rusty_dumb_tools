@@ -123,7 +123,9 @@ after 20 seconds, when 100% done, the screen will be like
 # Additional Demos
 
 * [DumbCalculator Text-based Demo](demos/text_based_calculator/README.md)
-* [DumbCalculator Web-based Demo](demos/web_based_calculator/README.md) -- [https://trevorwslee.github.io/DumbCalculator/](https://trevorwslee.github.io/DumbCalculator/)
+* [DumbCalculator Web-based Demo](demos/web_based_calculator/README.md)
+  - try it -- https://trevorwslee.github.io/DumbCalculator/
+  - some brief introduction on how it is implemented -- https://github.com/trevorwslee/wasm_calculator
 
 
 
@@ -147,6 +149,7 @@ MIT
 
 * v0.1.7
   - bug fix
+  - enhanced DumbCalcProcessor and DumbCalculator
 
 * v0.1.6
   - bug fix

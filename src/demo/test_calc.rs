@@ -46,12 +46,13 @@ macro_rules! assert_calc_eq_result {
             CalcResult::Final(calc_res) => calc_res,
             _ => res + 1.0,
         };
-        if check_calc_res != res {
+        let res_diff = (check_calc_res - res).abs();
+        if res_diff > 0.000000001 {
             println!("XXX");
             println!("XXX calc_res(={calc_res:?}) != res(={res}) ... calc={calc:?}");
             println!("XXX");
+            assert_eq!(check_calc_res, res);
         }
-        assert_eq!(check_calc_res, res);
     };
 }
 
@@ -200,6 +201,61 @@ pub fn test_calc_const() {
     test_calc_prase_and_push!(" 50% + 50 %", 1.0);
     test_calc_prase_and_push!(" 2 * PI ", 2.0 * std::f64::consts::PI);
     test_calc_prase_and_push!(" 3 * E ", 3.0 * std::f64::consts::E);
+}
+#[test]
+pub fn test_calc_angle() {
+    test_calc_prase_and_push!(" 0 cos ", 1.0);
+    test_calc_prase_and_push!(" 90 cos ", 0.0);
+    test_calc_prase_and_push!(" 45 cos ", 0.7071067811865476);
+
+    let mut calc = DumbCalcProcessor::new();
+    calc.parse_and_push("30 cos");
+    calc.eval();
+    assert_calc_eq_result!(&calc, 0.8660254037844387);
+    calc.push("acos");
+    calc.eval();
+    assert_calc_eq_result!(&calc, 30.0);
+
+    let mut calc = DumbCalcProcessor::new();
+    calc.parse_and_push("30 sin");
+    calc.eval();
+    assert_calc_eq_result!(&calc, 0.49999999999999994);
+    calc.push("asin");
+    calc.eval();
+    assert_calc_eq_result!(&calc, 30.0);
+
+    let mut calc = DumbCalcProcessor::new();
+    calc.parse_and_push("30 tan");
+    calc.eval();
+    assert_calc_eq_result!(&calc, 0.5773502691896257);
+    calc.push("atan");
+    calc.eval();
+    assert_calc_eq_result!(&calc, 30.0);
+
+    let mut calc = DumbCalcProcessor::new();
+    calc.use_angle_mode("rad");
+    calc.parse_and_push("0.5 cos");
+    calc.eval();
+    assert_calc_eq_result!(&calc, 0.8775825618903728);
+    calc.push("acos");
+    calc.eval();
+    assert_calc_eq_result!(&calc, 0.5);
+
+    calc.reset();
+    calc.parse_and_push("0.5 sin");
+    calc.eval();
+    assert_calc_eq_result!(&calc, 0.479425538604203);
+    calc.push("asin");
+    calc.eval();
+    assert_calc_eq_result!(&calc, 0.5);
+
+    calc.reset();
+    calc.parse_and_push("0.5 tan");
+    calc.eval();
+    assert_calc_eq_result!(&calc, 0.5463024898437905);
+    calc.push("atan");
+    calc.eval();
+    assert_calc_eq_result!(&calc, 0.5);
 }
 #[test]
 pub fn test_calc_underscore() {

@@ -22,6 +22,8 @@ fn main() {
 fn App() -> impl IntoView {
     // create an instance of DumbCalculator and wrap it in a RefCell, so that it can be got back as mutable
     let calculator_ref = RefCell::new(DumbCalculator::new());
+    let (angle_mode, set_angle_mode) = create_signal(String::from("deg"));
+    let (alt_mode, set_alt_mode) = create_signal(false);
     let (clicked_value, set_clicked_value) = create_signal(String::from(""));
     let (history, set_history) = create_signal(String::from(""));
     let on_clicked = move |ev: MouseEvent| {
@@ -34,10 +36,20 @@ fn App() -> impl IntoView {
             <div class="item display"> {
                 // since want to re-render when "clicked_value" signal changes, need to use a closure
                 move || {
+                    // get the "input" from the signal
+                    let mut clicked_chars = clicked_value.get();
+                    if clicked_chars == "alt" {
+                        let alt = alt_mode.get();
+                        set_alt_mode.set(!alt);
+                        clicked_chars = "".to_string()
+                    } else if clicked_chars == "am" {
+                        let angle_mode = angle_mode.get();
+                        let new_angle_mode = if angle_mode == "deg" { "rad" } else { "deg" };
+                        set_angle_mode.set(new_angle_mode.to_string());
+                        clicked_chars = "".to_string()
+                    }
                     // get the calculator instance and make it mutable
                     let mut calculator = calculator_ref.borrow_mut();
-                    // get the "input" from the signal
-                    let clicked_chars = clicked_value.get();
                     if clicked_chars == "<" {
                         calculator.undo();
                     } else if clicked_chars == "ac" {
@@ -83,12 +95,37 @@ fn App() -> impl IntoView {
             </div>
 
             // keys row 1
-            <div class="item key"><button class="key_button" on:click=on_clicked value="sin">{"sin"}</button></div>
-            <div class="item key"><button class="key_button" on:click=on_clicked value="cos">{"cos"}</button></div>
-            <div class="item key"><button class="key_button" on:click=on_clicked value="tan">{"tan"}</button></div>
-            <div class="item key"><button class="key_button" on:click=on_clicked value="asin">{"sin"}<span class="ss_span">-1</span></button></div>
-            <div class="item key"><button class="key_button" on:click=on_clicked value="acos">{"cos"}<span class="ss_span">-1</span></button></div>
-            <div class="item key"><button class="key_button" on:click=on_clicked value="atan">{"tan"}<span class="ss_span">-1</span></button></div>
+            { move || view! {
+                <div class="item key"><button class="key_button" style="color:green; background-color:ivory" on:click=on_clicked value="am">{
+                    let angle_mode = angle_mode.get();
+                    angle_mode.to_uppercase()
+                }</button></div>
+            }}
+            { move || {
+                let alt = alt_mode.get();
+                let style = if alt { "color:blue; background-color:orange" } else { "color:darkgray; background-color:lightgray" };
+                view! {
+                <div class="item key"><button class="key_button" style={style} on:click=on_clicked value="alt">{
+                    //let angle_mode = angle_mode.get();
+                    "ALT"
+                }</button></div>
+            }}}
+            <div class="item key"><button class="key_button" on:click=on_clicked value="^">x<span class="ss_span">y</span></button></div>
+            { move || {
+                let alt = alt_mode.get();
+                if alt { view! {
+                        <div class="item key"><button class="key_button" on:click=on_clicked value="asin">{"sin"}<span class="ss_span">-1</span></button></div>
+                        <div class="item key"><button class="key_button" on:click=on_clicked value="acos">{"cos"}<span class="ss_span">-1</span></button></div>
+                        <div class="item key"><button class="key_button" on:click=on_clicked value="atan">{"tan"}<span class="ss_span">-1</span></button></div>
+                    }
+                } else { view! {
+                        <div class="item key"><button class="key_button" on:click=on_clicked value="sin">{"sin"}</button></div>
+                        <div class="item key"><button class="key_button" on:click=on_clicked value="cos">{"cos"}</button></div>
+                        <div class="item key"><button class="key_button" on:click=on_clicked value="tan">{"tan"}</button></div>
+                    }
+                }
+            }}
+
 
             // keys row 2
             <div class="item key"><button class="key_button" on:click=on_clicked value="square">x<span class="ss_span">2</span></button></div>
@@ -103,7 +140,7 @@ fn App() -> impl IntoView {
             <div class="item key"><button class="key_button" on:click=on_clicked value=7>{"7️⃣"}</button></div>
             <div class="item key"><button class="key_button" on:click=on_clicked value=8>{"8️⃣"}</button></div>
             <div class="item key"><button class="key_button" on:click=on_clicked value=9>{"9️⃣"}</button></div>
-            <div class="item key span2" style="background-color:orange"><button class="key_button" on:click=on_clicked value="ac">{"AC"}</button></div>
+            <div class="item key span2" style="background-color:orangered"><button class="key_button" on:click=on_clicked value="ac">{"AC"}</button></div>
 
             // keys row 4
             <div class="item key"><button class="key_button" on:click=on_clicked value="log">{"log"}</button></div>
