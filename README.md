@@ -1,29 +1,28 @@
 # RustyDumbTools (v0.1.7)
 
-A collection of simple tools in ***Rust*** as ***Rust*** modules:
-* `crate::arg::DumbArgParser`: A simple argument parser.
+A [collection of simple tools](https://crates.io/crates/rusty_dumb_tools) in ***Rust*** as ***Rust*** modules:
+* [`crate::arg::DumbArgParser`](https://docs.rs/rusty_dumb_tools/0.1.7/rusty_dumb_tools/arg/struct.DumbArgParser.html): A simple argument parser.
   It can be useful for handling command line argument parsing for a ***Rust*** program.
-* `crate::calc::DumbCalcProcessor`: A simple infix calculation processor 
+* [`crate::calc::DumbCalcProcessor`](https://docs.rs/rusty_dumb_tools/0.1.7/rusty_dumb_tools/calc/index.html): A simple infix calculation processor 
   It can be used to implement a simple calculator in ***Rust***.
-* `crate::calculator::DumbCalculator`: A simple calculator that accepts input keys acting like a real calculator.
+* [`crate::calculator::DumbCalculator`](https://docs.rs/rusty_dumb_tools/0.1.7/rusty_dumb_tools/calculator/struct.DumbCalculator.html): A simple calculator that accepts input keys acting like a real calculator.
   It can be used to implement a simple calculator UI in **Rust**.
-* `crate::ltemp::DumbLineTemplate`: A simple line template for formatting a line.
+* [`crate::ltemp::DumbLineTemplate`](https://docs.rs/rusty_dumb_tools/0.1.7/rusty_dumb_tools/ltemp/struct.DumbLineTemplate.html): A simple line template for formatting a line.
   It can be usee for printing values as a line with some template.
-* `crate::lblscreen::DumbLineByLineScreen`: A terminal / text-based "screen" update helper.
+* [`crate::lblscreen::DumbLineByLineScreen`](https://docs.rs/rusty_dumb_tools/0.1.7/rusty_dumb_tools/lblscreen/struct.DumbLineByLineScreen.html): A terminal / text-based "screen" update helper.
 It is extended from `crate::ltemp::DumbLineTemplate`, and should be helpful in managing the updates of the formatted lines that acts as a "screen".
   
   
 
 
-You may also want to refer to the [`crates.io` page about `RustyDumbTools`](https://crates.io/crates/rusty_dumb_tools).
-
 # Demo
 
-For a demo program of using the tools, you may want to run the included demo function [`rusty_dumb_tools::demo::run_demo`](https://docs.rs/rusty_dumb_tools/0.1.1/rusty_dumb_tools/demo/fn.run_demo.html) like
+For a demo program of using the tools, which is itself an application using `DumbArgParser`, you may want to run the included demo function [`rusty_dumb_tools::demo::run_demo`](https://docs.rs/rusty_dumb_tools/0.1.7/rusty_dumb_tools/demo/fn.run_demo.html) like
 ```
 use rusty_dumb_tools::demo;
 demo::run_demo(None);  // get arguments from command-line         
 ````
+
 
 Assuming new ***Rust*** project with `main.rs` like
 ```
@@ -124,8 +123,8 @@ after 20 seconds, when 100% done, the screen will be like
 
 * [DumbCalculator Text-based Demo](demos/text_based_calculator/README.md)
 * [DumbCalculator Web-based Demo](demos/web_based_calculator/README.md)
-  - try it -- https://trevorwslee.github.io/DumbCalculator/
-  - some brief introduction on how it is implemented -- https://github.com/trevorwslee/wasm_calculator
+  - you may try it: [<img src="images/dumb_calculator.png" width="150"/>](https://trevorwslee.github.io/DumbCalculator/)
+  - and may want to refer to some [brief introduction](https://github.com/trevorwslee/wasm_calculator) on how it is implemented 
 
 
 
