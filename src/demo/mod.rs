@@ -1,10 +1,11 @@
 #![deny(warnings)]
+#![allow(clippy::vec_init_then_push)]
 
 //! Home for `rusty_dumb_tools` demo, and sub-demos for the various tools included in this crate. Please refer to [`crate::demo::run_demo`].
 
 pub mod demo_arg;
 pub mod demo_calc;
-pub mod demo_calculator;
+//pub mod demo_calculator;
 //pub mod demo_calculator_gui;
 pub mod demo_lblscreen;
 pub mod demo_ltemp;
@@ -25,7 +26,6 @@ use crate::prelude::*;
 use self::{
     demo_arg::handle_demo_arg,
     demo_calc::{create_demo_parser_calc, handle_demo_calc, handle_demo_calc_repl},
-    demo_calculator::{create_demo_parser_calculator, handle_demo_calculator},
     demo_lblscreen::handle_demo_lblscreen,
     demo_ltemp::handle_demo_ltemp,
 };
@@ -37,7 +37,6 @@ use self::{
 /// sub-demos:
 /// * `calc`: see [`crate::demo::demo_calc::handle_demo_calc`]
 /// * `calc-repl`: see [`crate::demo::demo_calc::handle_demo_calc_repl`]
-/// * `calculator`: see [`crate::demo::demo_calculator::handle_demo_calculator`]
 /// * `ltemp`: see [`crate::demo::demo_ltemp::handle_demo_ltemp`]
 /// * `lblscreen`: see [`crate::demo::demo_lblscreen::handle_demo_lblscreen`]
 /// * `arg`: see [`crate::demo::demo_arg::handle_demo_arg`]
@@ -61,7 +60,7 @@ pub fn create_demo_parser() -> DumbArgParser {
         .set_with_desc_enums(vec![
             "calc:DumbCalcProcessor command-line input demo",
             "calc-repl:DumbCalcProcessor REPL demo",
-            "calculator:DumbCalculator text-based UI demo",
+            //"calculator:DumbCalculator text-based UI demo",
             //"calculator-gui:DumbCalculator GUI demo",
             "ltemp:DumbLineTemplate demo",
             "lblscreen:DumbLineByLineScreen demo",
@@ -90,11 +89,11 @@ pub fn handle_sub_demo(parser: DumbArgParser) {
         "calc-repl" => {
             handle_demo_calc_repl();
         }
-        "calculator" => {
-            let mut demo_parser = create_demo_parser_calculator();
-            parser.process_rest_args("demo", &mut demo_parser);
-            handle_demo_calculator(demo_parser);
-        }
+        // "calculator" => {
+        //     let mut demo_parser = create_demo_parser_calculator();
+        //     parser.process_rest_args("demo", &mut demo_parser);
+        //     handle_demo_calculator(demo_parser);
+        // }
         // "calculator-gui" => {
         //     handle_demo_calculator_gui();
         // }

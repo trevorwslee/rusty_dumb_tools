@@ -2,6 +2,14 @@
 
 #![deny(warnings)]
 #![allow(unused)]
+#![allow(clippy::comparison_chain)]
+#![allow(clippy::inherent_to_string_shadow_display)]
+#![allow(clippy::manual_strip)]
+#![allow(clippy::inherent_to_string)]
+#![allow(clippy::new_without_default)]
+#![allow(clippy::collapsible_if)]
+#![allow(clippy::collapsible_else_if)]
+#![allow(clippy::redundant_field_names)]
 
 use core::panic;
 use std::{
@@ -295,8 +303,8 @@ impl DumbArgParser {
             if value.is_none() {
                 continue;
             }
-            if parameters.len() > 0 {
-                parameters.push_str(" ");
+            if !parameters.is_empty() {
+                parameters.push(' ');
             }
             if let ArgNature::Fixed = arg.nature {
                 parameters.push_str(flag.unwrap());
@@ -304,7 +312,7 @@ impl DumbArgParser {
                 let value = value.unwrap();
                 if let Some(flag) = flag {
                     parameters.push_str(flag);
-                    parameters.push_str(" ");
+                    parameters.push(' ');
                 }
                 parameters.push_str(value.to_string().as_str());
             }
@@ -334,7 +342,7 @@ impl DumbArgParser {
             None => return None,
         };
         match T::from_arg_value(arg_value.clone()) {
-            Ok(value) => return Some(*value),
+            Ok(value) => Some(*value),
             Err(err) => panic!("{}", err),
         }
     }
@@ -423,7 +431,7 @@ impl DumbArgParser {
         }
         let rest = rest.unwrap();
         let rest = rest.iter().map(|s| s.as_str()).collect();
-        return parser.check_process_args(rest, show_help_if_needed);
+        parser.check_process_args(rest, show_help_if_needed)
     }
     /// parse from the input program arguments -- [`env::args`] -- for argument values (parameters);
     /// after parsing, the argument values can be retrieved by [`DumbArgParser::get`]
@@ -436,7 +444,7 @@ impl DumbArgParser {
     pub fn check_parse_args(&mut self, show_help_if_needed: bool) -> Result<bool, DumbError> {
         let in_args = self._prepare_in_args_from_os();
         let in_args = in_args.iter().map(|s| s.as_str()).collect();
-        return self.check_process_args(in_args, show_help_if_needed);
+        self.check_process_args(in_args, show_help_if_needed)
     }
     pub fn show_help(&self, err_msg: Option<String>, and_exit: bool) {
         let (flag_args, position_args) = self._split_args();
@@ -453,7 +461,7 @@ impl DumbArgParser {
     fn _prepare_in_args_from_os(&mut self) -> Vec<String> {
         let os_args: Vec<String> = env::args().collect();
         let program_path = &os_args[0];
-        let program_name = DumbArgParser::_extract_program_name(&program_path);
+        let program_name = DumbArgParser::_extract_program_name(program_path);
         let in_args = os_args[1..].to_vec();
         //let in_args = in_args.iter().map(|s| s.as_str()).collect();
         if self.program_name.is_none() {
@@ -464,7 +472,7 @@ impl DumbArgParser {
     fn _extract_program_name(program_path: &str) -> String {
         let path = Path::new(program_path);
         let file_stem = path.file_stem().unwrap().to_str().unwrap();
-        return file_stem.to_string();
+        file_stem.to_string()
     }
     /// like [`DumbArgParser::parse_args`] but the input arguments to parse are provided explicitly
     pub fn process_args(&mut self, in_args: Vec<&str>) {
@@ -508,9 +516,9 @@ impl DumbArgParser {
                 self._show_help(&flag_args, &position_args, &err_msg);
             }
             if let Some(err_msg) = err_msg {
-                return Err(err_msg.into());
+                Err(err_msg.into())
             } else {
-                return Ok(false);
+                Ok(false)
             }
         } else {
             Ok(true)
@@ -520,7 +528,7 @@ impl DumbArgParser {
         match check_parse_result {
             Ok(ok) => {
                 if ok {
-                    return;
+                    //return;
                 } else {
                     println!();
                     println!("~~~ [{}] EXITED normally ~~~", self._get_program_name());
@@ -557,8 +565,8 @@ impl DumbArgParser {
                 need_help = true;
                 break;
             }
-            let (arg_idx, arg, arg_value) = if in_arg.starts_with("-") {
-                let arg_idx = DumbArgParser::_scan_arg_index(&self.args, &in_arg, -1);
+            let (arg_idx, arg, arg_value) = if in_arg.starts_with('-') {
+                let arg_idx = DumbArgParser::_scan_arg_index(&self.args, in_arg, -1);
                 if arg_idx.is_none() {
                     err_msg = Some(format!("unknown input argument [{}]", in_arg));
                     //return Err(format!("unknown argument [{}]", in_arg));
@@ -575,12 +583,12 @@ impl DumbArgParser {
                         //return Err(format!("unknown argument [{}]", in_arg));
                         break;
                     }
-                    arg_value = arg.from_value(&in_args[in_arg_idx]);
+                    arg_value = arg.convert_in(in_args[in_arg_idx]);
                     in_arg_idx += 1;
                 };
                 (arg_idx, arg, arg_value)
             } else {
-                let arg_idx = DumbArgParser::_scan_arg_index(&self.args, &in_arg, pos_idx as i32);
+                let arg_idx = DumbArgParser::_scan_arg_index(&self.args, in_arg, pos_idx as i32);
                 if arg_idx.is_none() {
                     err_msg = Some(format!("unacceptable input argument [{}]", in_arg));
                     //return Err(format!("unacceptable argument [{}]", in_arg));
@@ -588,7 +596,7 @@ impl DumbArgParser {
                 }
                 let arg_idx = arg_idx.unwrap();
                 let arg = &self.args[arg_idx];
-                let arg_value = arg.from_value(in_arg);
+                let arg_value = arg.convert_in(in_arg);
                 pos_idx += 1;
                 (arg_idx, arg, arg_value)
             };
@@ -641,7 +649,7 @@ impl DumbArgParser {
         }
         Ok((need_help, err_msg))
     }
-    fn _scan_arg_index(args: &Vec<Arg>, flag: &str, pos_idx: i32) -> Option<usize> {
+    fn _scan_arg_index(args: &[Arg], flag: &str, pos_idx: i32) -> Option<usize> {
         let mut arg_pos_idx: usize = 0;
         for (arg_idx, arg) in args.iter().enumerate() {
             match &arg.key {
@@ -660,7 +668,7 @@ impl DumbArgParser {
                 }
             }
         }
-        return None;
+        None
     }
     fn _set_arg_value(
         &mut self,
@@ -713,10 +721,10 @@ impl DumbArgParser {
             if arg.multi_mode == ArgMultiMode::Regular {
                 let mut multi_arg_values = vec![arg_value];
                 for in_rest_arg in in_rest_args.iter() {
-                    let rest_arg_value = match arg.from_value(in_rest_arg) {
+                    let rest_arg_value = match arg.convert_in(in_rest_arg) {
                         Ok(rest_arg_value) => rest_arg_value,
                         Err(err) => {
-                            return Err(err.into());
+                            return Err(err /*.into()*/);
                         }
                     };
                     DumbArgParser::_verify_arg_range(arg, &rest_arg_value)?;
@@ -760,7 +768,7 @@ impl DumbArgParser {
             ArgConstraint::Enums(enum_values) => {
                 let mut found = false;
                 for enum_value in enum_values.iter() {
-                    if enum_value.compare(&arg_value) == 0 {
+                    if enum_value.compare(arg_value) == 0 {
                         found = true;
                         break;
                     }
@@ -769,7 +777,7 @@ impl DumbArgParser {
                     let mut values = String::new();
                     for enum_value in enum_values.iter() {
                         let value = enum_value.to_string();
-                        if values.len() > 0 {
+                        if !values.is_empty() {
                             values.push_str(", ");
                         }
                         values.push_str(value.as_str());
@@ -778,8 +786,7 @@ impl DumbArgParser {
                         "[{}] doesn't match any of the enum values [{}]",
                         arg_value.to_string(),
                         values
-                    )
-                    .into());
+                    ));
                 }
             }
             ArgConstraint::Range(min, max) => {
@@ -789,15 +796,14 @@ impl DumbArgParser {
                         arg_value.to_string(),
                         min,
                         max
-                    )
-                    .into());
+                    ));
                 }
             }
             ArgConstraint::None => {}
         }
         Ok(())
     }
-    fn _show_help(&self, flag_args: &Vec<Arg>, position_args: &Vec<Arg>, err_msg: &Option<String>) {
+    fn _show_help(&self, flag_args: &[Arg], position_args: &[Arg], err_msg: &Option<String>) {
         println!();
         if let Some(err_msg) = err_msg {
             println!("| !!!");
@@ -827,7 +833,7 @@ impl DumbArgParser {
                     print!(", ");
                 }
                 let f = if flag_arg.nature == ArgNature::Fixed {
-                    format!("{flag}")
+                    flag.to_string()
                 } else {
                     format!("{flag} {name}")
                 };
@@ -906,7 +912,7 @@ impl DumbArgParser {
                     let mut values = String::new();
                     for enum_value in enum_values.iter() {
                         let value = enum_value.to_string();
-                        if values.len() > 0 {
+                        if !values.is_empty() {
                             values.push_str(", ");
                         }
                         values.push_str(value.as_str());
@@ -930,7 +936,7 @@ impl DumbArgParser {
             ArgConstraint::None => {}
         }
     }
-    fn _compose_usage(&self, flag_args: &Vec<Arg>, position_args: &Vec<Arg>) -> String {
+    fn _compose_usage(&self, flag_args: &[Arg], position_args: &[Arg]) -> String {
         let mut usage = String::new();
         let program_name = self._get_program_name();
         usage.push_str(program_name.as_str());
@@ -1032,7 +1038,7 @@ impl Arg {
             description: description.clone(),
         }
     }
-    fn from_value(&self, val: &str) -> Result<ArgValue, String> {
+    fn convert_in(&self, val: &str) -> Result<ArgValue, String> {
         let value = match self.value {
             ArgValue::I32(_) => {
                 let v = match val.parse::<i32>() {
@@ -1202,7 +1208,7 @@ impl DumbArgBuilder {
         for value in values.iter() {
             let arg_value = value.to_arg_value();
             let value_str = arg_value.to_string();
-            let mut parts = value_str.split(":");
+            let mut parts = value_str.split(':');
             let value = parts.next().unwrap();
             let description = parts.next().map(|s| s.to_string()).unwrap();
             arg_enums.push(ArgEnum::new(
@@ -1249,7 +1255,7 @@ impl DumbArgBuilder {
         }
         if self.name_or_flags.len() == 1 {
             let name = &self.name_or_flags[0];
-            if !name.starts_with("-") {
+            if !name.starts_with('-') {
                 return Ok(ArgKey::Name(name.clone()));
             }
         }
@@ -1304,14 +1310,8 @@ impl ArgValue {
             ArgValue::F32(v) => v.to_string(),
             ArgValue::F64(v) => v.to_string(),
             ArgValue::String(ref v) => v.to_string(),
-            //ArgValue::StaticStr(v) => v.to_string(),
         }
     }
-    // fn equivalent(&self, arg_value: &ArgValue) -> bool {
-    //     let this_value = self.to_string();
-    //     let other_value = arg_value.to_string();
-    //     return this_value == other_value;
-    // }
     fn compare(&self, arg_value: &ArgValue) -> i32 {
         match *self {
             ArgValue::I32(_) | ArgValue::I64(_) => {

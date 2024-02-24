@@ -215,7 +215,7 @@ impl<const RICHER: bool> Calculator<RICHER> {
         };
         dltc!(&key.to_string(), fixed_width = fixed_width, align = 'C')
     }
-    fn _scan_for_keys(components: &Vec<LineTempComp>) -> Vec<char> {
+    fn _scan_for_keys(components: &[LineTempComp]) -> Vec<char> {
         let mut keys = Vec::<char>::new();
         for comp in components {
             if let LineTempComp::Mapped(mapped_comp) = comp {
@@ -232,7 +232,7 @@ impl<const RICHER: bool> Calculator<RICHER> {
         self._refresh();
         let key = self.refresh_state.selected_key.unwrap();
         self.refresh_state.selected_key = Some(key);
-        self._refresh_for_keys(&vec![key.to_string().as_ref()]);
+        self._refresh_for_keys(&[key.to_string().as_ref()]);
         enable_raw_mode().unwrap();
         loop {
             if let Event::Key(event) = read().unwrap() {
@@ -276,7 +276,7 @@ impl<const RICHER: bool> Calculator<RICHER> {
         };
         self.screen.refresh_ex(map_value_fn);
     }
-    fn _refresh_for_keys(&mut self, keys: &Vec<&str>) {
+    fn _refresh_for_keys(&mut self, keys: &[&str]) {
         let map_value_fn = |key: &str| -> Option<(String, u16)> {
             self.refresh_state.map_value(key, &self.calculator)
         };
@@ -284,7 +284,7 @@ impl<const RICHER: bool> Calculator<RICHER> {
     }
     fn _get_key_coor(
         key: char,
-        key_map: &[Vec<char>], /*&Vec<Vec<char>>*/
+        key_map: &[Vec<char>],
     ) -> Option<(usize, usize)> {
         for (row_idx, row) in key_map.iter().enumerate() {
             for (col_idx, cell) in row.iter().enumerate() {
@@ -298,12 +298,12 @@ impl<const RICHER: bool> Calculator<RICHER> {
     fn _commit_key_selected(&mut self) {
         let key = self.key_map[self.selected_key_rc.0][self.selected_key_rc.1];
         self.refresh_state.highlight_selected = true;
-        self._refresh_for_keys(&vec![key.to_string().as_ref()]);
+        self._refresh_for_keys(&[key.to_string().as_ref()]);
 
         thread::sleep(Duration::from_millis(ENTER_DELAY_MILLIS));
 
         self.refresh_state.highlight_selected = false;
-        self._refresh_for_keys(&vec![key.to_string().as_ref()]);
+        self._refresh_for_keys(&[key.to_string().as_ref()]);
 
         if key == 'C' {
             self.calculator.reset();
@@ -318,9 +318,9 @@ impl<const RICHER: bool> Calculator<RICHER> {
     }
     fn _update_display(&mut self) {
         if RICHER {
-            self._refresh_for_keys(&vec!["display", "indicators", "history"]);
+            self._refresh_for_keys(&["display", "indicators", "history"]);
         } else {
-            self._refresh_for_keys(&vec!["display"]);
+            self._refresh_for_keys(&["display"]);
         }
     }
     fn _select_and_enter_key(&mut self, key: char) {
@@ -330,12 +330,12 @@ impl<const RICHER: bool> Calculator<RICHER> {
         if let Some((row_idx, col_idx)) = key_coor {
             let key = self.key_map[self.selected_key_rc.0][self.selected_key_rc.1];
             self.refresh_state.selected_key = None;
-            self._refresh_for_keys(&vec![key.to_string().as_ref()]);
+            self._refresh_for_keys(&[key.to_string().as_ref()]);
 
             self.selected_key_rc = (row_idx, col_idx);
             let key = self.key_map[self.selected_key_rc.0][self.selected_key_rc.1];
             self.refresh_state.selected_key = Some(key);
-            self._refresh_for_keys(&vec![key.to_string().as_ref()]);
+            self._refresh_for_keys(&[key.to_string().as_ref()]);
 
             self._commit_key_selected();
         } else {
@@ -361,11 +361,11 @@ impl<const RICHER: bool> Calculator<RICHER> {
     fn _move_key_selected(&mut self, move_dir: MoveDir) {
         let key = self.key_map[self.selected_key_rc.0][self.selected_key_rc.1];
         self.refresh_state.selected_key = None;
-        self._refresh_for_keys(&vec![key.to_string().as_ref()]);
+        self._refresh_for_keys(&[key.to_string().as_ref()]);
 
         let key = self._adjust_key_selected(move_dir);
         self.refresh_state.selected_key = Some(key);
-        self._refresh_for_keys(&vec![key.to_string().as_ref()]);
+        self._refresh_for_keys(&[key.to_string().as_ref()]);
     }
     fn _adjust_key_selected(&mut self, move_dir: MoveDir) -> char {
         let row_count = self.key_map.len();

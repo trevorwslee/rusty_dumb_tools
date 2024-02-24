@@ -2,6 +2,9 @@
 
 #![deny(warnings)]
 #![allow(unused)]
+#![allow(clippy::if_same_then_else)]
+#![allow(clippy::manual_map)]
+#![allow(clippy::upper_case_acronyms)]
 
 use core::fmt;
 use std::{
@@ -286,7 +289,7 @@ impl DumbLineTemplate {
             match comp {
                 LineTempComp::Mapped(mapped_comp) => {
                     mapped_comp_indexes.push(Some(mapped_comps.len()));
-                    let map_value = match map_value_fn(&mapped_comp.get_map_key()) {
+                    let map_value = match map_value_fn(mapped_comp.get_map_key()) {
                         Some(map_value) => map_value,
                         None => {
                             if mapped_comp.is_optional() {

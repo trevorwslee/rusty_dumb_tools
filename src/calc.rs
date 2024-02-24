@@ -2,6 +2,10 @@
 
 #![deny(warnings)]
 #![allow(unused)]
+#![allow(clippy::new_without_default)]
+#![allow(clippy::upper_case_acronyms)]
+#![allow(clippy::match_like_matches_macro)]
+#![allow(clippy::single_match)]
 
 use std::{error::Error, fmt, num::ParseFloatError};
 
@@ -339,7 +343,7 @@ fn _parse_units_from_str(units: &str) -> Result<Vec<String>, String> {
     _parse_units_from_chars(&units)
 }
 
-fn _parse_units_from_chars(units: &Vec<char>) -> Result<Vec<String>, String> {
+fn _parse_units_from_chars(units: &[char]) -> Result<Vec<String>, String> {
     let mut parsed_units: Vec<String> = Vec::new();
     let max_idx = units.len();
     let mut idx = 0;
@@ -366,7 +370,7 @@ fn _parse_units_from_chars(units: &Vec<char>) -> Result<Vec<String>, String> {
     Ok(parsed_units)
 }
 
-fn _to_next_unit_token(mut idx: usize, s: &Vec<char>) -> Option<(usize, usize)> {
+fn _to_next_unit_token(mut idx: usize, s: &[char]) -> Option<(usize, usize)> {
     let max_idx = s.len();
     let mut start_idx: i32 = -1;
     let mut end_idx = max_idx;
@@ -395,11 +399,9 @@ fn _to_next_unit_token(mut idx: usize, s: &Vec<char>) -> Option<(usize, usize)> 
             idx += 1;
             continue;
         }
-        if c == '_' {
-            if _check_followed_by_digit(idx + 1, s) {
-                idx += 1;
-                continue;
-            }
+        if c == '_' && _check_followed_by_digit(idx + 1, s) {
+            idx += 1;
+            continue;
         }
         if c == '_'
             || c.is_whitespace()
@@ -429,7 +431,7 @@ fn _to_next_unit_token(mut idx: usize, s: &Vec<char>) -> Option<(usize, usize)> 
         Some((start_idx as usize, end_idx))
     }
 }
-fn _check_followed_by_digit(mut idx: usize, s: &Vec<char>) -> bool {
+fn _check_followed_by_digit(mut idx: usize, s: &[char]) -> bool {
     let max_idx = s.len();
     let mut start_idx: i32 = -1;
     let mut end_idx = max_idx;
@@ -548,7 +550,7 @@ impl CalcImpl {
                 if op.is_unary() {
                     self._push_to_scanned(&push_unit);
                 } else {
-                    self.stack.push(push_unit.clone());
+                    self.stack.push(push_unit /*.clone()*/);
                 }
             }
             Unit::Operand(operand) => self.scanned.push(operand),
@@ -593,8 +595,7 @@ impl CalcImpl {
 }
 impl CalcImpl {
     fn _push_all_to_scanned(&mut self, until_open_bracket: bool) {
-        while self.stack.len() > 0 {
-            let stack_unit = self.stack.pop().unwrap();
+        while let Some(stack_unit) = self.stack.pop() {
             if until_open_bracket && stack_unit == Unit::OpenBracket {
                 break;
             }
@@ -873,15 +874,21 @@ impl fmt::Display for Unit {
     }
 }
 
-fn print_infix(infix: &Vec<Unit>) {
+fn print_infix(infix: &[Unit]) {
     let len = infix.len();
     print!("[");
-    for i in 0..len {
+    for (i, unit) in infix.iter().enumerate() {
         if i > 0 {
             print!(", ");
         }
-        let unit = infix[i];
         print!("{}", unit);
     }
+    // for i in 0..len {
+    //     if i > 0 {
+    //         print!(", ");
+    //     }
+    //     let unit = infix[i];
+    //     print!("{}", unit);
+    // }
     println!("]");
 }

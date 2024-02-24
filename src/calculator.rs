@@ -2,6 +2,10 @@
 
 #![deny(warnings)]
 #![allow(unused)]
+#![allow(clippy::manual_range_contains)]
+#![allow(clippy::new_without_default)]
+#![allow(clippy::collapsible_else_if)]
+#![allow(clippy::redundant_field_names)]
 
 use core::panic;
 use std::{error::Error, ops::Index};
@@ -204,7 +208,7 @@ impl DumbCalculator {
         }
     }
     /// get history of the "key input", if history is enabled
-    pub fn get_history(&self) -> Option<&Vec<String>> {
+    pub fn get_history(&self) -> Option<&[String]> {
         if let Some(history_stack) = &self.history_stack {
             Some(history_stack)
         } else {
@@ -252,7 +256,7 @@ impl DumbCalculator {
                         _ => None,
                     };
                     if h == "%" && !better_symbols {
-                        hist.push_str("%");
+                        hist.push('%');
                     } else if let Some((start, bracket)) = marker {
                         let prefix = hist[0..start].to_string();
                         let inside = hist[start..].to_string();
@@ -397,7 +401,8 @@ impl DumbCalculator {
                 display_result = format!("{}{}", " ".repeat(room), display_result);
             } else {
                 if true {
-                    display_result = format!("{}", "~".repeat(result_width))
+                    display_result = "~".repeat(result_width).to_string();
+                    //display_result = format!("{}", "~".repeat(result_width))
                 } else {
                     panic!(
                         "cannot fit display_result [{}] ({}) to fixed width {}",
@@ -454,7 +459,7 @@ impl DumbCalculator {
         //let result = -1234567891234.0;
         if let Some(result_width) = result_width {
             if display_result.len() > result_width {
-                if display_result.contains(".") {
+                if display_result.contains('.') {
                     let dot_idx = display_result.find('.').unwrap();
                     let places: i32 = result_width as i32 - dot_idx as i32 - 1;
                     if places > 0 {
@@ -470,7 +475,7 @@ impl DumbCalculator {
             }
             let is_zero = if display_result.len() == result_width {
                 let dr = display_result.replace('-', "");
-                let dr = dr.replace(".", "");
+                let dr = dr.replace('.', "");
                 let dr = dr.replace('0', "");
                 let dr = dr.trim();
                 dr.is_empty()

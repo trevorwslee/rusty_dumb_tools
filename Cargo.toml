@@ -1,6 +1,6 @@
 [package]
 name = "rusty_dumb_tools"
-version = "0.1.7"
+version = "0.1.8"
 edition = "2021"
 description = "A collection of simply tools Rust modules."
 repository = "https://github.com/trevorwslee/rusty_dumb_tools"
@@ -8,6 +8,7 @@ license = "MIT"
 categories = ["command-line-utilities"]
 readme = "README.md"
 exclude = [".vscode", ".ignore"]
+
 
 
 [dependencies]

@@ -53,20 +53,3 @@ pub fn handle_demo_lblscreen() {
     }
 }
 
-// fn new_lbl_demo_screen() -> DumbLineByLineScreen {
-//     let mut line_temps = Vec::<DumbLineTemplate>::new();
-
-//     let mut comps = dlt_comps![
-//         "| ",
-//         dltc!("description").set_truncate_indicator("..."),
-//         " | ",
-//         dltc!("progress-bar", fixed_width = 20),
-//         ": ",
-//         dltc!("progress%", fixed_width = 4),
-//         " |"
-//     ];
-//     let temp = DumbLineTemplate::new_fixed_width(50, &comps);
-//     line_temps.push(temp);
-
-//     DumbLineByLineScreen::new(line_temps, LBLScreenSettings::default())
-// }

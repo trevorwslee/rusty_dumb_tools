@@ -2,6 +2,10 @@
 
 #![deny(warnings)]
 #![allow(unused)]
+#![allow(clippy::manual_map)]
+#![allow(clippy::let_and_return)]
+#![allow(clippy::upper_case_acronyms)]
+#![allow(clippy::redundant_field_names)]
 
 use std::{
     cell::{Cell, RefCell},
@@ -217,7 +221,7 @@ impl DumbLineByLineScreen {
     /// refresh the screen assuming only the values of the given keys changed; it will be a bit faster, but in general, simply use[`DumbLineByLineScreen::refresh`] to refresh the whole "screen"
     pub fn refresh_for_keys<T: LBLScreenMapValueTrait>(
         &self,
-        keys: &Vec<&str>,
+        keys: &[&str],
         value_mapper: &T,
     ) -> usize {
         if !self.initialized {
@@ -234,7 +238,7 @@ impl DumbLineByLineScreen {
     }
     pub fn refresh_for_keys_ex<T: fmt::Display, F: Fn(&str) -> Option<(T, u16)>>(
         &self,
-        keys: &Vec<&str>,
+        keys: &[&str],
         map_value_fn: F,
     ) -> usize {
         if !self.initialized {
@@ -253,7 +257,7 @@ impl DumbLineByLineScreen {
     }
     fn _update<T: fmt::Display, F: Fn(&str) -> Option<(T, u16)>>(
         &self,
-        keys: Option<&Vec<&str>>,
+        keys: Option<&[&str]>,
         map_value_fn: F,
     ) -> usize {
         if self.initialized {
@@ -286,7 +290,8 @@ impl DumbLineByLineScreen {
             if refresh_line {
                 let line = line_temp
                     .format_ex(map_value_fn)
-                    .expect(format!("line[{}]", index).as_str());
+                    .unwrap_or_else(|_| panic!("line[{}]", index));
+                //.expect(format!("line[{}]", index).as_str());
                 let line = match &self.line_cache {
                     Some(line_cache) => {
                         let cache = &mut line_cache.borrow_mut();
