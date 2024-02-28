@@ -145,16 +145,16 @@ impl<const RICHER: bool> Calculator<RICHER> {
 
         let settings = if RICHER {
             LBLScreenSettings {
-                line_prefix: Some("\t🧱 ".to_string()),
-                line_suffix: Some("🧱 ".to_string()),
+                line_prefix: Some("\t🧱 ".to_owned()),
+                line_suffix: Some("🧱 ".to_owned()),
                 top_line: Some(format!("\n\t{}", "🧱".repeat(FIXED_WIDTH as usize - 1))),
                 bottom_line: Some(format!("\t{}\n", "🧱".repeat(FIXED_WIDTH as usize - 1))),
                 ..LBLScreenSettings::default()
             }
         } else {
             LBLScreenSettings {
-                line_prefix: Some("\t|".to_string()),
-                line_suffix: Some("|".to_string()),
+                line_prefix: Some("\t|".to_owned()),
+                line_suffix: Some("|".to_owned()),
                 top_line: Some(format!("\n\t{}", "=".repeat(FIXED_WIDTH as usize + 2))),
                 bottom_line: Some(format!("\t{}\n", "=".repeat(FIXED_WIDTH as usize + 2))),
                 ..LBLScreenSettings::default()
@@ -449,60 +449,60 @@ impl<const RICHER: bool> RefreshState<RICHER> {
             let mut key_width = 1;
             if RICHER {
                 if key_value == "*" {
-                    key_value = /*'✖'*//*'✱'*/'x'.to_string();
+                    key_value = /*'✖'*//*'✱'*/'x'.to_owned();
                     key_width = 1;
                 } else if key_value == "/" {
                     key_value = "÷" /*'⟋'*/
-                        .to_string();
+                        .to_owned();
                     key_width = 1;
                 } else if key_value == "+" {
-                    key_value = /*"✚"*/'+'.to_string();
+                    key_value = /*"✚"*/'+'.to_owned();
                     key_width = 1;
                 } else if key_value == "-" {
-                    key_value = /*"⚊"*/'-'.to_string();
+                    key_value = /*"⚊"*/'-'.to_owned();
                     key_width = 1;
                 } else if key_value == "=" {
-                    key_value = "⚌".to_string();
+                    key_value = "⚌".to_owned();
                     key_width = 1;
                 } else if key_value == "C" {
-                    key_value = /*"🇦🇨"*/"Ｃ".to_string();
+                    key_value = /*"🇦🇨"*/"Ｃ".to_owned();
                     key_width = 2;
                 } else if key_value == "%" {
-                    key_value = "%".to_string();
+                    key_value = "%".to_owned();
                     key_width = 1;
                 } else if key_value == "." {
                     key_value = "." /*"・"*/
-                        .to_string();
+                        .to_owned();
                     key_width = 2;
                 } else if key_value == "0" {
-                    key_value = "０".to_string();
+                    key_value = "０".to_owned();
                     key_width = 2
                 } else if key_value == "1" {
-                    key_value = "１".to_string();
+                    key_value = "１".to_owned();
                     key_width = 2
                 } else if key_value == "2" {
-                    key_value = "２".to_string();
+                    key_value = "２".to_owned();
                     key_width = 2
                 } else if key_value == "3" {
-                    key_value = "３".to_string();
+                    key_value = "３".to_owned();
                     key_width = 2
                 } else if key_value == "4" {
-                    key_value = "４".to_string();
+                    key_value = "４".to_owned();
                     key_width = 2
                 } else if key_value == "5" {
-                    key_value = "５".to_string();
+                    key_value = "５".to_owned();
                     key_width = 2
                 } else if key_value == "6" {
-                    key_value = "６".to_string();
+                    key_value = "６".to_owned();
                     key_width = 2
                 } else if key_value == "7" {
-                    key_value = "７".to_string();
+                    key_value = "７".to_owned();
                     key_width = 2
                 } else if key_value == "8" {
-                    key_value = "８".to_string();
+                    key_value = "８".to_owned();
                     key_width = 2
                 } else if key_value == "9" {
-                    key_value = "９".to_string();
+                    key_value = "９".to_owned();
                     key_width = 2
                 }
             }
@@ -579,7 +579,7 @@ impl<const RICHER: bool> RefreshState<RICHER> {
             // }
             let indicators = match indicators {
                 Some(indicators) => indicators.clone(),
-                None => "〰️〰️".to_string(),
+                None => "〰️〰️".to_owned(),
             };
             Some((indicators, INDICATORS_WIDTH))
         } else if RICHER && key == "history" {

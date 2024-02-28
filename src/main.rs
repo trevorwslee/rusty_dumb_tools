@@ -11,27 +11,6 @@ use std::{collections::HashMap, env, vec};
 //use crossterm::style::Colorize;
 use rusty_dumb_tools::{demo, prelude::*};
 
-// fn test_ltemp_align() {
-//     let lt_comps = dlt_comps![
-//         "|abc>",
-//         dltc!("key1", max_width = 10, align=LineTempCompAlign::Left),
-//         "|".to_string(),
-//         dltc!("key2", max_width = 10, align=LineTempCompAlign::Left),
-//         "|".to_string(),
-//         dltc!("key3", max_width = 10, align=LineTempCompAlign::Right),
-//         "<ghi|".to_string()
-//     ];
-
-//     let ltemp = DumbLineTemplate::new(34, 100, &lt_comps);
-//     let mut map = HashMap::new();
-//     map.insert(String::from("key1"), String::from("value1"));
-//     map.insert(String::from("key2"), String::from("value2"));
-//     map.insert(String::from("key3"), String::from("value3"));
-//     let formatted = ltemp.format(&map).unwrap();
-//     //assert!(formatted.len() >= 34 && formatted.len() <= 100);
-//     assert_eq!(formatted, "");
-// }
-
 fn main() {
     let version = env!("CARGO_PKG_VERSION");
     println!("The version of this crate is: {}", version);

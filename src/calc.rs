@@ -227,21 +227,37 @@ impl DumbCalcProcessor {
     pub fn get_result(&self) -> CalcResult {
         let result = self.calc_impl.result;
         if result.is_nan() {
-            CalcResult::Error("result is NaN".to_string())
+            CalcResult::Error("result is NaN".to_owned())
         } else if result.is_infinite() {
-            CalcResult::Error("result is infinity".to_string())
+            CalcResult::Error("result is infinity".to_owned())
         } else {
-            let stack = &self.calc_impl.stack;
-            if let Some(Unit::OpenBracket) = stack.last() {
-                CalcResult::Intermediate(0.0)
-            } else {
-                //println!("!!!!! {:?}", stack.last());
-                let scanned = &self.calc_impl.scanned;
-                if !scanned.is_empty() {
-                    let intermediate_result = scanned.last().unwrap();
-                    CalcResult::Intermediate(*intermediate_result)
+            if true {
+                let last_pushed = &self.calc_impl.last_pushed;
+                if let Some(Unit::OpenBracket) = last_pushed {
+                    CalcResult::Intermediate(0.0)
                 } else {
-                    CalcResult::Final(result)
+                    //println!("!!!!! {:?}", stack.last());
+                    let scanned = &self.calc_impl.scanned;
+                    if !scanned.is_empty() {
+                        let intermediate_result = scanned.last().unwrap();
+                        CalcResult::Intermediate(*intermediate_result)
+                    } else {
+                        CalcResult::Final(result)
+                    }
+                }
+            } else {
+                let stack = &self.calc_impl.stack;
+                if let Some(Unit::OpenBracket) = stack.last() {
+                    CalcResult::Intermediate(0.0)
+                } else {
+                    //println!("!!!!! {:?}", stack.last());
+                    let scanned = &self.calc_impl.scanned;
+                    if !scanned.is_empty() {
+                        let intermediate_result = scanned.last().unwrap();
+                        CalcResult::Intermediate(*intermediate_result)
+                    } else {
+                        CalcResult::Final(result)
+                    }
                 }
             }
         }
@@ -363,7 +379,7 @@ fn _parse_units_from_chars(units: &[char]) -> Result<Vec<String>, String> {
                 }
             }
             None => {
-                return Err("failed to extract token".to_string());
+                return Err("failed to extract token".to_owned());
             }
         }
     }

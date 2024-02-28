@@ -66,7 +66,7 @@ fn test_arg_types() {
     dap_arg!("f32", value = 0 as f32).add_to(&mut parser);
     dap_arg!("f64", value = 0 as f64).add_to(&mut parser);
     dap_arg!("bool", value = false).add_to(&mut parser);
-    dap_arg!("string", value = "".to_string()).add_to(&mut parser);
+    dap_arg!("string", value = "".to_owned()).add_to(&mut parser);
     dap_arg!("string2", value = "STR2").add_to(&mut parser);
     let in_args = vec!["1", "2", "3", "4", "true", "in-string", "in-string2"];
     parser.process_args(in_args);

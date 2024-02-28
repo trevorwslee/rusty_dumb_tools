@@ -41,12 +41,12 @@ fn App() -> impl IntoView {
                     if clicked_chars == "alt" {
                         let alt = alt_mode.get();
                         set_alt_mode.set(!alt);
-                        clicked_chars = "".to_string()
+                        clicked_chars = "".to_owned()
                     } else if clicked_chars == "am" {
                         let angle_mode = angle_mode.get();
                         let new_angle_mode = if angle_mode == "deg" { "rad" } else { "deg" };
                         set_angle_mode.set(new_angle_mode.to_string());
-                        clicked_chars = "".to_string()
+                        clicked_chars = "".to_owned()
                     }
                     // get the calculator instance and make it mutable
                     let mut calculator = calculator_ref.borrow_mut();
@@ -71,7 +71,7 @@ fn App() -> impl IntoView {
                     match &history {
                         // set the "history" signal
                         Some(history) => set_history.set(history.to_string()),
-                        None => set_history.set("".to_string()),
+                        None => set_history.set("".to_owned()),
                     }
                     // return the view that represents the calculator display
                     view! {
@@ -82,7 +82,7 @@ fn App() -> impl IntoView {
                             </div>
                             {
                                 display.chars().map(|c| {
-                                    let c = if c == ' ' { "".to_string() } else { c.to_string() };
+                                    let c = if c == ' ' { "".to_owned() } else { c.to_string() };
                                     view! {
                                         <span class="display_digit_span">{c}</span>
                                     }

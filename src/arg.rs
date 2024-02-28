@@ -158,7 +158,7 @@ fn debug_arg_sap() {
     sap_arg!("-v", "--verbose").fixed(false).add_to(&mut parser);
     sap_arg!("i32").value(0).add_to(&mut parser);
     sap_arg!("string")
-        .value("string".to_string())
+        .value("string".to_owned())
         .add_to(&mut parser);
     sap_arg!("bool").value(false).add_to(&mut parser);
     println!("parser: {:?}", parser);
@@ -980,7 +980,7 @@ impl DumbArgParser {
         if let Some(program_name) = &self.program_name {
             program_name.clone()
         } else {
-            "<program>".to_string()
+            "<program>".to_owned()
         }
     }
 }
@@ -1251,7 +1251,7 @@ impl DumbArgBuilder {
     }
     fn _to_key(&self) -> Result<ArgKey, String> {
         if self.name_or_flags.is_empty() {
-            return Err("must provide a name or some flags".to_string());
+            return Err("must provide a name or some flags".to_owned());
         }
         if self.name_or_flags.len() == 1 {
             let name = &self.name_or_flags[0];
@@ -1300,7 +1300,7 @@ pub enum ArgValue {
 }
 impl ArgValue {
     fn default() -> ArgValue {
-        ArgValue::String("".to_string())
+        ArgValue::String("".to_owned())
     }
     fn to_string(&self) -> String {
         match *self {

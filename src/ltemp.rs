@@ -111,7 +111,7 @@ fn debug_ltemp() {
     let lt_comps = dlt_comps![
         "abc",
         dltc!("key1"),
-        "def".to_string(),
+        "def".to_owned(),
         dltc!("key2", min_width = 1, max_width = 10, optional = true)
     ];
     println!("lt_comps: {:?}", lt_comps);
@@ -130,7 +130,7 @@ fn debug_ltemp() {
         &dlt_comps![
             "abc",
             dltc!("key1"),
-            "def".to_string(),
+            "def".to_owned(),
             dltc!("key2", min_width = 1, max_width = 10, optional = true)
         ],
     )

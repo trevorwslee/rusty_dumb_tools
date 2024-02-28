@@ -109,6 +109,52 @@ pub fn test_calc_general() {
     assert_eq!(0.15, calc.get_result().unwrap());
 }
 #[test]
+pub fn test_calc_result() {
+    let mut calc = DumbCalcProcessor::new();
+    calc.push("1");
+    assert_eq!(1.0, calc.get_result().unwrap());
+    calc.push("+");
+    assert_eq!(1.0, calc.get_result().unwrap());
+    calc.push("2");
+    assert_eq!(2.0, calc.get_result().unwrap());
+    calc.push("*");
+    assert_eq!(2.0, calc.get_result().unwrap());
+    calc.push("3");
+    assert_eq!(3.0, calc.get_result().unwrap());
+    calc.push("-");
+    assert_eq!(7.0, calc.get_result().unwrap());
+    calc.push("1");
+    assert_eq!(1.0, calc.get_result().unwrap());
+    calc.push("+");
+    assert_eq!(6.0, calc.get_result().unwrap());
+    calc.push("2");
+    assert_eq!(2.0, calc.get_result().unwrap());
+    calc.push("square");
+    assert_eq!(4.0, calc.get_result().unwrap());
+    calc.eval();
+    assert_eq!(10.0, calc.get_result().unwrap());
+}
+#[test]
+pub fn test_calc_result_2() {
+    let mut calc = DumbCalcProcessor::new();
+    calc.push("(");
+    assert_eq!(0.0, calc.get_result().unwrap());
+    calc.push("1");
+    assert_eq!(1.0, calc.get_result().unwrap());
+    calc.push(")");
+    assert_eq!(1.0, calc.get_result().unwrap());
+
+    let mut calc = DumbCalcProcessor::new();
+    calc.push("(");
+    calc.push("(");
+    assert_eq!(0.0, calc.get_result().unwrap());
+    calc.push("1");
+    assert_eq!(1.0, calc.get_result().unwrap());
+    calc.push(")");
+    calc.push(")");
+    assert_eq!(1.0, calc.get_result().unwrap());
+}
+#[test]
 pub fn test_calc_parse() {
     test_calc_prase_and_push!(" 2 + 2 * ( 1 + 1 ) - ( 2 + 2 ) / (1 + 1) ", 4.0);
     test_calc_prase_and_push!("2+3*(4+5-6)-(2+3)/(1+1)", 8.5);

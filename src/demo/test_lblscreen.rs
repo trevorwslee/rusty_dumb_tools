@@ -54,7 +54,7 @@ fn test_lblscreen_general() {
     let updated_line_count = lbl_demo_screen.refresh(&state); // update the "screen" according to the mapped values
     assert_eq!(updated_line_count, 0);
 
-    state.insert("description", "???".to_string());
+    state.insert("description", "???".to_owned());
     let updated_line_count = lbl_demo_screen.refresh(&state); // update the "screen" according to the mapped values
     assert_eq!(updated_line_count, 1);
 

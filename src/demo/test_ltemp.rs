@@ -10,9 +10,9 @@ fn test_ltemp_fit() {
     let lt_comps = dlt_comps![
         "|abc>",
         dltc!("key1"),
-        "_def_".to_string(),
+        "_def_".to_owned(),
         dltc!("key2", min_width = 1, max_width = 100, optional = true),
-        "<ghi|".to_string()
+        "<ghi|".to_owned()
     ];
     let ltemp = DumbLineTemplate::new(0, 100, &lt_comps);
 
@@ -34,9 +34,9 @@ fn test_ltemp_over() {
     let lt_comps = dlt_comps![
         "|abc>",
         dltc!("key1", min_width = 3),
-        "_def_".to_string(),
+        "_def_".to_owned(),
         dltc!("key2", min_width = 3, optional = true),
-        "<ghi|".to_string()
+        "<ghi|".to_owned()
     ];
 
     let ltemp = DumbLineTemplate::new(5, 22, &lt_comps);
@@ -75,9 +75,9 @@ fn test_ltemp_under() {
     let lt_comps = dlt_comps![
         "|abc>",
         dltc!("key1", max_width = 10),
-        "_def_".to_string(),
+        "_def_".to_owned(),
         dltc!("key2", max_width = 10, optional = true),
-        "<ghi|".to_string()
+        "<ghi|".to_owned()
     ];
 
     let ltemp = DumbLineTemplate::new(30, 100, &lt_comps);
@@ -117,11 +117,11 @@ fn test_ltemp_align() {
     let lt_comps = dlt_comps![
         "|abc>",
         dltc!("key1", max_width = 10, align = 'L'),
-        "|".to_string(),
+        "|".to_owned(),
         dltc!("key2", max_width = 10, align = 'C'),
-        "|".to_string(),
+        "|".to_owned(),
         dltc!("key3", max_width = 10, align = 'R'),
-        "<ghi|".to_string()
+        "<ghi|".to_owned()
     ];
 
     let ltemp = DumbLineTemplate::new(37, 100, &lt_comps);

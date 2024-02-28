@@ -24,7 +24,17 @@ demo::run_demo(None);  // get arguments from command-line
 ````
 
 
-Assuming new ***Rust*** project with `main.rs` like
+Assuming new ***Rust*** project with `Cargo.toml` and `main.rs` like
+
+`Cargo.toml`
+```
+...
+[dependencies]
+rusty_dumb_tools = "0.1"
+...
+```
+
+`main.rs`
 ```
 use rusty_dumb_tools::demo;
 fn main() {
@@ -118,7 +128,6 @@ after 20 seconds, when 100% done, the screen will be like
 | ........ |>>>>>>>>>>>>>>>>>>>>: 100% |
 ----------------------------------------
 ```
-
 # Additional Demos
 
 * [DumbCalculator Text-based Demo](demos/text_based_calculator/README.md)
