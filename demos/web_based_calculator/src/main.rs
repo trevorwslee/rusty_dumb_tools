@@ -103,7 +103,7 @@ fn App() -> impl IntoView {
             }}
             { move || {
                 let alt = alt_mode.get();
-                let style = if alt { "color:blue; background-color:orange" } else { "color:darkgray; background-color:lightgray" };
+                let style = if alt { "color:darkgreen; background-color:orange" } else { "color:blue; background-color:lightgray" };
                 view! {
                 <div class="item key"><button class="key_button" style={style} on:click=on_clicked value="alt">{
                     //let angle_mode = angle_mode.get();
@@ -114,9 +114,9 @@ fn App() -> impl IntoView {
             { move || {
                 let alt = alt_mode.get();
                 if alt { view! {
-                        <div class="item key"><button class="key_button" on:click=on_clicked value="asin">{"sin"}<span class="ss_span">-1</span></button></div>
-                        <div class="item key"><button class="key_button" on:click=on_clicked value="acos">{"cos"}<span class="ss_span">-1</span></button></div>
-                        <div class="item key"><button class="key_button" on:click=on_clicked value="atan">{"tan"}<span class="ss_span">-1</span></button></div>
+                        <div class="item key"><button class="key_button alt_key" on:click=on_clicked value="asin">{"sin"}<span class="ss_span">-1</span></button></div>
+                        <div class="item key"><button class="key_button alt_key" on:click=on_clicked value="acos">{"cos"}<span class="ss_span">-1</span></button></div>
+                        <div class="item key"><button class="key_button alt_key" on:click=on_clicked value="atan">{"tan"}<span class="ss_span">-1</span></button></div>
                     }
                 } else { view! {
                         <div class="item key"><button class="key_button" on:click=on_clicked value="sin">{"sin"}</button></div>
@@ -130,8 +130,20 @@ fn App() -> impl IntoView {
             // keys row 2
             <div class="item key"><button class="key_button" on:click=on_clicked value="square">x<span class="ss_span">2</span></button></div>
             <div class="item key"><button class="key_button" on:click=on_clicked value="sqrt">{"√"}</button></div>
-            <div class="item key"><button class="key_button" on:click=on_clicked value="inv">{"1/x"}</button></div>
-            <div class="item key"><button class="key_button" on:click=on_clicked value="abs">{"|x|"}</button></div>
+            { move || {
+                let alt = alt_mode.get();
+                if alt {
+                    view! {
+                        <div class="item key"><button class="key_button alt_key" on:click=on_clicked value="PI">{"𝞹"}</button></div>
+                        <div class="item key"><button class="key_button alt_key" on:click=on_clicked value="E">{"e"}</button></div>
+                    }
+                } else {
+                    view! {
+                        <div class="item key"><button class="key_button" on:click=on_clicked value="inv">{"1/x"}</button></div>
+                        <div class="item key"><button class="key_button" on:click=on_clicked value="abs">{"|x|"}</button></div>
+                    }
+                }
+            }}
             <div class="item key" style="background-color:lightyellow"><button class="key_button" on:click=on_clicked value="(">{"("}</button></div>
             <div class="item key" style="background-color:lightyellow"><button class="key_button" on:click=on_clicked value=")">{")"}</button></div>
 

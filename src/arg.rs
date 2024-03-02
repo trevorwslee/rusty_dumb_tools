@@ -225,11 +225,11 @@ impl DumbArgParser {
     /// create and instance of [DumbArgParser]; program name will be extracted from [`env::args`] when [`DumbArgParser::parse_args`] is called
     /// use [`DumbArgParser::new_with_name`] if want to create an instance with a specific program name
     pub fn new() -> DumbArgParser {
-        DumbArgParser::_new(None)
+        Self::_new(None)
     }
     /// create an instance of [DumbArgParser] with the specific program name to be shown in the help message
     pub fn new_with_name(program_name: &str) -> DumbArgParser {
-        DumbArgParser::_new(Some(program_name.to_string()))
+        Self::_new(Some(program_name.to_string()))
     }
     /// create an instance of [DumbArgParser] with the specific settings [`DumbArgParserSettings`]
     fn new_ex(settings: ArgParserSettings) -> DumbArgParser {
@@ -676,8 +676,8 @@ impl DumbArgParser {
         arg_value: ArgValue,
         in_rest_args: Option<Vec<String>>,
     ) -> Result<(), String> {
-        let arg = &self.args[arg_idx];
-        DumbArgParser::_verify_arg_range(arg, &arg_value)?;
+        let arg: &Arg = &self.args[arg_idx];
+        Self::_verify_arg_range(arg, &arg_value)?;
         // match &arg.range {
         //     ArgRange::Enum(enum_values) => {
         //         let mut found = false;
@@ -727,7 +727,7 @@ impl DumbArgParser {
                             return Err(err /*.into()*/);
                         }
                     };
-                    DumbArgParser::_verify_arg_range(arg, &rest_arg_value)?;
+                    Self::_verify_arg_range(arg, &rest_arg_value)?;
                     multi_arg_values.push(rest_arg_value.clone());
                 }
                 (Some(multi_arg_values), None)

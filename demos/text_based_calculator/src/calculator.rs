@@ -449,17 +449,17 @@ impl<const RICHER: bool> RefreshState<RICHER> {
             let mut key_width = 1;
             if RICHER {
                 if key_value == "*" {
-                    key_value = /*'✖'*//*'✱'*/'x'.to_owned();
+                    key_value = /*'✖'*//*'✱'*/"x".to_owned();
                     key_width = 1;
                 } else if key_value == "/" {
                     key_value = "÷" /*'⟋'*/
                         .to_owned();
                     key_width = 1;
                 } else if key_value == "+" {
-                    key_value = /*"✚"*/'+'.to_owned();
+                    key_value = /*"✚"*/"+".to_owned();
                     key_width = 1;
                 } else if key_value == "-" {
-                    key_value = /*"⚊"*/'-'.to_owned();
+                    key_value = /*"⚊"*/"-".to_owned();
                     key_width = 1;
                 } else if key_value == "=" {
                     key_value = "⚌".to_owned();

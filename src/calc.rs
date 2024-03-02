@@ -180,7 +180,7 @@ impl DumbCalcProcessor {
             self.evaluate();
             Ok(())
         } else {
-            let push_unit = DumbCalcProcessor::_to_unit(unit);
+            let push_unit = Self::_to_unit(unit);
             let push_unit = match push_unit {
                 Some(push_unit) => push_unit,
                 None => match unit.parse::<f64>() {
@@ -297,21 +297,21 @@ impl DumbCalcProcessor {
 }
 impl DumbCalcProcessor {
     pub fn is_operator(unit: &str) -> bool {
-        let unit = DumbCalcProcessor::_to_unit(unit);
+        let unit = Self::_to_unit(unit);
         match unit {
             Some(Unit::Operator(op)) => true,
             _ => false,
         }
     }
     pub fn is_binary_operator(unit: &str) -> bool {
-        let unit = DumbCalcProcessor::_to_unit(unit);
+        let unit = Self::_to_unit(unit);
         match unit {
             Some(Unit::Operator(op)) => op.is_binary(),
             _ => false,
         }
     }
     pub fn is_unary_operator(unit: &str) -> bool {
-        let unit = DumbCalcProcessor::_to_unit(unit);
+        let unit = Self::_to_unit(unit);
         match unit {
             Some(Unit::Operator(op)) => op.is_unary(),
             _ => false,

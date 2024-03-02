@@ -291,7 +291,9 @@ impl DumbCalculator {
                             UnaryBracket::No => false,
                             UnaryBracket::IfNeeded => bracket,
                             UnaryBracket::IfNeededNotNum => {
-                                bracket && inside.parse::<f64>().is_err()
+                                bracket
+                                    && (inside != "π" && inside != "e")
+                                    && inside.parse::<f64>().is_err()
                             }
                         };
                         hist = prefix;
@@ -325,6 +327,8 @@ impl DumbCalculator {
                             "-" => "−",
                             "*" => "×",
                             "/" => "÷",
+                            "PI" => "π",
+                            "E" => "e",
                             _ => h,
                         }
                     } else {
