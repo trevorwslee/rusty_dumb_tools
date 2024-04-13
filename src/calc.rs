@@ -527,7 +527,12 @@ impl CalcImpl {
                             self._push(Unit::Operator(Op::IMPLICIT)); // add a _imp_ between if next is an open bracket
                         }
                     }
-                    _ => {}
+                    Unit::OpenBracket => {
+                        if self.support_imp_op {
+                            self._push(Unit::Operator(Op::IMPLICIT)); // add a _imp_ between if next is an open bracket
+                        }
+                    }
+                _ => {}
                 },
                 Unit::Operator(last_op) => {
                     if let Unit::Operator(op) = push_unit {

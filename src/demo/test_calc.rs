@@ -265,16 +265,14 @@ pub fn test_calc_priority() {
 }
 #[test]
 pub fn test_calc_implicit_op() {
-    test_calc_prase_and_push!(" 2(3)4 ", 24.0);
-    test_calc_prase_and_push!(" 2(1+1) ", 4.0);
-    test_calc_prase_and_push!(" (1+1)2 ", 4.0);
-    test_calc_prase_and_push!(" 8/2(1+3) ", 1.0);
-    test_calc_prase_and_push!(" 8/(1+3)2 ", 1.0);
+    test_calc_prase_and_push!("2(3)4", 24.0);
+    test_calc_prase_and_push!("2(1+1)", 4.0);
+    test_calc_prase_and_push!("(1+1)2", 4.0);
+    test_calc_prase_and_push!("8/2(1+3)", 1.0);
+    test_calc_prase_and_push!("8/(1+3)2", 1.0);
+    test_calc_prase_and_push!("(1+2)(3+4)", 21.0);
+}   //test_calc_prase_and_push!(" 123 321", 123.0);
  
- 
-    //test_calc_prase_and_push!(" 123 321", 123.0);
-    //test_calc_prase_and_push!(" (1+1)(1+1) ", 4.0);
-}
 #[test]
 pub fn test_calc_angle() {
     test_calc_prase_and_push!(" 0 cos ", 1.0);
