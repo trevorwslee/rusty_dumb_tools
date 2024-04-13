@@ -156,7 +156,7 @@ MIT
 # Change History:
 
 * v0.1.8
-  - bug fix
+  - bug fix ... 8/2(1+3) now is 1 (not 16)
 
 * v0.1.7
   - bug fix

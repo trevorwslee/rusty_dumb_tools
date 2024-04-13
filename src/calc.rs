@@ -473,6 +473,7 @@ struct CalcImpl {
     last_pushed: Option<Unit>,
     result: f64,
     angle_mode: AngleMode,
+    support_imp_op: bool,
 }
 impl CalcImpl {
     fn new() -> CalcImpl {
@@ -482,6 +483,7 @@ impl CalcImpl {
             last_pushed: None,
             result: 0.0,
             angle_mode: AngleMode::DEGREE,
+            support_imp_op: true,
         }
     }
     fn push(&mut self, push_unit: Unit) {
@@ -496,7 +498,11 @@ impl CalcImpl {
                     // }
                     match push_unit {
                         Unit::OpenBracket => {
-                            self._push(Unit::Operator(Op::MULTIPLY)); // add a * between if next is an open bracket
+                            if self.support_imp_op {
+                                self._push(Unit::Operator(Op::IMPLICIT)); // add a _imp_ between if next is an open bracket
+                            } else {
+                                self._push(Unit::Operator(Op::MULTIPLY)); // add a * between if next is an open bracket
+                            }
                         }
                         Unit::Operand(operand) => {
                             self.scanned.pop(); // consecutive operands => replace the last one
@@ -512,6 +518,14 @@ impl CalcImpl {
                     }
                     Unit::CloseBracket => {
                         self._push(Unit::Operand(0.0)); // add a 0 after ( if next is a )
+                    }
+                    _ => {}
+                },
+                Unit::CloseBracket => match push_unit {
+                    Unit::Operand(_) => {
+                        if self.support_imp_op {
+                            self._push(Unit::Operator(Op::IMPLICIT)); // add a _imp_ between if next is an open bracket
+                        }
                     }
                     _ => {}
                 },
@@ -580,6 +594,18 @@ impl CalcImpl {
                 panic!("'scanned' should have a single element ... self={:?}", self);
             }
             self.scanned.pop().unwrap()
+            // if self.support_imp_op && false {
+            //     let mut res = self.scanned.pop().unwrap();
+            //     while !self.scanned.is_empty() {
+            //         res = Op::IMPLICIT.evaluate_binary(res, self.scanned.pop().unwrap());
+            //     }
+            //     res
+            // } else {
+            //     if self.scanned.len() != 1 {
+            //         panic!("'scanned' should have a single element ... self={:?}", self);
+            //     }
+            //     self.scanned.pop().unwrap()
+            // }
         } else {
             self.result
         };
@@ -709,8 +735,9 @@ enum AngleMode {
 enum OpPriority {
     BINARY_AM = 1,
     BINARY_MD = 2,
-    BINARY_FN = 3,
-    UNARY = 4,
+    BINARY_IMP = 3,
+    BINARY_FN = 4,  // 3
+    UNARY = 5, // 4
 }
 
 #[derive(PartialEq, Copy, Clone, Debug)]
@@ -719,6 +746,7 @@ enum Op {
     SUBTRACT,
     MULTIPLY,
     DIVIDE,
+    IMPLICIT,
     TOPOW,
     NEGATE,
     SIN,
@@ -743,6 +771,7 @@ impl Op {
         match self {
             Op::ADD | Op::SUBTRACT => OpPriority::BINARY_AM,
             Op::MULTIPLY | Op::DIVIDE => OpPriority::BINARY_MD,
+            Op::IMPLICIT => OpPriority::BINARY_IMP,
             Op::TOPOW => OpPriority::BINARY_FN,
             Op::NEGATE
             | Op::SIN
@@ -772,6 +801,7 @@ impl Op {
             Op::SUBTRACT => left - right,
             Op::MULTIPLY => left * right,
             Op::DIVIDE => left / right,
+            Op::IMPLICIT => left * right,
             Op::TOPOW => left.powf(right),
             _ => panic!("{:?} non-binary operator", self),
         }
@@ -842,6 +872,7 @@ impl fmt::Display for Op {
             Op::SUBTRACT => write!(f, "-"),
             Op::MULTIPLY => write!(f, "*"),
             Op::DIVIDE => write!(f, "/"),
+            Op::IMPLICIT => write!(f, "_imp_"),
             Op::TOPOW => write!(f, "^"),
             Op::NEGATE => write!(f, "neg"),
             Op::SIN => write!(f, "sin"),

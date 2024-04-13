@@ -52,6 +52,7 @@ impl DumbCalculator {
         DumbCalculator::new_with_settings(DumbCalculatorSettings {
             enable_history: false,
             enable_undo: false,
+            ..DumbCalculatorSettings::default()
         })
     }
     /// create a new [`DumbCalculator`] (with all the default features enabled)
@@ -513,13 +514,13 @@ impl DumbCalculator {
 
 pub struct DumbCalculatorSettings {
     pub enable_undo: bool,
-    pub enable_history: bool,
+    pub enable_history: bool
 }
 impl Default for DumbCalculatorSettings {
     fn default() -> Self {
         Self {
             enable_undo: true,
-            enable_history: true,
+            enable_history: true
         }
     }
 }

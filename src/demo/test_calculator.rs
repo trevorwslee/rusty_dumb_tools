@@ -54,6 +54,16 @@ fn test_calculator_normal() {
     assert_eq!(calculator.get_display(), "0");
 }
 
+// #[test]
+// fn test_calculator_push_space() {
+//     let mut calculator = DumbCalculator::new();
+//     assert_eq!(calculator.get_display(), "0");
+//     calculator.push("1").unwrap();
+//     assert_eq!(calculator.get_display(), "1");
+//     // calculator.push(" ").unwrap();
+//     // assert_eq!(calculator.get_display(), "1");
+// }
+
 #[test]
 fn test_calculator_push_chars() {
     let mut calculator = DumbCalculator::new();

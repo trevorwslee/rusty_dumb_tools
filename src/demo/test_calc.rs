@@ -249,6 +249,33 @@ pub fn test_calc_const() {
     test_calc_prase_and_push!(" 3 * E ", 3.0 * std::f64::consts::E);
 }
 #[test]
+pub fn test_calc_priority() {
+    test_calc_prase_and_push!(" 1+2*3 ", 7.0);
+    test_calc_prase_and_push!(" 2*3+1 ", 7.0);
+    test_calc_prase_and_push!(" (1+2)*3 ", 9.0);
+    test_calc_prase_and_push!(" 2*(3+1) ", 8.0);
+    test_calc_prase_and_push!(" 1+2-3 ", 0.0);
+    test_calc_prase_and_push!(" 4/2*3 ", 6.0);
+    let mut calc = DumbCalcProcessor::new();
+    calc.parse_and_push("1+2");
+    calc.push("*");
+    calc.parse_and_push("(10 + 20) cos");
+    calc.eval();
+    assert_calc_eq_result!(&calc, 2.7320508075688776);
+}
+#[test]
+pub fn test_calc_implicit_op() {
+    test_calc_prase_and_push!(" 2(3)4 ", 24.0);
+    test_calc_prase_and_push!(" 2(1+1) ", 4.0);
+    test_calc_prase_and_push!(" (1+1)2 ", 4.0);
+    test_calc_prase_and_push!(" 8/2(1+3) ", 1.0);
+    test_calc_prase_and_push!(" 8/(1+3)2 ", 1.0);
+ 
+ 
+    //test_calc_prase_and_push!(" 123 321", 123.0);
+    //test_calc_prase_and_push!(" (1+1)(1+1) ", 4.0);
+}
+#[test]
 pub fn test_calc_angle() {
     test_calc_prase_and_push!(" 0 cos ", 1.0);
     test_calc_prase_and_push!(" 90 cos ", 0.0);
