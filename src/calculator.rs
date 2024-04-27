@@ -469,6 +469,25 @@ impl DumbCalculator {
                     let places: i32 = result_width as i32 - dot_idx as i32 - 1;
                     if places > 0 {
                         display_result = format!("{:.*}", places as usize, result);
+                        match self.entering {
+                            // since 2024-04-27
+                            EnteringMode::Not => {
+                                // remove trailing zeros from display_result
+                                display_result = display_result
+                                    .chars()
+                                    .rev()
+                                    .skip_while(|c| *c == '0')
+                                    .collect();
+                                display_result = display_result.chars().rev().collect();
+                                if display_result.ends_with('.') {
+                                    display_result.push('0');
+                                }
+                                if display_result == "-0.0" {
+                                    display_result = "0.0".to_string();
+                                }
+                            }
+                            _ => {}
+                        }
                     }
                 }
                 if display_result.len() > result_width {
@@ -514,13 +533,13 @@ impl DumbCalculator {
 
 pub struct DumbCalculatorSettings {
     pub enable_undo: bool,
-    pub enable_history: bool
+    pub enable_history: bool,
 }
 impl Default for DumbCalculatorSettings {
     fn default() -> Self {
         Self {
             enable_undo: true,
-            enable_history: true
+            enable_history: true,
         }
     }
 }

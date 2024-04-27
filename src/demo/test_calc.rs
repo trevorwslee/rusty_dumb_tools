@@ -278,7 +278,7 @@ pub fn test_calc_implicit_op() {
         test_calc_prase_and_push!("(1+2)(3+4)", 21.0);
     }
 }
- 
+
 #[test]
 pub fn test_calc_angle() {
     test_calc_prase_and_push!(" 0 cos ", 1.0);

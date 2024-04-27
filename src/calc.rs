@@ -11,7 +11,6 @@ use std::{error::Error, fmt, num::ParseFloatError};
 
 use crate::shared::DumbError;
 
-
 pub const SUPPORT_IMP_OP: bool = true;
 
 #[test]
@@ -481,7 +480,7 @@ struct CalcImpl {
     stack: Vec<Unit>, // can only be ) or Op
     last_pushed: Option<Unit>,
     result: f64,
-    angle_mode: AngleMode
+    angle_mode: AngleMode,
 }
 impl CalcImpl {
     fn new() -> CalcImpl {
@@ -490,7 +489,7 @@ impl CalcImpl {
             stack: Vec::new(),
             last_pushed: None,
             result: 0.0,
-            angle_mode: AngleMode::DEGREE
+            angle_mode: AngleMode::DEGREE,
         }
     }
     fn push(&mut self, push_unit: Unit, src_unit: &str) {
@@ -547,7 +546,7 @@ impl CalcImpl {
                             self._push(Unit::Operator(Op::IMPLICIT)); // add a _imp_ between if next is an open bracket
                         }
                     }
-                _ => {}
+                    _ => {}
                 },
                 Unit::Operator(last_op) => {
                     if let Unit::Operator(op) = push_unit {
@@ -756,8 +755,8 @@ enum OpPriority {
     BINARY_AM = 1,
     BINARY_MD = 2,
     BINARY_IMP = 3,
-    BINARY_FN = 4,  // 3
-    UNARY = 5, // 4
+    BINARY_FN = 4, // 3
+    UNARY = 5,     // 4
 }
 
 #[derive(PartialEq, Copy, Clone, Debug)]

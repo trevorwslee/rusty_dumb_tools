@@ -52,8 +52,11 @@ fn test_calculator_normal() {
     assert_eq!(calculator.get_display(), "1");
     calculator.reset();
     assert_eq!(calculator.get_display(), "0");
+    calculator.push("30").unwrap();
+    calculator.push("sin").unwrap();
+    calculator.push("=").unwrap();
+    assert_eq!(calculator.get_display(), "0.49999999999999994");
 }
-
 // #[test]
 // fn test_calculator_push_space() {
 //     let mut calculator = DumbCalculator::new();
@@ -154,9 +157,14 @@ fn test_calculator_display() {
 fn test_calculator_display_roundoff() {
     let mut calculator = DumbCalculator::new();
     calculator.push_chars("5.00005/5.000001=");
-    assert_eq!(calculator.get_display_sized(5), "1.000");
-    assert_eq!(calculator.get_display_sized(6), "1.0000");
+    assert_eq!(calculator.get_display_sized(5), "  1.0");
+    assert_eq!(calculator.get_display_sized(6), "   1.0");
     assert_eq!(calculator.get_display_sized(7), "1.00001");
+    calculator.reset();
+    calculator.push("30").unwrap();
+    calculator.push("sin").unwrap();
+    calculator.push("=").unwrap();
+    assert_eq!(calculator.get_display_sized(10), "       0.5");
 }
 #[test]
 fn test_calculator_display_e() {
@@ -201,7 +209,7 @@ fn test_calculator_display_e() {
     calculator.reset();
     calculator.push_chars("0.00001");
     calculator.push("neg");
-    assert_eq!(calculator.get_display_sized(7), "-1.0e-5");
+    assert_eq!(calculator.get_display_sized(7), "    0.0");
     assert_eq!(calculator.get_display_sized(8), "-0.00001");
     assert_eq!(calculator.get_display_sized(9), " -0.00001");
 }
