@@ -90,12 +90,12 @@
   .span5 {
     grid-column: span 5;
   }
-  @media (min-resolution: 144dpi) and (max-width: 1024px) {
+  @media (min-resolution: 144dpi) and (max-width: 1024px) and (orientation: portrait) {
     .container {
-      width: 100vmin;
+      width: 100%;
     }
-    .display_digit_button {
-      font-size: 10vw;
+    .display_digit_span {
+      font-size: 7vw;
     }
     .display_indicator_div {
       font-size: 4vw;

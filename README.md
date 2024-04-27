@@ -1,4 +1,4 @@
-# RustyDumbTools (v0.1.8)
+# RustyDumbTools (v0.1.9)
 
 A [collection of simple tools](https://crates.io/crates/rusty_dumb_tools) in ***Rust*** as ***Rust*** modules:
 * [`crate::arg::DumbArgParser`](https://docs.rs/rusty_dumb_tools/latest/rusty_dumb_tools/arg/struct.DumbArgParser.html): A simple argument parser.
@@ -155,8 +155,11 @@ MIT
 
 # Change History:
 
+* v0.1.89
+  - bug fix
+  
 * v0.1.8
-  - bug fix ... 8/2(1+3) now is 1 (not 16)
+  - bug fix ... for calculator, 8/2(1+3) now is 1 (not 16)
 
 * v0.1.7
   - bug fix

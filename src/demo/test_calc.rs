@@ -247,6 +247,10 @@ pub fn test_calc_const() {
     test_calc_prase_and_push!(" 50% + 50 %", 1.0);
     test_calc_prase_and_push!(" 2 * PI ", 2.0 * std::f64::consts::PI);
     test_calc_prase_and_push!(" 3 * E ", 3.0 * std::f64::consts::E);
+    if SUPPORT_IMP_OP {
+        test_calc_prase_and_push!(" 2 PI ", 2.0 * std::f64::consts::PI);
+        test_calc_prase_and_push!(" 3 E ", 3.0 * std::f64::consts::E);
+    }
 }
 #[test]
 pub fn test_calc_priority() {
@@ -265,13 +269,15 @@ pub fn test_calc_priority() {
 }
 #[test]
 pub fn test_calc_implicit_op() {
-    test_calc_prase_and_push!("2(3)4", 24.0);
-    test_calc_prase_and_push!("2(1+1)", 4.0);
-    test_calc_prase_and_push!("(1+1)2", 4.0);
-    test_calc_prase_and_push!("8/2(1+3)", 1.0);
-    test_calc_prase_and_push!("8/(1+3)2", 1.0);
-    test_calc_prase_and_push!("(1+2)(3+4)", 21.0);
-}   //test_calc_prase_and_push!(" 123 321", 123.0);
+    if SUPPORT_IMP_OP {
+        test_calc_prase_and_push!("2(3)4", 24.0);
+        test_calc_prase_and_push!("2(1+1)", 4.0);
+        test_calc_prase_and_push!("(1+1)2", 4.0);
+        test_calc_prase_and_push!("8/2(1+3)", 1.0);
+        test_calc_prase_and_push!("8/(1+3)2", 1.0);
+        test_calc_prase_and_push!("(1+2)(3+4)", 21.0);
+    }
+}
  
 #[test]
 pub fn test_calc_angle() {

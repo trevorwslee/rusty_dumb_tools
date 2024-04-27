@@ -11,128 +11,131 @@ use std::{error::Error, fmt, num::ParseFloatError};
 
 use crate::shared::DumbError;
 
+
+pub const SUPPORT_IMP_OP: bool = true;
+
 #[test]
 pub fn test_calc() {}
 
-/// For internal debugging use only.
-#[test]
-fn debug_calc() {
-    if true {
-        println!("raw");
-        let open: Unit = Unit::OpenBracket;
-        let close = Unit::CloseBracket;
-        let add = Unit::Operator(Op::ADD);
-        let digit = Unit::Operand(888.0);
-        println!("{} | {} | {} | {}", open, close, add, digit);
-    }
+// /// For internal debugging use only.
+// #[test]
+// fn debug_calc() {
+//     if true {
+//         println!("raw");
+//         let open: Unit = Unit::OpenBracket;
+//         let close = Unit::CloseBracket;
+//         let add = Unit::Operator(Op::ADD);
+//         let digit = Unit::Operand(888.0);
+//         println!("{} | {} | {} | {}", open, close, add, digit);
+//     }
 
-    if true {
-        println!("infix");
-        let infix = vec![
-            Unit::Operand(1.0),
-            Unit::Operator(Op::ADD),
-            Unit::Operand(2.0),
-            Unit::Operator(Op::MULTIPLY),
-            Unit::OpenBracket,
-            Unit::Operand(3.0),
-            Unit::Operator(Op::SUBTRACT),
-            Unit::Operand(1.0),
-            Unit::CloseBracket,
-            Unit::Operator(Op::DIVIDE),
-            Unit::Operand(3.0),
-        ];
-        print_infix(&infix);
-    }
+//     if true {
+//         println!("infix");
+//         let infix = vec![
+//             Unit::Operand(1.0),
+//             Unit::Operator(Op::ADD),
+//             Unit::Operand(2.0),
+//             Unit::Operator(Op::MULTIPLY),
+//             Unit::OpenBracket,
+//             Unit::Operand(3.0),
+//             Unit::Operator(Op::SUBTRACT),
+//             Unit::Operand(1.0),
+//             Unit::CloseBracket,
+//             Unit::Operator(Op::DIVIDE),
+//             Unit::Operand(3.0),
+//         ];
+//         print_infix(&infix);
+//     }
 
-    if true {
-        let mut calc = CalcImpl::new();
+//     if true {
+//         let mut calc = CalcImpl::new();
 
-        println!("2 * (3 + 4) - 1");
-        calc.push(Unit::Operand(2.0));
-        println!(". calc={:?}", calc);
-        calc.push(Unit::Operator(Op::MULTIPLY));
-        println!(". calc={:?}", calc);
-        calc.push(Unit::OpenBracket);
-        println!(". calc={:?}", calc);
-        calc.push(Unit::Operand(3.0));
-        println!(". calc={:?}", calc);
-        calc.push(Unit::Operator(Op::ADD));
-        println!(". calc={:?}", calc);
-        calc.push(Unit::Operand(4.0));
-        println!(". calc={:?}", calc);
-        calc.push(Unit::CloseBracket);
-        println!(". calc={:?}", calc);
-        calc.push(Unit::Operator(Op::SUBTRACT));
-        println!(". calc={:?}", calc);
-        calc.push(Unit::Operand(1.0));
-        println!(". calc={:?}", calc);
-        calc.eval();
-        println!(". calc={:?}", calc);
-        println!("= {}", calc.result);
-        assert_eq!(13.0, calc.result);
+//         println!("2 * (3 + 4) - 1");
+//         calc.push(Unit::Operand(2.0));
+//         println!(". calc={:?}", calc);
+//         calc.push(Unit::Operator(Op::MULTIPLY));
+//         println!(". calc={:?}", calc);
+//         calc.push(Unit::OpenBracket);
+//         println!(". calc={:?}", calc);
+//         calc.push(Unit::Operand(3.0));
+//         println!(". calc={:?}", calc);
+//         calc.push(Unit::Operator(Op::ADD));
+//         println!(". calc={:?}", calc);
+//         calc.push(Unit::Operand(4.0));
+//         println!(". calc={:?}", calc);
+//         calc.push(Unit::CloseBracket);
+//         println!(". calc={:?}", calc);
+//         calc.push(Unit::Operator(Op::SUBTRACT));
+//         println!(". calc={:?}", calc);
+//         calc.push(Unit::Operand(1.0));
+//         println!(". calc={:?}", calc);
+//         calc.eval();
+//         println!(". calc={:?}", calc);
+//         println!("= {}", calc.result);
+//         assert_eq!(13.0, calc.result);
 
-        println!("4 / 2");
-        calc.push(Unit::Operand(4.0));
-        println!(". calc={:?}", calc);
-        calc.push(Unit::Operator(Op::DIVIDE));
-        println!(". calc={:?}", calc);
-        calc.push(Unit::Operand(2.0));
-        println!(". calc={:?}", calc);
-        calc.eval();
-        println!(". calc={:?}", calc);
-        println!("= {}", calc.result);
-        assert_eq!(2.0, calc.result);
+//         println!("4 / 2");
+//         calc.push(Unit::Operand(4.0));
+//         println!(". calc={:?}", calc);
+//         calc.push(Unit::Operator(Op::DIVIDE));
+//         println!(". calc={:?}", calc);
+//         calc.push(Unit::Operand(2.0));
+//         println!(". calc={:?}", calc);
+//         calc.eval();
+//         println!(". calc={:?}", calc);
+//         println!("= {}", calc.result);
+//         assert_eq!(2.0, calc.result);
 
-        println!("+ 5");
-        calc.push(Unit::Operator(Op::ADD));
-        println!(". calc={:?}", calc);
-        calc.push(Unit::Operand(5.0));
-        println!(". calc={:?}", calc);
-        calc.eval();
-        println!(". calc={:?}", calc);
-        println!("= {}", calc.result);
-        assert_eq!(7.0, calc.result);
+//         println!("+ 5");
+//         calc.push(Unit::Operator(Op::ADD));
+//         println!(". calc={:?}", calc);
+//         calc.push(Unit::Operand(5.0));
+//         println!(". calc={:?}", calc);
+//         calc.eval();
+//         println!(". calc={:?}", calc);
+//         println!("= {}", calc.result);
+//         assert_eq!(7.0, calc.result);
 
-        // if true {
-        //     println!(")");
-        //     calc.push(Unit::CloseBracket);
-        //     println!(". calc={:?}", calc);
-        //     println!("= {}", calc.result.unwrap());
-        //     assert_eq!(7.0, calc.result.unwrap());
-        // }
+//         // if true {
+//         //     println!(")");
+//         //     calc.push(Unit::CloseBracket);
+//         //     println!(". calc={:?}", calc);
+//         //     println!("= {}", calc.result.unwrap());
+//         //     assert_eq!(7.0, calc.result.unwrap());
+//         // }
 
-        println!("CLEAR");
-        calc.reset();
-        println!(". calc={:?}", calc);
-        assert_eq!(0.0, calc.result);
+//         println!("CLEAR");
+//         calc.reset();
+//         println!(". calc={:?}", calc);
+//         assert_eq!(0.0, calc.result);
 
-        // println!("(+ 5)");
+//         // println!("(+ 5)");
 
-        // println!("3 (1 + 1)) - 2");
-        // // if true {
-        // //     calc.push(Unit::Operand(5.0));
-        // //     calc.push(Unit::Operator(Op::MULTIPLY));
-        // // }
-        // calc.push(Unit::Operand(3.0));
-        // println!(". calc={:?}", calc);
-        // calc.push(Unit::OpenBracket);
-        // println!(". calc={:?}", calc);
-        // calc.push(Unit::Operand(1.0));
-        // println!(". calc={:?}", calc);
-        // calc.push(Unit::Operator(Op::ADD));
-        // println!(". calc={:?}", calc);
-        // calc.push(Unit::Operand(1.0));
-        // println!(". calc={:?}", calc);
-        // calc.push(Unit::CloseBracket);
-        // println!(". calc={:?}", calc);
-        // calc.push(Unit::CloseBracket);
-        // println!(". calc={:?}", calc);
-        // calc.push(Unit::Operator(Op::SUBTRACT));
-        // println!(". calc={:?}", calc);
-        // calc.push(Unit::Operand(2.0));
-        // println!(". calc={:?}", calc);
-    }
-}
+//         // println!("3 (1 + 1)) - 2");
+//         // // if true {
+//         // //     calc.push(Unit::Operand(5.0));
+//         // //     calc.push(Unit::Operator(Op::MULTIPLY));
+//         // // }
+//         // calc.push(Unit::Operand(3.0));
+//         // println!(". calc={:?}", calc);
+//         // calc.push(Unit::OpenBracket);
+//         // println!(". calc={:?}", calc);
+//         // calc.push(Unit::Operand(1.0));
+//         // println!(". calc={:?}", calc);
+//         // calc.push(Unit::Operator(Op::ADD));
+//         // println!(". calc={:?}", calc);
+//         // calc.push(Unit::Operand(1.0));
+//         // println!(". calc={:?}", calc);
+//         // calc.push(Unit::CloseBracket);
+//         // println!(". calc={:?}", calc);
+//         // calc.push(Unit::CloseBracket);
+//         // println!(". calc={:?}", calc);
+//         // calc.push(Unit::Operator(Op::SUBTRACT));
+//         // println!(". calc={:?}", calc);
+//         // calc.push(Unit::Operand(2.0));
+//         // println!(". calc={:?}", calc);
+//     }
+// }
 
 /// a simple infix calculation processor that accepts a stream of "calculation units" and evaluate the result;
 /// please refer to [`DumbCalcProcessor::push`] for the acceptable "calculation units"
@@ -191,7 +194,7 @@ impl DumbCalcProcessor {
                     }
                 },
             };
-            self.calc_impl.push(push_unit);
+            self.calc_impl.push(push_unit, unit);
             Ok(())
         }
     }
@@ -348,6 +351,12 @@ impl DumbCalcProcessor {
             _ => None,
         }
     }
+    fn _is_unit_constant(unit: &str) -> bool {
+        match unit {
+            "PI" | "E" => true,
+            _ => false,
+        }
+    }
 }
 
 pub struct CalcProcessorBackup {
@@ -472,8 +481,7 @@ struct CalcImpl {
     stack: Vec<Unit>, // can only be ) or Op
     last_pushed: Option<Unit>,
     result: f64,
-    angle_mode: AngleMode,
-    support_imp_op: bool,
+    angle_mode: AngleMode
 }
 impl CalcImpl {
     fn new() -> CalcImpl {
@@ -482,11 +490,10 @@ impl CalcImpl {
             stack: Vec::new(),
             last_pushed: None,
             result: 0.0,
-            angle_mode: AngleMode::DEGREE,
-            support_imp_op: true,
+            angle_mode: AngleMode::DEGREE
         }
     }
-    fn push(&mut self, push_unit: Unit) {
+    fn push(&mut self, push_unit: Unit, src_unit: &str) {
         //println!("* {:?}", push_unit);
         let last_pushed = self.last_pushed;
         self.last_pushed = Some(push_unit);
@@ -498,14 +505,22 @@ impl CalcImpl {
                     // }
                     match push_unit {
                         Unit::OpenBracket => {
-                            if self.support_imp_op {
+                            if SUPPORT_IMP_OP {
                                 self._push(Unit::Operator(Op::IMPLICIT)); // add a _imp_ between if next is an open bracket
                             } else {
                                 self._push(Unit::Operator(Op::MULTIPLY)); // add a * between if next is an open bracket
                             }
                         }
                         Unit::Operand(operand) => {
-                            self.scanned.pop(); // consecutive operands => replace the last one
+                            if SUPPORT_IMP_OP {
+                                if DumbCalcProcessor::_is_unit_constant(src_unit) {
+                                    self._push(Unit::Operator(Op::IMPLICIT)); // add a _imp_ between if next is a constant
+                                } else {
+                                    self.scanned.pop(); // consecutive operands => replace the last one
+                                }
+                            } else {
+                                self.scanned.pop(); // consecutive operands => replace the last one
+                            }
                         }
                         _ => {}
                     }
@@ -523,12 +538,12 @@ impl CalcImpl {
                 },
                 Unit::CloseBracket => match push_unit {
                     Unit::Operand(_) => {
-                        if self.support_imp_op {
-                            self._push(Unit::Operator(Op::IMPLICIT)); // add a _imp_ between if next is an open bracket
+                        if SUPPORT_IMP_OP {
+                            self._push(Unit::Operator(Op::IMPLICIT)); // add a _imp_ between if next is an operand
                         }
                     }
                     Unit::OpenBracket => {
-                        if self.support_imp_op {
+                        if SUPPORT_IMP_OP {
                             self._push(Unit::Operator(Op::IMPLICIT)); // add a _imp_ between if next is an open bracket
                         }
                     }
