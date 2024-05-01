@@ -65,6 +65,35 @@ pub fn test_json_array() {
     _test_json(json_segment, check_map);
 }
 
+#[test]
+pub fn test_json_obj_array() {
+    let json_segment = r#"
+    {
+        "items": [ 
+            {
+              "str" :  "this is abc" ,
+              "str_arr" : [ "item0" , "item1" ] ,
+              "int" : 123 ,
+              "int_arr" : [ 0 , 1 ]
+            }, {
+                "str" :  "str2" ,
+                "float" : 1.234
+            }
+         ]
+    }"#;
+    let check_map = HashMap::from([
+        ("items.0.str", "this is abc"),
+        ("items.0.str_arr.0", "item0"),
+        ("items.0.str_arr.1", "item1"),
+        ("items.0.int", "123"),
+        ("items.0.int_arr.0", "0"),
+        ("items.0.int_arr.1", "1"),
+        ("items.1.str", "str2"),
+        ("items.1.float", "1.234"),
+    ]);
+    _test_json(json_segment, check_map);
+}
+
 fn _test_json(json_segment: &str, check_map: HashMap<&str, &str>) {
     let mut handler = TestJsonEntryHandler::new();
     let mut json_processor = DumbJsonProcessor::new(Box::new(&mut handler));
