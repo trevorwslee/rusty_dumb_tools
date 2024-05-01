@@ -1,15 +1,12 @@
 use std::collections::HashMap;
 
-use crate::{
-    json::{DumbJsonProcessor, JsonEntry, JsonEntryHandler},
-    prelude::InPlaceJsonEntryHandler,
-};
+use crate::json::{DumbJsonProcessor, InPlaceJsonEntryHandler, JsonEntry, JsonEntryHandler};
 
 #[test]
 pub fn test_json_in_place() {
     let mut handler = InPlaceJsonEntryHandler::new(|json_entry| {
         println!(
-            "In PlaceJson item: {} => {}",
+            "In-Place JSON entry: {} => {}",
             json_entry.field_name, json_entry.field_value
         );
     });

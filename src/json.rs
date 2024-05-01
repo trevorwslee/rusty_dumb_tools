@@ -1,9 +1,11 @@
-use std::{fmt, sync::OnceState};
+//! A simple JSON stream processor / parser -- [`crate::json::DumbJsonProcessor`]
+
+use std::fmt;
 
 const DEBUG_ON: bool = true;
 
-//#[test]
-pub fn test_json_processor() {
+#[test]
+fn test_json_processor() {
     // struct TestJsonEntryHandler {}
     // impl JsonEntryHandler for TestJsonEntryHandler {
     //     fn handle_json_entry(&self, json_entry: &JsonEntry) {
@@ -57,6 +59,56 @@ pub fn test_json_processor() {
 //     my_struct_instance.test();
 // }
 
+/// a simple terminal / text-based "screen" update helper, which relies on [`DumbLineTemplate`] to format each "screen" lines
+///
+/// for example:
+/// ```
+/// use rusty_dumb_tools::json::{DumbJsonProcessor, InPlaceJsonEntryHandler, JsonEntry, JsonEntryHandler};
+/// let mut handler = InPlaceJsonEntryHandler::new(|json_entry| {
+///     println!(
+///         "In-Place JSON entry: {} => {}",
+///         json_entry.field_name, json_entry.field_value
+///     );
+/// });
+/// let mut json_processor = DumbJsonProcessor::new(Box::new(&mut handler));
+/// let json_segment = r#"{"hello":"world"}"#;
+/// let res = json_processor.push_json_segment(json_segment);
+/// assert!(res.is_some() && res.unwrap().is_empty());
+/// print!("~~~")
+/// ```
+/// Note that [`InPlaceJsonEntryHandler`] is simply a helper that implements the [`JsonEntryHandler`] trait,
+/// which acts as a callback to handle [`JsonEntry`] as soon as it comes:
+/// * [`JsonEntryHandler::handle_json_entry`] is called when a JSON entry comes to be handled
+/// * [`JsonEntry`] is passed as argument when [`JsonEntryHandler::handle_json_entry`] is called
+/// * [`JsonEntry::field_name`] tells the "path" of the JSON entry; more on this later
+/// * [`JsonEntry::field_value`] is the value of the JSON entry:
+///   - [`JsonEntryValue::String`] for string value
+///   - [`JsonEntryValue::Whole`] for integer value
+///   - [`JsonEntryValue::Decimal`] for float value
+///   - [`JsonEntryValue::Boolean`] for boolean value
+///   - [`JsonEntryValue::Null`] for null value
+///
+/// For example, for the following JSON:
+/// ```json
+/// {
+///   "simple_key": "simple_value,
+///   "nested": {
+///     "nested_key": "nested_value"
+///   },
+///   "array": [ "item0", "item1" ],
+///   "obj_array": [
+///     { "obj_key": "obj0" },
+///     { "obj_key": "obj1" }
+///   ]
+/// }
+/// ```
+/// the field-name/field-value pairs are:
+/// - "simple_key" => "simple_value"
+/// - "nested.nested_key" => "nested_value"
+/// - "array.0" => "item0"
+/// - "array.1" => "item1"
+/// - "obj_array.0.obj_key" => "obj0"
+/// - "obj_array.1.obj_key" => "obj1"
 pub struct DumbJsonProcessor<'a> {
     json_entry_handler: Box<&'a mut dyn JsonEntryHandler>,
     //for_array: bool,
@@ -87,6 +139,12 @@ impl<'a> DumbJsonProcessor<'a> {
             // count: 0,
         }
     }
+    /// push a JSON segment to the processor; note that the JSON segment can be a complete JSON, or part of a JSON;
+    /// as soon as JSON entries are recognized, callback are called for those recognized JSON entries
+    ///
+    /// It returns:
+    /// - `Some(String)` as the remaining after processing the complete JSON; e.g. an empty string if "}" is the last character of the last input JSON segment
+    /// - `None` if the JSON is not complete needing the rest of the JSON segments to be pushed
     pub fn push_json_segment(&mut self, json_segment: &str) -> Option<String> {
         let mut state = ProcessorStage::new(String::new(), false);
         return self._push_json_segment(&mut state, json_segment);

@@ -7,6 +7,7 @@
 //! * [`crate::ltemp::DumbLineTemplate`]: A simple line template for formatting a line, which can be use to print values as a line with some template.
 //! * [`crate::lblscreen::DumbLineByLineScreen`]: A terminal / text-based "screen" update helper, which is extended from [`crate::ltemp::DumbLineTemplate`],
 //!   and should be helpful in managing the updates of the formatted lines that acts as a "screen".
+//! * [`crate::json::DumbJsonProcessor`]: A simple JSON stream processor / parser.
 //!
 //! For a demo program of using the tools, you may want to run the included demo function [`demo::run_demo`] like
 //! ```
