@@ -357,7 +357,7 @@ impl<'a> DumbJsonProcessor<'a> {
                 return StreamParseRes::to_be_continued();
             }
             if stage.state == "^>" {
-                let field_value = skipped_to[..skipped_to.len() - 1].to_string(); //skipped.substring(0, skipped.length - 1).trim()
+                let field_value = skipped_to[..skipped_to.len() - 1].trim().to_string(); //skipped.substring(0, skipped.length - 1).trim()
                 let field_value_is_empty = field_value.is_empty();
                 stage.field_value = Some(field_value);
                 if !field_value_is_empty {

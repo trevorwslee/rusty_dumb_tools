@@ -1,6 +1,24 @@
 use std::collections::HashMap;
 
-use crate::json::{DumbJsonProcessor, JsonEntry, JsonEntryHandler};
+use crate::{
+    json::{DumbJsonProcessor, JsonEntry, JsonEntryHandler},
+    prelude::InPlaceJsonEntryHandler,
+};
+
+#[test]
+pub fn test_json_in_place() {
+    let mut handler = InPlaceJsonEntryHandler::new(|json_entry| {
+        println!(
+            "In PlaceJson item: {} => {}",
+            json_entry.field_name, json_entry.field_value
+        );
+    });
+    let mut json_processor = DumbJsonProcessor::new(Box::new(&mut handler));
+    let json_segment = r#"{"hello":"world"}"#;
+    let res = json_processor.push_json_segment(json_segment);
+    assert!(res.is_some() && res.unwrap().is_empty());
+    print!("~~~")
+}
 
 #[test]
 pub fn test_json_simple() {
@@ -8,11 +26,20 @@ pub fn test_json_simple() {
     let check_map = HashMap::from([("hello", "world")]);
     _test_json_standard(json_segment, check_map);
 
-    let json_segment = r#"{"int":123,"float":9.87,"str":"abc","null":null}"#;
+    let json_segment = r#"{"hello":" w:\"o{r}l\"[d], "}"#;
+    let check_map = HashMap::from([("hello", " w:\"o{r}l\"[d], ")]);
+    _test_json_standard(json_segment, check_map);
+
+    let json_segment = r#"{
+          "int" : 123 ,
+          "float" : 9.87 ,
+          "str" : "this is abc" ,
+          "null" : null
+        }"#;
     let check_map = HashMap::from([
         ("int", "123"),
         ("float", "9.87"),
-        ("str", "abc"),
+        ("str", "this is abc"),
         ("null", "null"),
     ]);
     _test_json_standard(json_segment, check_map);
