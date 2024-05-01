@@ -13,13 +13,13 @@ pub fn test_json_processor() {
     // let json_data = "{}";
     // json_processor.push_json_segment(json_data);
 
-    let handler = InPlaceJsonEntryHandler::new(|json_entry| {
+    let mut handler = InPlaceJsonEntryHandler::new(|json_entry| {
         println!(
             "In PlaceJson item: {} => {}",
             json_entry.field_name, json_entry.field_value
         );
     });
-    let mut json_processor = DumbJsonProcessor::new(Box::new(handler));
+    let mut json_processor = DumbJsonProcessor::new(Box::new(&mut handler));
     let json_segment = r#"{"hello":"world"}"#;
     let res = json_processor.push_json_segment(json_segment);
     assert!(res.is_some() && res.unwrap().is_empty());
@@ -56,8 +56,8 @@ pub fn test_json_processor() {
 //     my_struct_instance.test();
 // }
 
-pub struct DumbJsonProcessor {
-    json_entry_handler: Box<dyn JsonEntryHandler>,
+pub struct DumbJsonProcessor<'a> {
+    json_entry_handler: Box<&'a mut dyn JsonEntryHandler>,
     for_array: bool,
     unescape_escaped: bool,
     //nested_parser: Option<Box<DumbJsonProcessor>>,
@@ -70,8 +70,8 @@ pub struct DumbJsonProcessor {
     // count: i16,
 }
 
-impl DumbJsonProcessor {
-    pub fn new(json_entry_handler: Box<dyn JsonEntryHandler>) -> DumbJsonProcessor {
+impl<'a> DumbJsonProcessor<'a> {
+    pub fn new(json_entry_handler: Box<&mut dyn JsonEntryHandler>) -> DumbJsonProcessor {
         DumbJsonProcessor {
             json_entry_handler,
             for_array: false,
@@ -374,7 +374,7 @@ impl DumbJsonProcessor {
         }
         return StreamParseRes::to_be_continued();
     }
-    fn _submit(&self, stage: &mut ProcessorStage) {
+    fn _submit(&mut self, stage: &mut ProcessorStage) {
         let field_name = stage.field_name.clone().unwrap();
         let field_value = stage.field_value.clone().unwrap();
         let json_entry = JsonEntry {
@@ -463,7 +463,7 @@ pub struct JsonEntry {
 }
 
 pub trait JsonEntryHandler {
-    fn handle_json_entry(&self, json_entry: &JsonEntry);
+    fn handle_json_entry(&mut self, json_entry: &JsonEntry);
 }
 
 pub struct InPlaceJsonEntryHandler {
@@ -475,7 +475,7 @@ impl InPlaceJsonEntryHandler {
     }
 }
 impl JsonEntryHandler for InPlaceJsonEntryHandler {
-    fn handle_json_entry(&self, json_entry: &JsonEntry) {
+    fn handle_json_entry(&mut self, json_entry: &JsonEntry) {
         let f = &self.f;
         f(json_entry);
     }
