@@ -42,10 +42,10 @@
 pub mod shared;
 pub mod arg;
 pub mod calc;
+pub mod calculator;
+pub mod json;
 pub mod lblscreen;
 pub mod ltemp;
-
-pub mod calculator;
 
 pub mod demo;
 
