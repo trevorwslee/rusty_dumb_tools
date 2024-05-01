@@ -1,3 +1,5 @@
+use std::sync::OnceState;
+
 const DEBUG_ON: bool = true;
 
 //#[test]
@@ -12,7 +14,6 @@ pub fn test_json_processor() {
     // let mut json_processor = DumbJsonProcessor::new(Box::new(handler));
     // let json_data = "{}";
     // json_processor.push_json_segment(json_data);
-
     let mut handler = InPlaceJsonEntryHandler::new(|json_entry| {
         println!(
             "In PlaceJson item: {} => {}",
@@ -58,7 +59,7 @@ pub fn test_json_processor() {
 
 pub struct DumbJsonProcessor<'a> {
     json_entry_handler: Box<&'a mut dyn JsonEntryHandler>,
-    for_array: bool,
+    //for_array: bool,
     unescape_escaped: bool,
     //nested_parser: Option<Box<DumbJsonProcessor>>,
     // state: &'static str,
@@ -74,7 +75,7 @@ impl<'a> DumbJsonProcessor<'a> {
     pub fn new(json_entry_handler: Box<&mut dyn JsonEntryHandler>) -> DumbJsonProcessor {
         DumbJsonProcessor {
             json_entry_handler,
-            for_array: false,
+            //for_array: false,
             unescape_escaped: true,
             //nested_parser: None,
             // state: "",
@@ -87,7 +88,7 @@ impl<'a> DumbJsonProcessor<'a> {
         }
     }
     pub fn push_json_segment(&mut self, json_segment: &str) -> Option<String> {
-        let mut state = ProcessorStage::new();
+        let mut state = ProcessorStage::new(String::new(), false);
         return self._push_json_segment(&mut state, json_segment);
     }
     fn _push_json_segment(
@@ -210,14 +211,14 @@ impl<'a> DumbJsonProcessor<'a> {
     }
     fn _stream_parse(&mut self, stage: &mut ProcessorStage) -> StreamParseRes {
         if stage.state.is_empty() {
-            let skip_what = if self.for_array { '[' } else { '{' };
+            let skip_what = if stage.for_array { '[' } else { '{' };
             if self._skip_to(stage, skip_what, false).is_none() {
                 return StreamParseRes::to_be_continued();
             }
             stage.state = "{"
         }
         if stage.state == "{" {
-            if self.for_array {
+            if stage.for_array {
                 stage.field_name = Some(stage.count.to_string());
                 stage.state = ":"
             } else {
@@ -299,7 +300,7 @@ impl<'a> DumbJsonProcessor<'a> {
             let json_segment =
                 (if parsing_array { '[' } else { '{' }).to_string() + stage.buffer.as_str();
             stage.buffer.clear();
-            let mut nested_stage = ProcessorStage::new();
+            let mut nested_stage = ProcessorStage::new(stage.get_field_name(), parsing_array);
             let rest = self._push_json_segment(&mut nested_stage, json_segment.as_str());
             // let rest = match self.nested_parser {
             //     Some(ref mut nested_parser) => {
@@ -334,7 +335,7 @@ impl<'a> DumbJsonProcessor<'a> {
             stage.state = "$";
         }
         if stage.state == "^>" || stage.state == "$" {
-            let close_token = if self.for_array { ']' } else { '}' };
+            let close_token = if stage.for_array { ']' } else { '}' };
             let sep_idx = self._scan_to(stage, ',', false);
             let close_idx = self._scan_to(stage, close_token, false);
             if sep_idx.is_none() || close_idx.is_none() {
@@ -375,8 +376,8 @@ impl<'a> DumbJsonProcessor<'a> {
         return StreamParseRes::to_be_continued();
     }
     fn _submit(&mut self, stage: &mut ProcessorStage) {
-        let field_name = stage.field_name.clone().unwrap();
-        let field_value = stage.field_value.clone().unwrap();
+        let field_name = stage.get_field_name(); //field_name.clone().unwrap();
+        let field_value = stage.get_field_value(); //field_value.clone().unwrap();
         let json_entry = JsonEntry {
             field_name: field_name,
             field_value: field_value,
@@ -393,6 +394,8 @@ impl<'a> DumbJsonProcessor<'a> {
 }
 
 struct ProcessorStage {
+    parent_field_name: String,
+    for_array: bool,
     state: &'static str,
     buffer: String,
     skipping: String,
@@ -402,8 +405,10 @@ struct ProcessorStage {
     count: i16,
 }
 impl ProcessorStage {
-    pub fn new() -> ProcessorStage {
+    pub fn new(parent_field_name: String, for_array: bool) -> ProcessorStage {
         ProcessorStage {
+            parent_field_name: parent_field_name,
+            for_array: for_array,
             state: "",
             buffer: String::new(),
             skipping: String::new(),
@@ -412,6 +417,17 @@ impl ProcessorStage {
             field_value: None,
             count: 0,
         }
+    }
+    pub fn get_field_name(&self) -> String {
+        let field_name = if self.parent_field_name.is_empty() {
+            self.field_name.clone().unwrap()
+        } else {
+            self.parent_field_name.clone() + "." + &self.field_name.clone().unwrap()
+        };
+        return field_name;
+    }
+    pub fn get_field_value(&self) -> String {
+        return self.field_value.clone().unwrap();
     }
 }
 
