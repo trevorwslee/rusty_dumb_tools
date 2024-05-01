@@ -17,6 +17,8 @@ pub mod test_calc;
 #[cfg(test)]
 pub mod test_calculator;
 #[cfg(test)]
+pub mod test_json;
+#[cfg(test)]
 pub mod test_lblscreen;
 #[cfg(test)]
 pub mod test_ltemp;

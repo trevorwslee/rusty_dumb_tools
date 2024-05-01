@@ -57,6 +57,7 @@ pub mod prelude {
     pub use crate::dap_arg;
     pub use crate::dlt_comps;
     pub use crate::dltc;
+    pub use crate::json::*;
     pub use crate::lblscreen::*;
     pub use crate::ltemp::*;
     pub use crate::sap_arg;

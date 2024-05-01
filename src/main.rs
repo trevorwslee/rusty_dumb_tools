@@ -9,9 +9,14 @@ mod debug;
 use std::{collections::HashMap, env, vec};
 
 //use crossterm::style::Colorize;
-use rusty_dumb_tools::{demo, prelude::*};
+use rusty_dumb_tools::{demo, json, prelude::*};
 
 fn main() {
+    if true {
+        json::test_json_processor();
+        return;
+    }
+
     let version = env!("CARGO_PKG_VERSION");
     println!("The version of this crate is: {}", version);
 
