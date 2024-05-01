@@ -128,11 +128,12 @@ impl JsonEntryHandler for TestJsonEntryHandler {
     fn handle_json_entry(&mut self, json_entry: &JsonEntry) {
         println!(
             "* JSON entry: \"{}\" => \"{}\"",
-            json_entry.field_name, json_entry.field_value
+            json_entry.field_name,
+            json_entry.field_value.to_string()
         );
         self.entry_map.insert(
             json_entry.field_name.clone(),
-            json_entry.field_value.clone(),
+            json_entry.field_value.to_string().clone(),
         );
     }
 }

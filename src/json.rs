@@ -1,4 +1,4 @@
-use std::sync::OnceState;
+use std::{fmt, sync::OnceState};
 
 const DEBUG_ON: bool = true;
 
@@ -329,7 +329,9 @@ impl<'a> DumbJsonProcessor<'a> {
             if skipped_to.is_empty() {
                 return StreamParseRes::to_be_continued();
             }
-            stage.field_value = Some(skipped_to[..skipped_to.len() - 1].to_string());
+            stage.field_value = Some(JsonEntryValue::new_str(
+                skipped_to[..skipped_to.len() - 1].to_string(),
+            ));
             self._submit(stage);
             stage.count += 1;
             stage.state = "$";
@@ -360,7 +362,7 @@ impl<'a> DumbJsonProcessor<'a> {
             if stage.state == "^>" {
                 let field_value = skipped_to[..skipped_to.len() - 1].trim().to_string(); //skipped.substring(0, skipped.length - 1).trim()
                 let field_value_is_empty = field_value.is_empty();
-                stage.field_value = Some(field_value);
+                stage.field_value = Some(JsonEntryValue::new_none_str(field_value));
                 if !field_value_is_empty {
                     self._submit(stage);
                 }
@@ -401,7 +403,7 @@ struct ProcessorStage {
     skipping: String,
     finalized: bool,
     field_name: Option<String>,
-    field_value: Option<String>,
+    field_value: Option<JsonEntryValue>,
     count: i16,
 }
 impl ProcessorStage {
@@ -426,7 +428,7 @@ impl ProcessorStage {
         };
         return field_name;
     }
-    pub fn get_field_value(&self) -> String {
+    pub fn get_field_value(&self) -> JsonEntryValue {
         return self.field_value.clone().unwrap();
     }
 }
@@ -473,9 +475,65 @@ impl StreamParseRes {
 //     }
 // }
 
+#[derive(Debug, Clone)]
+pub enum JsonEntryValue {
+    String(String),
+    Whole(i32),
+    Decimal(f64),
+    Boolean(bool),
+    Null,
+}
+
+impl JsonEntryValue {
+    fn new_str(v: String) -> JsonEntryValue {
+        JsonEntryValue::String(v)
+    }
+    fn new_none_str(v: String) -> JsonEntryValue {
+        if v == "null" {
+            JsonEntryValue::Null
+        } else if v == "true" {
+            JsonEntryValue::Boolean(true)
+        } else if v == "false" {
+            JsonEntryValue::Boolean(false)
+        } else {
+            if v.contains('.') {
+                let n = v.parse::<f64>();
+                if n.is_ok() {
+                    JsonEntryValue::Decimal(n.unwrap())
+                } else {
+                    JsonEntryValue::String(v)
+                }
+            } else {
+                let n = v.parse::<i32>();
+                if n.is_ok() {
+                    JsonEntryValue::Whole(n.unwrap())
+                } else {
+                    JsonEntryValue::String(v)
+                }
+            }
+        }
+    }
+    pub fn to_string(&self) -> String {
+        match *self {
+            JsonEntryValue::Null => "null".to_string(),
+            JsonEntryValue::Boolean(v) => v.to_string(),
+            JsonEntryValue::Whole(v) => v.to_string(),
+            JsonEntryValue::Decimal(v) => v.to_string(),
+            JsonEntryValue::String(ref v) => v.clone(),
+        }
+    }
+}
+
+impl fmt::Display for JsonEntryValue {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = self.to_string();
+        write!(f, "{}", s)
+    }
+}
+
 pub struct JsonEntry {
     pub field_name: String,
-    pub field_value: String,
+    pub field_value: JsonEntryValue,
 }
 
 pub trait JsonEntryHandler {
