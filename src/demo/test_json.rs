@@ -114,7 +114,7 @@ fn _test_json_ex(json: &str, check_map: &HashMap<&str, &str>, one_piece: bool) {
         let len = json_piece.len();
         let mut start = 0;
         let mut end = 0;
-        let mut progess = ProcessJsonProgress::new();
+        let mut progress = ProcessJsonProgress::new();
         while end < len {
             //let mut rng = rand::thread_rng();
             //end = rng.gen_range(start + 1, len + 1);
@@ -123,10 +123,10 @@ fn _test_json_ex(json: &str, check_map: &HashMap<&str, &str>, one_piece: bool) {
                 end = len;
             }
             let json_piece = &json_piece[start..end];
-            json_processor.push_json_piece(json_piece, &mut progess);
-            // if res.is_none() {
-            //     panic!("res is none");
-            // }
+            let result = json_processor.push_json_piece(json_piece, &mut progress);
+            if result.is_err() {
+                panic!("result is err");
+            }
             // let res = res.unwrap();
             // if !res.is_empty() {
             //     panic!("res is not empty");
@@ -134,10 +134,10 @@ fn _test_json_ex(json: &str, check_map: &HashMap<&str, &str>, one_piece: bool) {
             start = end;
         }
 
-        if !progess.is_done() {
-            panic!("progess is done");
+        if !progress.is_done() {
+            panic!("progress is done");
         }
-        let remaining = progess.get_remaining();
+        let remaining = progress.get_remaining();
         if !remaining.is_empty() {
             panic!("remaining is not empty");
         }

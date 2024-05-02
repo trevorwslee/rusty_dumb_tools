@@ -142,12 +142,17 @@ impl<'a> DumbJsonProcessor<'a> {
     ///   and you can use [`ProcessJsonProgress::is_done`] to check if the input ended up a complete JSON, or needing additional JSON pieces
     /// - if it is done, you can use [`ProcessJsonProgress::get_remaining`] to get the remaining of the input outside of the JSON
     ///   e.g. an empty string if “}” is the last character of the last input JSON piece
-    pub fn push_json_piece(&mut self, json_piece: &str, progress: &mut ProcessJsonProgress) {
+    pub fn push_json_piece<'b>(
+        &mut self,
+        json_piece: &str,
+        progress: &'b mut ProcessJsonProgress,
+    ) -> Result<&'b mut ProcessJsonProgress, DumbError> {
         //let mut stage = ProcessorStage::new(String::new(), false);
         //let mut stage = self.first_stage.clone();
         let mut stage = progress.stages.last_mut().unwrap();
-        let result = self._push_json_piece(json_piece, &mut stage);
+        let result = self._push_json_piece(json_piece, &mut stage)?;
         progress.result = result;
+        return Ok(progress);
     }
     /// like [`DumbJsonProcessor::push_json_piece`] but for a complete JSON
     ///
@@ -161,27 +166,31 @@ impl<'a> DumbJsonProcessor<'a> {
             return Err(DumbError::from("JSON is not complete"));
         }
     }
-    fn _push_json_piece(&mut self, json_piece: &str, stage: &mut ProcessorStage) -> Option<String> {
+    fn _push_json_piece(
+        &mut self,
+        json_piece: &str,
+        stage: &mut ProcessorStage,
+    ) -> Result<Option<String>, DumbError> {
         if DEBUG_ON {
             println!("INPUT json_piece: {}", json_piece);
         }
         //let stage = stages.last_mut().unwrap();
         stage.buffer.push_str(json_piece);
         loop {
-            let stream_parse_res = self._stream_parse(stage);
+            let stream_parse_res = self._stream_parse(stage)?;
             if stream_parse_res.need_more_data {
-                return None;
+                return Ok(None);
             }
             if stream_parse_res.done {
                 stage.finalized = true;
-                return Some(stage.buffer.clone());
+                return Ok(Some(stage.buffer.clone()));
             } else {
                 if stage.buffer.is_empty() {
                     break;
                 }
             }
         }
-        return None;
+        return Ok(None);
         // let key = "key";
         // let value = "value";
         // let json_entry = JsonEntry { key, value };
@@ -276,12 +285,12 @@ impl<'a> DumbJsonProcessor<'a> {
         stage.buffer.clear();
         return false;
     }
-    fn _stream_parse(&mut self, stage: &mut ProcessorStage) -> StreamParseRes {
+    fn _stream_parse(&mut self, stage: &mut ProcessorStage) -> Result<StreamParseRes, DumbError> {
         //let stage = stages.last_mut().unwrap();
         if stage.state.is_empty() {
             let skip_what = if stage.for_array { '[' } else { '{' };
             if self._skip_to(stage, skip_what, false).is_none() {
-                return StreamParseRes::to_be_continued();
+                return Ok(StreamParseRes::to_be_continued());
             }
             stage.state = "{"
         }
@@ -293,7 +302,7 @@ impl<'a> DumbJsonProcessor<'a> {
                 let idx = self._scan_to(stage, '"', false);
                 let close_idx = self._scan_to(stage, '}', false);
                 if idx.is_none() || close_idx.is_none() {
-                    return StreamParseRes::need_more_data();
+                    return Ok(StreamParseRes::need_more_data());
                 }
                 let idx = idx.unwrap();
                 let close_idx = close_idx.unwrap();
@@ -302,11 +311,11 @@ impl<'a> DumbJsonProcessor<'a> {
                 } else {
                     let skipped_to = self._skip_to(stage, '"', false);
                     if skipped_to.is_none() {
-                        return StreamParseRes::need_more_data();
+                        return Ok(StreamParseRes::need_more_data());
                     }
                     let skipped_to: String = skipped_to.unwrap();
                     if skipped_to.is_empty() {
-                        return StreamParseRes::to_be_continued();
+                        return Ok(StreamParseRes::to_be_continued());
                     }
                     stage.state = "{>"
                 }
@@ -315,11 +324,11 @@ impl<'a> DumbJsonProcessor<'a> {
         if stage.state == "{>" {
             let skipped_to = self._skip_to(stage, '"', false);
             if skipped_to.is_none() {
-                return StreamParseRes::need_more_data();
+                return Ok(StreamParseRes::need_more_data());
             }
             let skipped_to = skipped_to.unwrap();
             if skipped_to.is_empty() {
-                return StreamParseRes::to_be_continued();
+                return Ok(StreamParseRes::to_be_continued());
             }
             stage.field_name = Some(skipped_to[..skipped_to.len() - 1].to_string());
             stage.state = ">:"
@@ -327,17 +336,17 @@ impl<'a> DumbJsonProcessor<'a> {
         if stage.state == ">:" {
             let skipped_to = self._skip_to(stage, ':', false);
             if skipped_to.is_none() {
-                return StreamParseRes::need_more_data();
+                return Ok(StreamParseRes::need_more_data());
             }
             let skipped_to = skipped_to.unwrap();
             if skipped_to.is_empty() {
-                return StreamParseRes::to_be_continued();
+                return Ok(StreamParseRes::to_be_continued());
             }
             stage.state = ":"
         }
         if stage.state == ":" {
             if !self._skip_ws(stage) {
-                return StreamParseRes::to_be_continued();
+                return Ok(StreamParseRes::to_be_continued());
             }
             stage.state = "^"
         }
@@ -386,7 +395,7 @@ impl<'a> DumbJsonProcessor<'a> {
             // };
             //stages.push(stage);
             //let mut nested_stage = ProcessorStage::new(stage.get_field_name(), parsing_array);
-            let rest = self._push_json_piece(json_piece.as_str(), child_stage);
+            let rest = self._push_json_piece(json_piece.as_str(), child_stage)?;
             // let rest = match self.nested_parser {
             //     Some(ref mut nested_parser) => {
             //         nested_parser._push_json_segment(stage, json_data.as_str())
@@ -397,7 +406,7 @@ impl<'a> DumbJsonProcessor<'a> {
             //     }
             // };
             if rest.is_none() {
-                return StreamParseRes::need_more_data();
+                return Ok(StreamParseRes::need_more_data());
             }
             let rest = rest.unwrap();
             //self.nested_parser = None;
@@ -409,11 +418,11 @@ impl<'a> DumbJsonProcessor<'a> {
         if stage.state == "^>\"" {
             let skipped_to = self._skip_to(stage, '"', true);
             if skipped_to.is_none() {
-                return StreamParseRes::need_more_data();
+                return Ok(StreamParseRes::need_more_data());
             }
             let skipped_to = skipped_to.unwrap();
             if skipped_to.is_empty() {
-                return StreamParseRes::to_be_continued();
+                return Ok(StreamParseRes::to_be_continued());
             }
             stage.field_value = Some(JsonFieldValue::new_str(
                 skipped_to[..skipped_to.len() - 1].to_string(),
@@ -427,7 +436,7 @@ impl<'a> DumbJsonProcessor<'a> {
             let sep_idx = self._scan_to(stage, ',', false);
             let close_idx = self._scan_to(stage, close_token, false);
             if sep_idx.is_none() || close_idx.is_none() {
-                return StreamParseRes::need_more_data();
+                return Ok(StreamParseRes::need_more_data());
             }
             let sep_idx = sep_idx.unwrap();
             let close_idx = close_idx.unwrap();
@@ -439,29 +448,29 @@ impl<'a> DumbJsonProcessor<'a> {
                 (skipped_to, true)
             };
             if skipped_to.is_none() {
-                return StreamParseRes::need_more_data();
+                return Ok(StreamParseRes::need_more_data());
             }
             let skipped_to = skipped_to.unwrap();
             if skipped_to.is_empty() {
-                return StreamParseRes::to_be_continued();
+                return Ok(StreamParseRes::to_be_continued());
             }
             if stage.state == "^>" {
                 let field_value = skipped_to[..skipped_to.len() - 1].trim().to_string(); //skipped.substring(0, skipped.length - 1).trim()
                 let field_value_is_empty = field_value.is_empty();
-                stage.field_value = Some(JsonFieldValue::new_none_str(field_value));
+                stage.field_value = Some(JsonFieldValue::new_none_str(field_value)?);
                 if !field_value_is_empty {
                     self._submit(stage);
                 }
                 stage.count += 1
             }
             stage.state = "{";
-            return if done {
+            return Ok(if done {
                 StreamParseRes::done()
             } else {
                 StreamParseRes::to_be_continued()
-            };
+            });
         }
-        return StreamParseRes::to_be_continued();
+        return Ok(StreamParseRes::to_be_continued());
     }
     fn _submit(&mut self, stage: &mut ProcessorStage) {
         let field_name = stage.get_field_name(); //field_name.clone().unwrap();
@@ -601,27 +610,27 @@ impl JsonFieldValue {
     fn new_str(v: String) -> JsonFieldValue {
         JsonFieldValue::String(v)
     }
-    fn new_none_str(v: String) -> JsonFieldValue {
+    fn new_none_str(v: String) -> Result<JsonFieldValue, DumbError> {
         if v == "null" {
-            JsonFieldValue::Null
+            Ok(JsonFieldValue::Null)
         } else if v == "true" {
-            JsonFieldValue::Boolean(true)
+            Ok(JsonFieldValue::Boolean(true))
         } else if v == "false" {
-            JsonFieldValue::Boolean(false)
+            Ok(JsonFieldValue::Boolean(false))
         } else {
             if v.contains('.') {
                 let n = v.parse::<f64>();
                 if n.is_ok() {
-                    JsonFieldValue::Decimal(n.unwrap())
+                    Ok(JsonFieldValue::Decimal(n.unwrap()))
                 } else {
-                    JsonFieldValue::String(v)
+                    Err(DumbError::from(format!("Invalid decimal number '{}'", v)))
                 }
             } else {
                 let n = v.parse::<i32>();
                 if n.is_ok() {
-                    JsonFieldValue::Whole(n.unwrap())
+                    Ok(JsonFieldValue::Whole(n.unwrap()))
                 } else {
-                    JsonFieldValue::String(v)
+                    Err(DumbError::from(format!("Invalid whole number '{}'", v)))
                 }
             }
         }
