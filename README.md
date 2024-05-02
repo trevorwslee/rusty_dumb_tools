@@ -12,7 +12,7 @@ A [collection of simple tools](https://crates.io/crates/rusty_dumb_tools) in ***
 * [`crate::lblscreen::DumbLineByLineScreen`](https://docs.rs/rusty_dumb_tools/latest/rusty_dumb_tools/lblscreen/struct.DumbLineByLineScreen.html): A terminal / text-based "screen" update helper.
 It is extended from `crate::ltemp::DumbLineTemplate`, and should be helpful in managing the updates of the formatted lines that acts as a "screen".
   
-  
+ 
 
 
 # Demo
@@ -154,6 +154,10 @@ MIT
 
 
 # Change History:
+
+* v0.1.9
+  - added DumbJsonProcessor
+  - bug fix
 
 * v0.1.89
   - bug fix

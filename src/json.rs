@@ -82,11 +82,11 @@ fn test_json_processor() {
 /// * [`JsonEntry`] is passed as argument when [`JsonEntryHandler::handle_json_entry`] is called
 /// * [`JsonEntry::field_name`] tells the "path" of the JSON entry; more on this later
 /// * [`JsonEntry::field_value`] is the value of the JSON entry:
-///   - [`JsonEntryValue::String`] for string value
-///   - [`JsonEntryValue::Whole`] for integer value
-///   - [`JsonEntryValue::Decimal`] for float value
-///   - [`JsonEntryValue::Boolean`] for boolean value
-///   - [`JsonEntryValue::Null`] for null value
+///   - [`JsonFieldValue::String`] for string value
+///   - [`JsonFieldValue::Whole`] for integer value
+///   - [`JsonFieldValue::Decimal`] for float value
+///   - [`JsonFieldValue::Boolean`] for boolean value
+///   - [`JsonFieldValue::Null`] for null value
 ///
 /// For example, for the following JSON:
 /// ```json
@@ -121,6 +121,7 @@ pub struct DumbJsonProcessor<'a> {
     // field_name: Option<String>,
     // field_value: Option<String>,
     // count: i16,
+    first_stage: ProcessorStage,
 }
 
 impl<'a> DumbJsonProcessor<'a> {
@@ -137,6 +138,7 @@ impl<'a> DumbJsonProcessor<'a> {
             // field_name: None,
             // field_value: None,
             // count: 0,
+            first_stage: ProcessorStage::new(String::new(), false),
         }
     }
     /// push a JSON segment to the processor; note that the JSON segment can be a complete JSON, or part of a JSON;
@@ -146,8 +148,11 @@ impl<'a> DumbJsonProcessor<'a> {
     /// - `Some(String)` as the remaining after processing the complete JSON; e.g. an empty string if "}" is the last character of the last input JSON segment
     /// - `None` if the JSON is not complete needing the rest of the JSON segments to be pushed
     pub fn push_json_segment(&mut self, json_segment: &str) -> Option<String> {
-        let mut state = ProcessorStage::new(String::new(), false);
-        return self._push_json_segment(&mut state, json_segment);
+        //let mut stage = ProcessorStage::new(String::new(), false);
+        let mut stage = self.first_stage.clone();
+        let res = self._push_json_segment(&mut stage, json_segment);
+        self.first_stage = stage;
+        return res;
     }
     fn _push_json_segment(
         &mut self,
@@ -387,7 +392,7 @@ impl<'a> DumbJsonProcessor<'a> {
             if skipped_to.is_empty() {
                 return StreamParseRes::to_be_continued();
             }
-            stage.field_value = Some(JsonEntryValue::new_str(
+            stage.field_value = Some(JsonFieldValue::new_str(
                 skipped_to[..skipped_to.len() - 1].to_string(),
             ));
             self._submit(stage);
@@ -420,7 +425,7 @@ impl<'a> DumbJsonProcessor<'a> {
             if stage.state == "^>" {
                 let field_value = skipped_to[..skipped_to.len() - 1].trim().to_string(); //skipped.substring(0, skipped.length - 1).trim()
                 let field_value_is_empty = field_value.is_empty();
-                stage.field_value = Some(JsonEntryValue::new_none_str(field_value));
+                stage.field_value = Some(JsonFieldValue::new_none_str(field_value));
                 if !field_value_is_empty {
                     self._submit(stage);
                 }
@@ -453,6 +458,7 @@ impl<'a> DumbJsonProcessor<'a> {
     // }
 }
 
+#[derive(Debug, Clone)]
 struct ProcessorStage {
     parent_field_name: String,
     for_array: bool,
@@ -461,7 +467,7 @@ struct ProcessorStage {
     skipping: String,
     finalized: bool,
     field_name: Option<String>,
-    field_value: Option<JsonEntryValue>,
+    field_value: Option<JsonFieldValue>,
     count: i16,
 }
 impl ProcessorStage {
@@ -486,7 +492,7 @@ impl ProcessorStage {
         };
         return field_name;
     }
-    pub fn get_field_value(&self) -> JsonEntryValue {
+    pub fn get_field_value(&self) -> JsonFieldValue {
         return self.field_value.clone().unwrap();
     }
 }
@@ -534,7 +540,7 @@ impl StreamParseRes {
 // }
 
 #[derive(Debug, Clone)]
-pub enum JsonEntryValue {
+pub enum JsonFieldValue {
     String(String),
     Whole(i32),
     Decimal(f64),
@@ -542,47 +548,47 @@ pub enum JsonEntryValue {
     Null,
 }
 
-impl JsonEntryValue {
-    fn new_str(v: String) -> JsonEntryValue {
-        JsonEntryValue::String(v)
+impl JsonFieldValue {
+    fn new_str(v: String) -> JsonFieldValue {
+        JsonFieldValue::String(v)
     }
-    fn new_none_str(v: String) -> JsonEntryValue {
+    fn new_none_str(v: String) -> JsonFieldValue {
         if v == "null" {
-            JsonEntryValue::Null
+            JsonFieldValue::Null
         } else if v == "true" {
-            JsonEntryValue::Boolean(true)
+            JsonFieldValue::Boolean(true)
         } else if v == "false" {
-            JsonEntryValue::Boolean(false)
+            JsonFieldValue::Boolean(false)
         } else {
             if v.contains('.') {
                 let n = v.parse::<f64>();
                 if n.is_ok() {
-                    JsonEntryValue::Decimal(n.unwrap())
+                    JsonFieldValue::Decimal(n.unwrap())
                 } else {
-                    JsonEntryValue::String(v)
+                    JsonFieldValue::String(v)
                 }
             } else {
                 let n = v.parse::<i32>();
                 if n.is_ok() {
-                    JsonEntryValue::Whole(n.unwrap())
+                    JsonFieldValue::Whole(n.unwrap())
                 } else {
-                    JsonEntryValue::String(v)
+                    JsonFieldValue::String(v)
                 }
             }
         }
     }
     pub fn to_string(&self) -> String {
         match *self {
-            JsonEntryValue::Null => "null".to_string(),
-            JsonEntryValue::Boolean(v) => v.to_string(),
-            JsonEntryValue::Whole(v) => v.to_string(),
-            JsonEntryValue::Decimal(v) => v.to_string(),
-            JsonEntryValue::String(ref v) => v.clone(),
+            JsonFieldValue::Null => "null".to_string(),
+            JsonFieldValue::Boolean(v) => v.to_string(),
+            JsonFieldValue::Whole(v) => v.to_string(),
+            JsonFieldValue::Decimal(v) => v.to_string(),
+            JsonFieldValue::String(ref v) => v.clone(),
         }
     }
 }
 
-impl fmt::Display for JsonEntryValue {
+impl fmt::Display for JsonFieldValue {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let s = self.to_string();
         write!(f, "{}", s)
@@ -591,7 +597,7 @@ impl fmt::Display for JsonEntryValue {
 
 pub struct JsonEntry {
     pub field_name: String,
-    pub field_value: JsonEntryValue,
+    pub field_value: JsonFieldValue,
 }
 
 pub trait JsonEntryHandler {

@@ -92,19 +92,50 @@ pub fn test_json_obj_array() {
 }
 
 fn _test_json(json_segment: &str, check_map: HashMap<&str, &str>) {
+    _test_json_ex(json_segment, check_map, true); // TODO: make multiple segments work!!!
+}
+fn _test_json_ex(json_segment: &str, check_map: HashMap<&str, &str>, single_segment: bool) {
     let mut handler = TestJsonEntryHandler::new();
     let mut json_processor = DumbJsonProcessor::new(Box::new(&mut handler));
-    let res = json_processor.push_json_segment(json_segment);
-    if res.is_none() {
-        panic!("res is none");
+    if single_segment {
+        let res = json_processor.push_json_segment(json_segment);
+        if res.is_none() {
+            panic!("res is none");
+        }
+        let res = res.unwrap();
+        if !res.is_empty() {
+            panic!("res is not empty");
+        }
+    } else {
+        let json_segment = json_segment.trim();
+        let len = json_segment.len();
+        let mut start = 0;
+        let mut end = 0;
+        while end < len {
+            //let mut rng = rand::thread_rng();
+            //end = rng.gen_range(start + 1, len + 1);
+            end = start + 5;
+            if end > len {
+                end = len;
+            }
+            let json_segment = &json_segment[start..end];
+            json_processor.push_json_segment(json_segment);
+            // if res.is_none() {
+            //     panic!("res is none");
+            // }
+            // let res = res.unwrap();
+            // if !res.is_empty() {
+            //     panic!("res is not empty");
+            // }
+            start = end;
+        }
     }
-    let res = res.unwrap();
-    if !res.is_empty() {
-        panic!("res is not empty");
-    }
-    //assert!(res.is_some() && res.unwrap().is_empty());
     let res_map = handler.entry_map;
-    assert!(res_map.len() == check_map.len());
+    if res_map.len() != check_map.len() {
+        println!("res_map: {:?}", res_map);
+        println!("check_map: {:?}", check_map);
+        panic!("res_map.len() != check_map.len()");
+    }
     for (k, v) in res_map.iter() {
         assert!(check_map.contains_key(k.as_str()));
         assert!(check_map.get(k.as_str()).unwrap() == v);
