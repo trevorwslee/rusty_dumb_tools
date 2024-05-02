@@ -51,7 +51,7 @@ const DEBUG_ON: bool = true;
 //     my_struct_instance.test();
 // }
 
-/// a simple terminal / text-based "screen" update helper, which relies on [`DumbLineTemplate`] to format each "screen" lines
+/// A simple JSON stream processor / parser
 ///
 /// for example:
 /// ```
@@ -134,11 +134,14 @@ impl<'a> DumbJsonProcessor<'a> {
         }
     }
     /// push a JSON piece to the processor; note that the JSON piece can be a complete JSON, or part of a JSON;
-    /// as soon as JSON entries are recognized, callback are called for those recognized JSON entries
+    /// as soon as JSON entries are recognized, callback is called for those recognized JSON entries
     ///
-    /// It returns:
-    /// - `Some(String)` as the remaining after processing the complete JSON; e.g. an empty string if "}" is the last character of the last input JSON piece
-    /// - `None` if the JSON is not complete needing the rest of the JSON pieces to be pushed
+    /// it requires an input [`ProcessJsonProgress`] to keep track of the progress
+    /// - the initial [`ProcessJsonProgress`] can be created by [`ProcessJsonProgress::new`]
+    /// - after each push, the progress will be updated;
+    ///   and you can use [`ProcessJsonProgress::is_done`] to check if the input ended up a complete JSON, or needing additional JSON pieces
+    /// - if it is done, you can use [`ProcessJsonProgress::get_remaining`] to get the remaining of the input outside of the JSON
+    ///   e.g. an empty string if “}” is the last character of the last input JSON piece
     pub fn push_json_piece(&mut self, json_piece: &str, progress: &mut ProcessJsonProgress) {
         //let mut stage = ProcessorStage::new(String::new(), false);
         //let mut stage = self.first_stage.clone();
@@ -148,7 +151,7 @@ impl<'a> DumbJsonProcessor<'a> {
     }
     /// like [`DumbJsonProcessor::push_json_piece`] but for a complete JSON
     ///
-    /// It returns the remaining after processing the complete JSON; e.g. an empty string if "}" is the last character of the last input JSON piece
+    /// It returns the remaining after processing the complete JSON; e.g. an empty string if "}" is the last character of the last input JSON
     pub fn push_json(&mut self, json: &str) -> Result<String, DumbError> {
         let mut progress = ProcessJsonProgress::new();
         self.push_json_piece(json, &mut progress);

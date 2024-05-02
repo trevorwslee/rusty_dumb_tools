@@ -23,11 +23,11 @@ pub fn test_json_in_place() {
 pub fn test_json_simple() {
     let json = r#"{"hello":"world"}"#;
     let check_map = HashMap::from([("hello", "world")]);
-    _test_json(json, check_map);
+    _test_json(json, &check_map);
 
     let json = r#"{"hello":" w:\"o{r}l\"[d], "}"#;
     let check_map = HashMap::from([("hello", " w:\"o{r}l\"[d], ")]);
-    _test_json(json, check_map);
+    _test_json(json, &check_map);
 
     let json = r#"{
           "int" : 123 ,
@@ -41,7 +41,7 @@ pub fn test_json_simple() {
         ("str", "this is abc"),
         ("null", "null"),
     ]);
-    _test_json(json, check_map);
+    _test_json(json, &check_map);
 }
 
 #[test]
@@ -61,7 +61,7 @@ pub fn test_json_array() {
         ("int_arr.0", "0"),
         ("int_arr.1", "1"),
     ]);
-    _test_json(json, check_map);
+    _test_json(json, &check_map);
 }
 
 #[test]
@@ -90,13 +90,14 @@ pub fn test_json_obj_array() {
         ("items.1.str", "str2"),
         ("items.1.float", "1.234"),
     ]);
-    _test_json(json, check_map);
+    _test_json(json, &check_map);
 }
 
-fn _test_json(json: &str, check_map: HashMap<&str, &str>) {
-    _test_json_ex(json, check_map, true); // TODO: make multiple segments work!!!
+fn _test_json(json: &str, check_map: &HashMap<&str, &str>) {
+    _test_json_ex(json, check_map, true);
+    _test_json_ex(json, check_map, true);
 }
-fn _test_json_ex(json: &str, check_map: HashMap<&str, &str>, one_piece: bool) {
+fn _test_json_ex(json: &str, check_map: &HashMap<&str, &str>, one_piece: bool) {
     let mut handler = TestJsonEntryHandler::new();
     let mut json_processor = DumbJsonProcessor::new(Box::new(&mut handler));
     if one_piece {
