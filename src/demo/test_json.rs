@@ -8,7 +8,7 @@ use super::ProcessJsonProgress;
 pub fn test_json_in_place() {
     let mut handler = InPlaceJsonEntryHandler::new(|json_entry| {
         println!(
-            "In-Place JSON entry: {} => {}",
+            "In-Place JSON entry: `{}` => `{}`",
             json_entry.field_name, json_entry.field_value
         );
     });
@@ -23,6 +23,10 @@ pub fn test_json_in_place() {
 pub fn test_json_simple() {
     let json = r#"{"hello":"world"}"#;
     let check_map = HashMap::from([("hello", "world")]);
+    _test_json(json, &check_map);
+
+    let json = r#"{"hello":"world","hello2":"world2"}"#;
+    let check_map = HashMap::from([("hello", "world"), ("hello2", "world2")]);
     _test_json(json, &check_map);
 
     let json = r#"{"hello":" w:\"o{r}l\"[d], "}"#;
@@ -103,7 +107,7 @@ fn _test_json_ex(json: &str, check_map: &HashMap<&str, &str>, one_piece: bool) {
     if one_piece {
         let res = json_processor.push_json(json);
         if res.is_err() {
-            panic!("res is err");
+            panic!("res is err [{}]", res.unwrap_err());
         }
         let res = res.unwrap();
         if !res.is_empty() {

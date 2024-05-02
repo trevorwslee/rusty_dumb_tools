@@ -2,9 +2,17 @@
 
 use std::fmt;
 
+use unicode_segmentation::UnicodeSegmentation;
+
 use crate::prelude::DumbError;
 
 const DEBUG_ON: bool = true;
+
+// fn main() {
+//     let s = "Hello, world! 👋🌍".to_string();
+//     let graphemes = UnicodeSegmentation::graphemes(s.as_str(), true).collect::<Vec<&str>>();
+//     println!("{:?}", graphemes);
+// }
 
 // #[test]
 // fn test_json_processor() {
@@ -114,6 +122,7 @@ pub struct DumbJsonProcessor<'a> {
     // field_value: Option<String>,
     // count: i16,
     //first_stage: ProcessorStage,
+    remaining: String,
 }
 
 impl<'a> DumbJsonProcessor<'a> {
@@ -131,6 +140,7 @@ impl<'a> DumbJsonProcessor<'a> {
             // field_value: None,
             // count: 0,
             //first_stage: ProcessorStage::new(String::new(), false),
+            remaining: String::new(),
         }
     }
     /// push a JSON piece to the processor; note that the JSON piece can be a complete JSON, or part of a JSON;
@@ -147,10 +157,19 @@ impl<'a> DumbJsonProcessor<'a> {
         json_piece: &str,
         progress: &'b mut ProcessJsonProgress,
     ) -> Result<&'b mut ProcessJsonProgress, DumbError> {
+        let in_str = self.remaining.clone() + json_piece;
+        let graphemes =
+            UnicodeSegmentation::graphemes(in_str.as_str(), true).collect::<Vec<&str>>();
+        let consumed_len = graphemes.join("").len();
+        self.remaining = json_piece[consumed_len..].to_string();
+        let buffer = graphemes
+            .iter()
+            .map(|&x| x.to_string())
+            .collect::<Vec<String>>();
         //let mut stage = ProcessorStage::new(String::new(), false);
         //let mut stage = self.first_stage.clone();
         let mut stage = progress.stages.last_mut().unwrap();
-        let result = self._push_json_piece(json_piece, &mut stage)?;
+        let result = self._push_json_piece(buffer, &mut stage)?;
         progress.result = result;
         return Ok(progress);
     }
@@ -159,7 +178,7 @@ impl<'a> DumbJsonProcessor<'a> {
     /// It returns the remaining after processing the complete JSON; e.g. an empty string if "}" is the last character of the last input JSON
     pub fn push_json(&mut self, json: &str) -> Result<String, DumbError> {
         let mut progress = ProcessJsonProgress::new();
-        self.push_json_piece(json, &mut progress);
+        self.push_json_piece(json, &mut progress)?;
         if progress.is_done() {
             return Ok(progress.get_remaining());
         } else {
@@ -168,14 +187,17 @@ impl<'a> DumbJsonProcessor<'a> {
     }
     fn _push_json_piece(
         &mut self,
-        json_piece: &str,
+        buffer: Vec<String>,
         stage: &mut ProcessorStage,
     ) -> Result<Option<String>, DumbError> {
         if DEBUG_ON {
-            println!("INPUT json_piece: {}", json_piece);
+            println!("INPUT json_piece: {}", buffer.join(""));
         }
         //let stage = stages.last_mut().unwrap();
-        stage.buffer.push_str(json_piece);
+        //let graphemes = UnicodeSegmentation::graphemes(json_piece, true).collect::<Vec<&str>>();
+        //let consumed_len = graphemes.join("").len();
+        //stage.remaining = json_piece[consumed_len..].to_string();
+        stage.buffer = buffer;
         loop {
             let stream_parse_res = self._stream_parse(stage)?;
             if stream_parse_res.need_more_data {
@@ -183,7 +205,7 @@ impl<'a> DumbJsonProcessor<'a> {
             }
             if stream_parse_res.done {
                 stage.finalized = true;
-                return Ok(Some(stage.buffer.clone()));
+                return Ok(Some(stage.buffer.join("")));
             } else {
                 if stage.buffer.is_empty() {
                     break;
@@ -209,15 +231,22 @@ impl<'a> DumbJsonProcessor<'a> {
         let mut i = 0;
         let mut max_i = buf_len;
         while i < max_i {
-            let c = stage.buffer.chars().nth(i).unwrap(); // TODO: enhance
+            let c = &stage.buffer[i];
             if escaping {
                 escaping = false;
                 if self.unescape_escaped {
-                    stage.buffer = stage.buffer[0..i - 1].to_string() + &stage.buffer[i..];
+                    let prefix = stage.buffer[0..i - 1].to_vec();
+                    let suffix = stage.buffer[i..].to_vec();
+                    stage.buffer = prefix;
+                    stage.buffer.extend(suffix);
                     i -= 1;
                     max_i -= 1;
                 }
             } else {
+                if c.len() != 1 {
+                    continue;
+                }
+                let c = c.chars().next().unwrap();
                 if allow_escape && c == '\\' {
                     escaping = true
                 } else if c == what {
@@ -233,30 +262,102 @@ impl<'a> DumbJsonProcessor<'a> {
             return Some(-1);
         }
     }
+    // fn _scan_to(
+    //     &mut self,
+    //     stage: &mut ProcessorStage,
+    //     what: char,
+    //     allow_escape: bool,
+    // ) -> Option<i32> {
+    //     let ori_buffer = stage.buffer.clone();
+    //     let buf_len = stage.buffer.len();
+    //     //let buf_chars: Vec<char> = self.buffer.chars().collect();
+    //     let mut escaping = false;
+    //     let mut i = 0;
+    //     let mut max_i = buf_len;
+    //     while i < max_i {
+    //         let c = stage.buffer.chars().nth(i).unwrap(); // TODO: enhance
+    //         if escaping {
+    //             escaping = false;
+    //             if self.unescape_escaped {
+    //                 stage.buffer = stage.buffer[0..i - 1].to_string() + &stage.buffer[i..];
+    //                 i -= 1;
+    //                 max_i -= 1;
+    //             }
+    //         } else {
+    //             if allow_escape && c == '\\' {
+    //                 escaping = true
+    //             } else if c == what {
+    //                 return Some(i as i32);
+    //             }
+    //         }
+    //         i += 1
+    //     }
+    //     if escaping {
+    //         stage.buffer = ori_buffer;
+    //         return None;
+    //     } else {
+    //         return Some(-1);
+    //     }
+    // }
+    // fn __skip(
+    //     &mut self,
+    //     stage: &mut ProcessorStage,
+    //     what: char,
+    //     inclusive: bool,
+    //     allow_escape: bool,
+    // ) -> Option<String> {
+    //     match self._scan_to(stage, what, allow_escape) {
+    //         Some(i) => {
+    //             if i == -1 {
+    //                 stage.skipping.push_str(stage.buffer.as_str());
+    //                 stage.buffer.clear();
+    //                 return Some(String::new());
+    //             } else {
+    //                 let i = i as usize;
+    //                 let skipped = if inclusive {
+    //                     let skipped = stage.skipping.clone() + &stage.buffer[0..i + 1];
+    //                     //skipped.push_str(&self.buffer[0..i+1]);
+    //                     stage.buffer = stage.buffer[i + 1..].to_string();
+    //                     skipped
+    //                 } else {
+    //                     let skipped = stage.skipping.clone() + &stage.buffer[0..i];
+    //                     //skipped.push_str(&self.buffer[0..i]);
+    //                     stage.buffer = stage.buffer[i..].to_string();
+    //                     skipped
+    //                 };
+    //                 stage.skipping.clear();
+    //                 return Some(skipped);
+    //             }
+    //         }
+    //         None => return None,
+    //     }
+    // }
     fn __skip(
         &mut self,
         stage: &mut ProcessorStage,
         what: char,
         inclusive: bool,
         allow_escape: bool,
-    ) -> Option<String> {
+    ) -> Option<Vec<String>> {
         match self._scan_to(stage, what, allow_escape) {
             Some(i) => {
                 if i == -1 {
-                    stage.skipping.push_str(stage.buffer.as_str());
+                    stage.skipping.extend(stage.buffer.to_vec());
                     stage.buffer.clear();
-                    return Some(String::new());
+                    return Some(Vec::new());
                 } else {
                     let i = i as usize;
                     let skipped = if inclusive {
-                        let skipped = stage.skipping.clone() + &stage.buffer[0..i + 1];
+                        let mut skipped = stage.skipping.clone();
+                        skipped.extend(stage.buffer[0..i + 1].to_vec());
                         //skipped.push_str(&self.buffer[0..i+1]);
-                        stage.buffer = stage.buffer[i + 1..].to_string();
+                        stage.buffer = stage.buffer[i + 1..].to_vec();
                         skipped
                     } else {
-                        let skipped = stage.skipping.clone() + &stage.buffer[0..i];
+                        let mut skipped = stage.skipping.clone();
+                        skipped.extend(stage.buffer[0..i].to_vec());
                         //skipped.push_str(&self.buffer[0..i]);
-                        stage.buffer = stage.buffer[i..].to_string();
+                        stage.buffer = stage.buffer[i..].to_vec();
                         skipped
                     };
                     stage.skipping.clear();
@@ -266,19 +367,45 @@ impl<'a> DumbJsonProcessor<'a> {
             None => return None,
         }
     }
+    // fn _skip_to(
+    //     &mut self,
+    //     stage: &mut ProcessorStage,
+    //     what: char,
+    //     allow_escape: bool,
+    // ) -> Option<String> {
+    //     return self.__skip(stage, what, true, allow_escape);
+    // }
     fn _skip_to(
         &mut self,
         stage: &mut ProcessorStage,
         what: char,
         allow_escape: bool,
-    ) -> Option<String> {
+    ) -> Option<Vec<String>> {
         return self.__skip(stage, what, true, allow_escape);
     }
+    // fn _skip_ws(&mut self, stage: &mut ProcessorStage) -> bool {
+    //     let buf_chars = stage.buffer.chars();
+    //     for (i, c) in buf_chars.enumerate() {
+    //         if !c.is_whitespace() {
+    //             stage.buffer = stage.buffer[i..].to_string();
+    //             return true;
+    //         }
+    //     }
+    //     stage.buffer.clear();
+    //     return false;
+    // }
     fn _skip_ws(&mut self, stage: &mut ProcessorStage) -> bool {
-        let buf_chars = stage.buffer.chars();
-        for (i, c) in buf_chars.enumerate() {
+        // let buf_chars = stage.buffer.chars();
+        let buffer = &stage.buffer;
+        let buffer_len = buffer.len();
+        for i in 0..buffer_len {
+            let c = &buffer[i];
+            if c.len() != 1 {
+                continue;
+            }
+            let c = c.chars().next().unwrap();
             if !c.is_whitespace() {
-                stage.buffer = stage.buffer[i..].to_string();
+                stage.buffer = stage.buffer[i..].to_vec();
                 return true;
             }
         }
@@ -313,7 +440,7 @@ impl<'a> DumbJsonProcessor<'a> {
                     if skipped_to.is_none() {
                         return Ok(StreamParseRes::need_more_data());
                     }
-                    let skipped_to: String = skipped_to.unwrap();
+                    let skipped_to = skipped_to.unwrap();
                     if skipped_to.is_empty() {
                         return Ok(StreamParseRes::to_be_continued());
                     }
@@ -330,7 +457,7 @@ impl<'a> DumbJsonProcessor<'a> {
             if skipped_to.is_empty() {
                 return Ok(StreamParseRes::to_be_continued());
             }
-            stage.field_name = Some(skipped_to[..skipped_to.len() - 1].to_string());
+            stage.field_name = Some(skipped_to[..skipped_to.len() - 1].join(""));
             stage.state = ">:"
         }
         if stage.state == ">:" {
@@ -351,9 +478,14 @@ impl<'a> DumbJsonProcessor<'a> {
             stage.state = "^"
         }
         if stage.state == "^" {
-            let c = stage.buffer.chars().nth(0).unwrap();
+            let c = &stage.buffer[0];
+            let c = if c.len() != 1 {
+                '?'
+            } else {
+                c.chars().next().unwrap()
+            };
             if c == '{' || c == '[' || c == '"' {
-                stage.buffer = stage.buffer[1..].to_string();
+                stage.buffer = stage.buffer[1..].to_vec();
                 if c == '{' {
                     stage.state = "^>{"
                 } else if c == '[' {
@@ -374,8 +506,10 @@ impl<'a> DumbJsonProcessor<'a> {
             //     //self.nested_parser = Some(Box::new(nested_parser));
             //     json_data = (if parsing_array { '[' } else { '{' }).to_string() + &json_data
             // }
-            let json_piece =
-                (if parsing_array { '[' } else { '{' }).to_string() + stage.buffer.as_str();
+            // let json_piece =
+            //     (if parsing_array { '[' } else { '{' }).to_string() + stage.buffer.join("").as_str();
+            let mut child_buffer = vec![(if parsing_array { '[' } else { '{' }).to_string()];
+            child_buffer.extend(stage.buffer.clone());
             stage.buffer.clear();
             if stage.child_stage.is_none() {
                 let new_stage = ProcessorStage::new(stage.get_field_name(), parsing_array);
@@ -395,7 +529,7 @@ impl<'a> DumbJsonProcessor<'a> {
             // };
             //stages.push(stage);
             //let mut nested_stage = ProcessorStage::new(stage.get_field_name(), parsing_array);
-            let rest = self._push_json_piece(json_piece.as_str(), child_stage)?;
+            let rest = self._push_json_piece(child_buffer, child_stage)?;
             // let rest = match self.nested_parser {
             //     Some(ref mut nested_parser) => {
             //         nested_parser._push_json_segment(stage, json_data.as_str())
@@ -411,7 +545,12 @@ impl<'a> DumbJsonProcessor<'a> {
             let rest = rest.unwrap();
             //self.nested_parser = None;
             stage.child_stage = None;
-            stage.buffer = rest;
+            let rest_graphemes =
+                UnicodeSegmentation::graphemes(rest.as_str(), true).collect::<Vec<&str>>();
+            stage.buffer = rest_graphemes
+                .iter()
+                .map(|&x| x.to_string())
+                .collect::<Vec<String>>();
             stage.state = "$";
             stage.count += 1
         }
@@ -425,7 +564,7 @@ impl<'a> DumbJsonProcessor<'a> {
                 return Ok(StreamParseRes::to_be_continued());
             }
             stage.field_value = Some(JsonFieldValue::new_str(
-                skipped_to[..skipped_to.len() - 1].to_string(),
+                skipped_to[..skipped_to.len() - 1].join(""),
             ));
             self._submit(stage);
             stage.count += 1;
@@ -455,7 +594,10 @@ impl<'a> DumbJsonProcessor<'a> {
                 return Ok(StreamParseRes::to_be_continued());
             }
             if stage.state == "^>" {
-                let field_value = skipped_to[..skipped_to.len() - 1].trim().to_string(); //skipped.substring(0, skipped.length - 1).trim()
+                let field_value = skipped_to[..skipped_to.len() - 1]
+                    .join("")
+                    .trim()
+                    .to_string(); //skipped.substring(0, skipped.length - 1).trim()
                 let field_value_is_empty = field_value.is_empty();
                 stage.field_value = Some(JsonFieldValue::new_none_str(field_value)?);
                 if !field_value_is_empty {
@@ -519,8 +661,8 @@ struct ProcessorStage {
     parent_field_name: String,
     for_array: bool,
     state: &'static str,
-    buffer: String,
-    skipping: String,
+    buffer: Vec<String>,
+    skipping: Vec<String>,
     finalized: bool,
     field_name: Option<String>,
     field_value: Option<JsonFieldValue>,
@@ -533,8 +675,8 @@ impl ProcessorStage {
             parent_field_name: parent_field_name,
             for_array: for_array,
             state: "",
-            buffer: String::new(),
-            skipping: String::new(),
+            buffer: Vec::new(),
+            skipping: Vec::new(),
             finalized: false,
             field_name: None,
             field_value: None,

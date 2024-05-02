@@ -12,3 +12,4 @@ exclude = [".vscode", ".ignore"]
 
 
 [dependencies]
+unicode-segmentation = "1.11.0"
