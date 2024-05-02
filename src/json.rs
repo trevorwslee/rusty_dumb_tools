@@ -2,22 +2,24 @@
 
 use std::fmt;
 
+use crate::prelude::DumbError;
+
 const DEBUG_ON: bool = true;
 
-#[test]
-fn test_json_processor() {
-    let mut handler = InPlaceJsonEntryHandler::new(|json_entry| {
-        println!(
-            "In PlaceJson item: {} => {}",
-            json_entry.field_name, json_entry.field_value
-        );
-    });
-    let mut json_processor = DumbJsonProcessor::new(Box::new(&mut handler));
-    let json_piece = r#"{"hello":"world"}"#;
-    let res = json_processor.push_json_piece(json_piece);
-    assert!(res.is_some() && res.unwrap().is_empty());
-    print!("~~~")
-}
+// #[test]
+// fn test_json_processor() {
+//     let mut handler = InPlaceJsonEntryHandler::new(|json_entry| {
+//         println!(
+//             "In PlaceJson item: {} => {}",
+//             json_entry.field_name, json_entry.field_value
+//         );
+//     });
+//     let mut json_processor = DumbJsonProcessor::new(Box::new(&mut handler));
+//     let json_piece = r#"{"hello":"world"}"#;
+//     let res = json_processor.push_json_piece(json_piece);
+//     assert!(res.is_some() && res.unwrap().is_empty());
+//     print!("~~~")
+// }
 
 // struct MyStruct {
 //   field: Box<dyn MyTrait>,
@@ -61,9 +63,9 @@ fn test_json_processor() {
 ///     );
 /// });
 /// let mut json_processor = DumbJsonProcessor::new(Box::new(&mut handler));
-/// let json_piece = r#"{"hello":"world"}"#;
-/// let res = json_processor.push_json_piece(json_piece);
-/// assert!(res.is_some() && res.unwrap().is_empty());
+/// let json = r#"{"hello":"world"}"#;
+/// let res = json_processor.push_json(json);
+/// assert!(res.is_ok() && res.unwrap().is_empty());
 /// print!("~~~")
 /// ```
 /// Note that [`InPlaceJsonEntryHandler`] is simply a helper that implements the [`JsonEntryHandler`] trait,
@@ -111,7 +113,7 @@ pub struct DumbJsonProcessor<'a> {
     // field_name: Option<String>,
     // field_value: Option<String>,
     // count: i16,
-    first_stage: ProcessorStage,
+    //first_stage: ProcessorStage,
 }
 
 impl<'a> DumbJsonProcessor<'a> {
@@ -128,26 +130,39 @@ impl<'a> DumbJsonProcessor<'a> {
             // field_name: None,
             // field_value: None,
             // count: 0,
-            first_stage: ProcessorStage::new(String::new(), false),
+            //first_stage: ProcessorStage::new(String::new(), false),
         }
     }
-    /// push a JSON segment to the processor; note that the JSON segment can be a complete JSON, or part of a JSON;
+    /// push a JSON piece to the processor; note that the JSON piece can be a complete JSON, or part of a JSON;
     /// as soon as JSON entries are recognized, callback are called for those recognized JSON entries
     ///
     /// It returns:
-    /// - `Some(String)` as the remaining after processing the complete JSON; e.g. an empty string if "}" is the last character of the last input JSON segment
-    /// - `None` if the JSON is not complete needing the rest of the JSON segments to be pushed
-    pub fn push_json_piece(&mut self, json_piece: &str) -> Option<String> {
+    /// - `Some(String)` as the remaining after processing the complete JSON; e.g. an empty string if "}" is the last character of the last input JSON piece
+    /// - `None` if the JSON is not complete needing the rest of the JSON pieces to be pushed
+    pub fn push_json_piece(&mut self, json_piece: &str, progress: &mut ProcessJsonProgress) {
         //let mut stage = ProcessorStage::new(String::new(), false);
-        let mut stage = self.first_stage.clone();
-        let res = self._push_json_piece(&mut stage, json_piece);
-        self.first_stage = stage;
-        return res;
+        //let mut stage = self.first_stage.clone();
+        let mut stage = progress.stages.last_mut().unwrap();
+        let result = self._push_json_piece(json_piece, &mut stage);
+        progress.result = result;
     }
-    fn _push_json_piece(&mut self, stage: &mut ProcessorStage, json_piece: &str) -> Option<String> {
+    /// like [`DumbJsonProcessor::push_json_piece`] but for a complete JSON
+    ///
+    /// It returns the remaining after processing the complete JSON; e.g. an empty string if "}" is the last character of the last input JSON piece
+    pub fn push_json(&mut self, json: &str) -> Result<String, DumbError> {
+        let mut progress = ProcessJsonProgress::new();
+        self.push_json_piece(json, &mut progress);
+        if progress.is_done() {
+            return Ok(progress.get_remaining());
+        } else {
+            return Err(DumbError::from("JSON is not complete"));
+        }
+    }
+    fn _push_json_piece(&mut self, json_piece: &str, stage: &mut ProcessorStage) -> Option<String> {
         if DEBUG_ON {
             println!("INPUT json_piece: {}", json_piece);
         }
+        //let stage = stages.last_mut().unwrap();
         stage.buffer.push_str(json_piece);
         loop {
             let stream_parse_res = self._stream_parse(stage);
@@ -259,6 +274,7 @@ impl<'a> DumbJsonProcessor<'a> {
         return false;
     }
     fn _stream_parse(&mut self, stage: &mut ProcessorStage) -> StreamParseRes {
+        //let stage = stages.last_mut().unwrap();
         if stage.state.is_empty() {
             let skip_what = if stage.for_array { '[' } else { '{' };
             if self._skip_to(stage, skip_what, false).is_none() {
@@ -349,8 +365,25 @@ impl<'a> DumbJsonProcessor<'a> {
             let json_piece =
                 (if parsing_array { '[' } else { '{' }).to_string() + stage.buffer.as_str();
             stage.buffer.clear();
-            let mut nested_stage = ProcessorStage::new(stage.get_field_name(), parsing_array);
-            let rest = self._push_json_piece(&mut nested_stage, json_piece.as_str());
+            if stage.child_stage.is_none() {
+                let new_stage = ProcessorStage::new(stage.get_field_name(), parsing_array);
+                stage.child_stage = Some(Box::new(new_stage));
+            }
+            let child_stage = stage.child_stage.as_mut().unwrap().as_mut();
+            // let child_stage = match stage.child_stage {
+            //     Some(ref mut child_stage) => {
+            //         let cs = child_stage.as_mut();
+            //         cs
+            //     },
+            //     None => {
+            //         let mut new_stage = ProcessorStage::new(stage.get_field_name(), parsing_array);
+            //         stage.child_stage = Some(Box::new(new_stage));
+            //         stage.child_stage.as_mut().unwrap()
+            //     }
+            // };
+            //stages.push(stage);
+            //let mut nested_stage = ProcessorStage::new(stage.get_field_name(), parsing_array);
+            let rest = self._push_json_piece(json_piece.as_str(), child_stage);
             // let rest = match self.nested_parser {
             //     Some(ref mut nested_parser) => {
             //         nested_parser._push_json_segment(stage, json_data.as_str())
@@ -365,6 +398,7 @@ impl<'a> DumbJsonProcessor<'a> {
             }
             let rest = rest.unwrap();
             //self.nested_parser = None;
+            stage.child_stage = None;
             stage.buffer = rest;
             stage.state = "$";
             stage.count += 1
@@ -445,6 +479,30 @@ impl<'a> DumbJsonProcessor<'a> {
 }
 
 #[derive(Debug, Clone)]
+pub struct ProcessJsonProgress {
+    stages: Vec<ProcessorStage>,
+    result: Option<String>,
+}
+impl ProcessJsonProgress {
+    pub fn new() -> ProcessJsonProgress {
+        let stage = ProcessorStage::new(String::new(), false);
+        ProcessJsonProgress {
+            stages: vec![stage],
+            result: None,
+        }
+    }
+    pub fn is_done(&self) -> bool {
+        return self.result.is_some();
+    }
+    pub fn get_remaining(&self) -> String {
+        match &self.result {
+            Some(v) => v.clone(),
+            None => panic!("Not done yet"),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 struct ProcessorStage {
     parent_field_name: String,
     for_array: bool,
@@ -455,6 +513,7 @@ struct ProcessorStage {
     field_name: Option<String>,
     field_value: Option<JsonFieldValue>,
     count: i16,
+    child_stage: Option<Box<ProcessorStage>>,
 }
 impl ProcessorStage {
     pub fn new(parent_field_name: String, for_array: bool) -> ProcessorStage {
@@ -468,6 +527,7 @@ impl ProcessorStage {
             field_name: None,
             field_value: None,
             count: 0,
+            child_stage: None,
         }
     }
     pub fn get_field_name(&self) -> String {
