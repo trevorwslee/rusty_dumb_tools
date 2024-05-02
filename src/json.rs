@@ -508,13 +508,15 @@ impl<'a> DumbJsonProcessor<'a> {
             // }
             // let json_piece =
             //     (if parsing_array { '[' } else { '{' }).to_string() + stage.buffer.join("").as_str();
-            let mut child_buffer = vec![(if parsing_array { '[' } else { '{' }).to_string()];
-            child_buffer.extend(stage.buffer.clone());
-            stage.buffer.clear();
-            if stage.child_stage.is_none() {
+            let mut child_buffer = if stage.child_stage.is_none() {
                 let new_stage = ProcessorStage::new(stage.get_field_name(), parsing_array);
                 stage.child_stage = Some(Box::new(new_stage));
-            }
+                vec![(if parsing_array { '[' } else { '{' }).to_string()]
+            } else {
+                Vec::new()
+            };
+            child_buffer.extend(stage.buffer.clone());
+            stage.buffer.clear();
             let child_stage = stage.child_stage.as_mut().unwrap().as_mut();
             // let child_stage = match stage.child_stage {
             //     Some(ref mut child_stage) => {

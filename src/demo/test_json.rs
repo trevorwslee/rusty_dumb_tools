@@ -50,6 +50,10 @@ pub fn test_json_simple() {
 
 #[test]
 pub fn test_json_array() {
+    let json = r#"{"str_arr":["item0","item1"]}"#;
+    let check_map = HashMap::from([("str_arr.0", "item0"), ("str_arr.1", "item1")]);
+    _test_json(json, &check_map);
+
     let json = r#"
     {
         "str": "this is abc",
@@ -98,8 +102,8 @@ pub fn test_json_obj_array() {
 }
 
 fn _test_json(json: &str, check_map: &HashMap<&str, &str>) {
-    _test_json_ex(json, check_map, true);
-    _test_json_ex(json, check_map, true);
+    _test_json_ex(json, check_map, true); // TODO: enable this line
+    _test_json_ex(json, check_map, false);
 }
 fn _test_json_ex(json: &str, check_map: &HashMap<&str, &str>, one_piece: bool) {
     let mut handler = TestJsonEntryHandler::new();
@@ -129,7 +133,7 @@ fn _test_json_ex(json: &str, check_map: &HashMap<&str, &str>, one_piece: bool) {
             let json_piece = &json_piece[start..end];
             let result = json_processor.push_json_piece(json_piece, &mut progress);
             if result.is_err() {
-                panic!("result is err");
+                panic!("result is err [{}]", result.unwrap_err());
             }
             // let res = res.unwrap();
             // if !res.is_empty() {
