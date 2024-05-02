@@ -11,23 +11,23 @@ pub fn test_json_in_place() {
         );
     });
     let mut json_processor = DumbJsonProcessor::new(Box::new(&mut handler));
-    let json_segment = r#"{"hello":"world"}"#;
-    let res = json_processor.push_json_segment(json_segment);
+    let json_piece = r#"{"hello":"world"}"#;
+    let res = json_processor.push_json_piece(json_piece);
     assert!(res.is_some() && res.unwrap().is_empty());
     print!("~~~")
 }
 
 #[test]
 pub fn test_json_simple() {
-    let json_segment = r#"{"hello":"world"}"#;
+    let json_piece = r#"{"hello":"world"}"#;
     let check_map = HashMap::from([("hello", "world")]);
-    _test_json(json_segment, check_map);
+    _test_json(json_piece, check_map);
 
-    let json_segment = r#"{"hello":" w:\"o{r}l\"[d], "}"#;
+    let json_piece = r#"{"hello":" w:\"o{r}l\"[d], "}"#;
     let check_map = HashMap::from([("hello", " w:\"o{r}l\"[d], ")]);
-    _test_json(json_segment, check_map);
+    _test_json(json_piece, check_map);
 
-    let json_segment = r#"{
+    let json_piece = r#"{
           "int" : 123 ,
           "float" : 9.87 ,
           "str" : "this is abc" ,
@@ -39,12 +39,12 @@ pub fn test_json_simple() {
         ("str", "this is abc"),
         ("null", "null"),
     ]);
-    _test_json(json_segment, check_map);
+    _test_json(json_piece, check_map);
 }
 
 #[test]
 pub fn test_json_array() {
-    let json_segment = r#"
+    let json_piece = r#"
     {
         "str": "this is abc",
         "str_arr" : [ "item0" , "item1" ],
@@ -59,12 +59,12 @@ pub fn test_json_array() {
         ("int_arr.0", "0"),
         ("int_arr.1", "1"),
     ]);
-    _test_json(json_segment, check_map);
+    _test_json(json_piece, check_map);
 }
 
 #[test]
 pub fn test_json_obj_array() {
-    let json_segment = r#"
+    let json_piece = r#"
     {
         "items": [ 
             {
@@ -88,17 +88,17 @@ pub fn test_json_obj_array() {
         ("items.1.str", "str2"),
         ("items.1.float", "1.234"),
     ]);
-    _test_json(json_segment, check_map);
+    _test_json(json_piece, check_map);
 }
 
-fn _test_json(json_segment: &str, check_map: HashMap<&str, &str>) {
-    _test_json_ex(json_segment, check_map, true); // TODO: make multiple segments work!!!
+fn _test_json(json_piece: &str, check_map: HashMap<&str, &str>) {
+    _test_json_ex(json_piece, check_map, true); // TODO: make multiple segments work!!!
 }
-fn _test_json_ex(json_segment: &str, check_map: HashMap<&str, &str>, single_segment: bool) {
+fn _test_json_ex(json_piece: &str, check_map: HashMap<&str, &str>, single_segment: bool) {
     let mut handler = TestJsonEntryHandler::new();
     let mut json_processor = DumbJsonProcessor::new(Box::new(&mut handler));
     if single_segment {
-        let res = json_processor.push_json_segment(json_segment);
+        let res = json_processor.push_json_piece(json_piece);
         if res.is_none() {
             panic!("res is none");
         }
@@ -107,8 +107,8 @@ fn _test_json_ex(json_segment: &str, check_map: HashMap<&str, &str>, single_segm
             panic!("res is not empty");
         }
     } else {
-        let json_segment = json_segment.trim();
-        let len = json_segment.len();
+        let json_piece = json_piece.trim();
+        let len = json_piece.len();
         let mut start = 0;
         let mut end = 0;
         while end < len {
@@ -118,8 +118,8 @@ fn _test_json_ex(json_segment: &str, check_map: HashMap<&str, &str>, single_segm
             if end > len {
                 end = len;
             }
-            let json_segment = &json_segment[start..end];
-            json_processor.push_json_segment(json_segment);
+            let json_piece = &json_piece[start..end];
+            json_processor.push_json_piece(json_piece);
             // if res.is_none() {
             //     panic!("res is none");
             // }

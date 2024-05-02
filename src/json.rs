@@ -6,16 +6,6 @@ const DEBUG_ON: bool = true;
 
 #[test]
 fn test_json_processor() {
-    // struct TestJsonEntryHandler {}
-    // impl JsonEntryHandler for TestJsonEntryHandler {
-    //     fn handle_json_entry(&self, json_entry: &JsonEntry) {
-    //         println!("Json item: {} => {}", json_entry.field_name, json_entry.field_value);
-    //     }
-    // }
-    // let handler = TestJsonEntryHandler {};
-    // let mut json_processor = DumbJsonProcessor::new(Box::new(handler));
-    // let json_data = "{}";
-    // json_processor.push_json_segment(json_data);
     let mut handler = InPlaceJsonEntryHandler::new(|json_entry| {
         println!(
             "In PlaceJson item: {} => {}",
@@ -23,8 +13,8 @@ fn test_json_processor() {
         );
     });
     let mut json_processor = DumbJsonProcessor::new(Box::new(&mut handler));
-    let json_segment = r#"{"hello":"world"}"#;
-    let res = json_processor.push_json_segment(json_segment);
+    let json_piece = r#"{"hello":"world"}"#;
+    let res = json_processor.push_json_piece(json_piece);
     assert!(res.is_some() && res.unwrap().is_empty());
     print!("~~~")
 }
@@ -71,8 +61,8 @@ fn test_json_processor() {
 ///     );
 /// });
 /// let mut json_processor = DumbJsonProcessor::new(Box::new(&mut handler));
-/// let json_segment = r#"{"hello":"world"}"#;
-/// let res = json_processor.push_json_segment(json_segment);
+/// let json_piece = r#"{"hello":"world"}"#;
+/// let res = json_processor.push_json_piece(json_piece);
 /// assert!(res.is_some() && res.unwrap().is_empty());
 /// print!("~~~")
 /// ```
@@ -147,22 +137,18 @@ impl<'a> DumbJsonProcessor<'a> {
     /// It returns:
     /// - `Some(String)` as the remaining after processing the complete JSON; e.g. an empty string if "}" is the last character of the last input JSON segment
     /// - `None` if the JSON is not complete needing the rest of the JSON segments to be pushed
-    pub fn push_json_segment(&mut self, json_segment: &str) -> Option<String> {
+    pub fn push_json_piece(&mut self, json_piece: &str) -> Option<String> {
         //let mut stage = ProcessorStage::new(String::new(), false);
         let mut stage = self.first_stage.clone();
-        let res = self._push_json_segment(&mut stage, json_segment);
+        let res = self._push_json_piece(&mut stage, json_piece);
         self.first_stage = stage;
         return res;
     }
-    fn _push_json_segment(
-        &mut self,
-        stage: &mut ProcessorStage,
-        json_segment: &str,
-    ) -> Option<String> {
+    fn _push_json_piece(&mut self, stage: &mut ProcessorStage, json_piece: &str) -> Option<String> {
         if DEBUG_ON {
-            println!("INPUT json_segment: {}", json_segment);
+            println!("INPUT json_piece: {}", json_piece);
         }
-        stage.buffer.push_str(json_segment);
+        stage.buffer.push_str(json_piece);
         loop {
             let stream_parse_res = self._stream_parse(stage);
             if stream_parse_res.need_more_data {
@@ -360,11 +346,11 @@ impl<'a> DumbJsonProcessor<'a> {
             //     //self.nested_parser = Some(Box::new(nested_parser));
             //     json_data = (if parsing_array { '[' } else { '{' }).to_string() + &json_data
             // }
-            let json_segment =
+            let json_piece =
                 (if parsing_array { '[' } else { '{' }).to_string() + stage.buffer.as_str();
             stage.buffer.clear();
             let mut nested_stage = ProcessorStage::new(stage.get_field_name(), parsing_array);
-            let rest = self._push_json_segment(&mut nested_stage, json_segment.as_str());
+            let rest = self._push_json_piece(&mut nested_stage, json_piece.as_str());
             // let rest = match self.nested_parser {
             //     Some(ref mut nested_parser) => {
             //         nested_parser._push_json_segment(stage, json_data.as_str())
