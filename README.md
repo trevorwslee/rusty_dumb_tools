@@ -142,7 +142,7 @@ after 20 seconds, when 100% done, the screen will be like
 * [DumbCalculator Text-based Demo](demos/text_based_calculator/README.md)
 * [DumbCalculator Web-based Demo](demos/web_based_calculator/README.md)
   - you may try it: [<img src="images/dumb_calculator.png" width="150"/>](https://trevorwslee.github.io/DumbCalculator/)
-  - and may want to refer to some [brief introduction](https://github.com/trevorwslee/wasm_calculator) on how it is implemented 
+  - and may want to refer to some [brief introduction](https://github.com/trevorwslee/wasm_calculator) on how the demo is implemented 
 
 
 
