@@ -1,4 +1,4 @@
-//! A simple JSON stream processor / parser -- [`crate::json::DumbJsonProcessor`]
+//! A simple JSON processor / stream parser -- [`crate::json::DumbJsonProcessor`]
 
 use std::fmt;
 
@@ -59,19 +59,22 @@ const DEBUG_ON: bool = true;
 //     my_struct_instance.test();
 // }
 
-/// A simple JSON stream processor / parser
+/// A simple JSON processor / stream parser, that processes input JSON (possibly streamed piece by piece).
+/// As soon as JSON entries are recognized, the configured callback is called for those recognized JSON entries
 ///
 /// for example:
 /// ```
 /// use rusty_dumb_tools::json::{DumbJsonProcessor, InPlaceJsonEntryHandler, JsonEntry, JsonEntryHandler};
 /// let mut handler = InPlaceJsonEntryHandler::new(|json_entry| {
 ///     println!(
-///         "In-Place JSON entry: {} => {}",
+///         "In-Place JSON entry: `{}` => `{}`",
 ///         json_entry.field_name, json_entry.field_value
 ///     );
+///     assert!(json_entry.field_name == "greeting");
+///     assert!(json_entry.field_value.to_string() == "hi😉 how are you❓");
 /// });
 /// let mut json_processor = DumbJsonProcessor::new(Box::new(&mut handler));
-/// let json = r#"{"hello":"world"}"#;
+/// let json = r#"{"greeting":"hi😉 how are you❓"}"#;
 /// let res = json_processor.push_json(json);
 /// assert!(res.is_ok() && res.unwrap().is_empty());
 /// print!("~~~")
@@ -80,8 +83,8 @@ const DEBUG_ON: bool = true;
 /// which acts as a callback to handle [`JsonEntry`] as soon as it comes:
 /// * [`JsonEntryHandler::handle_json_entry`] is called when a JSON entry comes to be handled
 /// * [`JsonEntry`] is passed as argument when [`JsonEntryHandler::handle_json_entry`] is called
-/// * [`JsonEntry::field_name`] tells the "path" of the JSON entry; more on this later
-/// * [`JsonEntry::field_value`] is the value of the JSON entry:
+/// * [`JsonEntry::field_name`] tells the "path" of the JSON entry; see the example below
+/// * [`JsonEntry::field_value`] is the value ([`JsonFieldValue`]) of the JSON entry:
 ///   - [`JsonFieldValue::String`] for string value
 ///   - [`JsonFieldValue::Whole`] for integer value
 ///   - [`JsonFieldValue::Decimal`] for float value
@@ -112,7 +115,7 @@ const DEBUG_ON: bool = true;
 pub struct DumbJsonProcessor<'a> {
     json_entry_handler: Box<&'a mut dyn JsonEntryHandler>,
     //for_array: bool,
-    unescape_escaped: bool,  // TODO: seems this must be true; hence, remove it later
+    unescape_escaped: bool, // TODO: seems this must be true; hence, remove it later
     //nested_parser: Option<Box<DumbJsonProcessor>>,
     // state: &'static str,
     // buffer: String,
@@ -157,7 +160,12 @@ impl<'a> DumbJsonProcessor<'a> {
         json_piece: &str,
         progress: &'b mut ProcessJsonProgress,
     ) -> Result<&'b mut ProcessJsonProgress, DumbError> {
-        let in_str = self.nc_remaining.clone() + json_piece;
+        let in_json_piece = if progress.is_done() {
+            progress._reset()
+        } else {
+            String::new()
+        } + json_piece;
+        let in_str = self.nc_remaining.clone() + in_json_piece.as_str();
         let graphemes =
             UnicodeSegmentation::graphemes(in_str.as_str(), true).collect::<Vec<&str>>();
         let consumed_len = graphemes.join("").len();
@@ -229,7 +237,7 @@ impl<'a> DumbJsonProcessor<'a> {
         what: char,
         allow_escape: bool,
     ) -> Option<i32> {
-        let ori_buffer = stage.buffer.clone();  // TODO: make clone once when stage.buffer changed
+        let ori_buffer = stage.buffer.clone(); // TODO: make clone once when stage.buffer changed
         let buf_len = stage.buffer.len();
         //let buf_chars: Vec<char> = self.buffer.chars().collect();
         let mut escaping = false;
@@ -644,9 +652,8 @@ pub struct ProcessJsonProgress {
 }
 impl ProcessJsonProgress {
     pub fn new() -> ProcessJsonProgress {
-        let stage = ProcessorStage::new(String::new(), false);
         ProcessJsonProgress {
-            stages: vec![stage],
+            stages: vec![ProcessorStage::new(String::new(), false)],
             result: None,
         }
     }
@@ -657,6 +664,16 @@ impl ProcessJsonProgress {
         match &self.result {
             Some(v) => v.clone(),
             None => panic!("Not done yet"),
+        }
+    }
+    fn _reset(&mut self) -> String {
+        let result = self.result.clone();
+        self.stages = vec![ProcessorStage::new(String::new(), false)];
+        self.result = None;
+        if result.is_some() {
+            return result.unwrap();
+        } else {
+            return String::new();
         }
     }
 }

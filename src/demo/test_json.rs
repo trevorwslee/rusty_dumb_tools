@@ -11,9 +11,11 @@ pub fn test_json_in_place() {
             "In-Place JSON entry: `{}` => `{}`",
             json_entry.field_name, json_entry.field_value
         );
+        assert!(json_entry.field_name == "greeting");
+        assert!(json_entry.field_value.to_string() == "hi😉 how are you❓");
     });
     let mut json_processor = DumbJsonProcessor::new(Box::new(&mut handler));
-    let json = r#"{"hello":"world"}"#;
+    let json = r#"{"greeting":"hi😉 how are you❓"}"#;
     let res = json_processor.push_json(json);
     assert!(res.is_ok() && res.unwrap().is_empty());
     print!("~~~")
@@ -142,30 +144,61 @@ fn _test_json_emojis(one_piece: bool) {
     _test_json(json, &check_map, one_piece);
 }
 
+#[test]
+pub fn test_multiple_jsons() {
+    _test_multiple_jsons(true);
+}
+#[test]
+pub fn test_multiple_jsons_chunked() {
+    _test_multiple_jsons(false);
+}
+fn _test_multiple_jsons(one_piece: bool) {
+    let json = r#"{"hello":"world"}"#;
+    let check_map = HashMap::from([("hello", "world")]);
+    let mut progress = ProcessJsonProgress::new();
+    _test_json_ex(json, &check_map, one_piece, &mut progress);
+    _test_json_ex(json, &check_map, one_piece, &mut progress);
+}
 
 // fn _test_json(json: &str, check_map: &HashMap<&str, &str>) {
 //     _test_json_ex(json, check_map, true); // TODO: enable this line
 //     _test_json_ex(json, check_map, false);
 // }
 fn _test_json(json: &str, check_map: &HashMap<&str, &str>, one_piece: bool) {
+    let mut progress = ProcessJsonProgress::new();
+    _test_json_ex(json, check_map, one_piece, &mut progress);
+    if one_piece {
+        assert!(progress.get_remaining().is_empty());
+    }
+}
+fn _test_json_ex(
+    json: &str,
+    check_map: &HashMap<&str, &str>,
+    one_piece: bool,
+    progress: &mut ProcessJsonProgress,
+) {
     let mut handler = TestJsonEntryHandler::new();
     let mut json_processor = DumbJsonProcessor::new(Box::new(&mut handler));
     if one_piece {
-        let res = json_processor.push_json(json);
-        if res.is_err() {
-            panic!("res is err [{}]", res.unwrap_err());
+        let result = json_processor.push_json_piece(json, progress);
+        if result.is_err() {
+            panic!("one-piece result is err [{}]", result.unwrap_err());
         }
-        let res = res.unwrap();
-        if !res.is_empty() {
-            panic!("res is not empty");
-        }
+    // let res = json_processor.push_json(json);
+    //     if res.is_err() {
+    //         panic!("res is err [{}]", res.unwrap_err());
+    //     }
+    //     let res = res.unwrap();
+    //     if !res.is_empty() {
+    //         panic!("res is not empty");
+    //     }
     } else {
         let json_chars: Vec<char> = json.chars().collect();
         //let json_piece = json.trim();
         let len = json_chars.len();
         let mut start = 0;
         let mut end = 0;
-        let mut progress = ProcessJsonProgress::new();
+        //let mut progress = ProcessJsonProgress::new();
         while end < len {
             end = start + 5;
             if end > len {
@@ -173,9 +206,9 @@ fn _test_json(json: &str, check_map: &HashMap<&str, &str>, one_piece: bool) {
             }
             let json_piece_chars = &json_chars[start..end];
             let json_piece: String = json_piece_chars.iter().collect();
-            let result = json_processor.push_json_piece(json_piece.as_str(), &mut progress);
+            let result = json_processor.push_json_piece(json_piece.as_str(), progress);
             if result.is_err() {
-                panic!("result is err [{}]", result.unwrap_err());
+                panic!("chunk result is err [{}]", result.unwrap_err());
             }
             // let res = res.unwrap();
             // if !res.is_empty() {

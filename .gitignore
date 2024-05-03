@@ -1,8 +1,6 @@
 target
 dist
-
+personal
 .vscode
-/venv
-/test.py
-/test.ipynb
+venv
 /demos/web_based_calculator/build_release_to_ghp.sh

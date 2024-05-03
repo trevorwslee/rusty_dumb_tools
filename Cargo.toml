@@ -7,7 +7,7 @@ repository = "https://github.com/trevorwslee/rusty_dumb_tools"
 license = "MIT"
 categories = ["command-line-utilities"]
 readme = "README.md"
-exclude = [".vscode", ".ignore"]
+exclude = [".vscode", ".ignore", "personal"]
 
 
 
