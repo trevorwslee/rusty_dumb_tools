@@ -112,7 +112,7 @@ const DEBUG_ON: bool = true;
 pub struct DumbJsonProcessor<'a> {
     json_entry_handler: Box<&'a mut dyn JsonEntryHandler>,
     //for_array: bool,
-    unescape_escaped: bool,
+    unescape_escaped: bool,  // TODO: seems this must be true; hence, remove it later
     //nested_parser: Option<Box<DumbJsonProcessor>>,
     // state: &'static str,
     // buffer: String,
@@ -122,7 +122,7 @@ pub struct DumbJsonProcessor<'a> {
     // field_value: Option<String>,
     // count: i16,
     //first_stage: ProcessorStage,
-    remaining: String,
+    nc_remaining: String,
 }
 
 impl<'a> DumbJsonProcessor<'a> {
@@ -140,7 +140,7 @@ impl<'a> DumbJsonProcessor<'a> {
             // field_value: None,
             // count: 0,
             //first_stage: ProcessorStage::new(String::new(), false),
-            remaining: String::new(),
+            nc_remaining: String::new(),
         }
     }
     /// push a JSON piece to the processor; note that the JSON piece can be a complete JSON, or part of a JSON;
@@ -157,11 +157,11 @@ impl<'a> DumbJsonProcessor<'a> {
         json_piece: &str,
         progress: &'b mut ProcessJsonProgress,
     ) -> Result<&'b mut ProcessJsonProgress, DumbError> {
-        let in_str = self.remaining.clone() + json_piece;
+        let in_str = self.nc_remaining.clone() + json_piece;
         let graphemes =
             UnicodeSegmentation::graphemes(in_str.as_str(), true).collect::<Vec<&str>>();
         let consumed_len = graphemes.join("").len();
-        self.remaining = json_piece[consumed_len..].to_string();
+        self.nc_remaining = json_piece[consumed_len..].to_string();
         let buffer = graphemes
             .iter()
             .map(|&x| x.to_string())
@@ -169,7 +169,12 @@ impl<'a> DumbJsonProcessor<'a> {
         //let mut stage = ProcessorStage::new(String::new(), false);
         //let mut stage = self.first_stage.clone();
         let mut stage = progress.stages.last_mut().unwrap();
-        let result = self._push_json_piece(buffer, &mut stage)?;
+        let mut result = self._push_json_piece(buffer, &mut stage)?;
+        if result.is_some() {
+            let remaining = self.nc_remaining.clone() + &result.unwrap();
+            self.nc_remaining = String::new();
+            result = Some(remaining)
+        }
         progress.result = result;
         return Ok(progress);
     }
@@ -224,7 +229,7 @@ impl<'a> DumbJsonProcessor<'a> {
         what: char,
         allow_escape: bool,
     ) -> Option<i32> {
-        let ori_buffer = stage.buffer.clone();
+        let ori_buffer = stage.buffer.clone();  // TODO: make clone once when stage.buffer changed
         let buf_len = stage.buffer.len();
         //let buf_chars: Vec<char> = self.buffer.chars().collect();
         let mut escaping = false;
@@ -243,14 +248,13 @@ impl<'a> DumbJsonProcessor<'a> {
                     max_i -= 1;
                 }
             } else {
-                if c.len() != 1 {
-                    continue;
-                }
-                let c = c.chars().next().unwrap();
-                if allow_escape && c == '\\' {
-                    escaping = true
-                } else if c == what {
-                    return Some(i as i32);
+                if c.len() == 1 {
+                    let c = c.chars().next().unwrap();
+                    if allow_escape && c == '\\' {
+                        escaping = true
+                    } else if c == what {
+                        return Some(i as i32);
+                    }
                 }
             }
             i += 1
@@ -400,13 +404,12 @@ impl<'a> DumbJsonProcessor<'a> {
         let buffer_len = buffer.len();
         for i in 0..buffer_len {
             let c = &buffer[i];
-            if c.len() != 1 {
-                continue;
-            }
-            let c = c.chars().next().unwrap();
-            if !c.is_whitespace() {
-                stage.buffer = stage.buffer[i..].to_vec();
-                return true;
+            if c.len() == 1 {
+                let c = c.chars().next().unwrap();
+                if !c.is_whitespace() {
+                    stage.buffer = stage.buffer[i..].to_vec();
+                    return true;
+                }
             }
         }
         stage.buffer.clear();
@@ -479,10 +482,10 @@ impl<'a> DumbJsonProcessor<'a> {
         }
         if stage.state == "^" {
             let c = &stage.buffer[0];
-            let c = if c.len() != 1 {
-                '?'
-            } else {
+            let c = if c.len() == 1 {
                 c.chars().next().unwrap()
+            } else {
+                '?'
             };
             if c == '{' || c == '[' || c == '"' {
                 stage.buffer = stage.buffer[1..].to_vec();

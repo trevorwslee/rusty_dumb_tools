@@ -21,17 +21,24 @@ pub fn test_json_in_place() {
 
 #[test]
 pub fn test_json_simple() {
+    _test_json_simple(true);
+}
+#[test]
+pub fn test_json_simple_chunked() {
+    _test_json_simple(false);
+}
+fn _test_json_simple(one_piece: bool) {
     let json = r#"{"hello":"world"}"#;
     let check_map = HashMap::from([("hello", "world")]);
-    _test_json(json, &check_map);
+    _test_json(json, &check_map, one_piece);
 
     let json = r#"{"hello":"world","hello2":"world2"}"#;
     let check_map = HashMap::from([("hello", "world"), ("hello2", "world2")]);
-    _test_json(json, &check_map);
+    _test_json(json, &check_map, one_piece);
 
     let json = r#"{"hello":" w:\"o{r}l\"[d], "}"#;
     let check_map = HashMap::from([("hello", " w:\"o{r}l\"[d], ")]);
-    _test_json(json, &check_map);
+    _test_json(json, &check_map, one_piece);
 
     let json = r#"{
           "int" : 123 ,
@@ -45,14 +52,21 @@ pub fn test_json_simple() {
         ("str", "this is abc"),
         ("null", "null"),
     ]);
-    _test_json(json, &check_map);
+    _test_json(json, &check_map, one_piece);
 }
 
 #[test]
 pub fn test_json_array() {
+    _test_json_array(true);
+}
+#[test]
+pub fn test_json_array_chunked() {
+    _test_json_array(false);
+}
+fn _test_json_array(one_piece: bool) {
     let json = r#"{"str_arr":["item0","item1"]}"#;
     let check_map = HashMap::from([("str_arr.0", "item0"), ("str_arr.1", "item1")]);
-    _test_json(json, &check_map);
+    _test_json(json, &check_map, one_piece);
 
     let json = r#"
     {
@@ -69,11 +83,18 @@ pub fn test_json_array() {
         ("int_arr.0", "0"),
         ("int_arr.1", "1"),
     ]);
-    _test_json(json, &check_map);
+    _test_json(json, &check_map, one_piece);
 }
 
 #[test]
 pub fn test_json_obj_array() {
+    _test_json_obj_array(true);
+}
+#[test]
+pub fn test_json_obj_array_chunked() {
+    _test_json_obj_array(false);
+}
+fn _test_json_obj_array(one_piece: bool) {
     let json = r#"
     {
         "items": [ 
@@ -98,14 +119,35 @@ pub fn test_json_obj_array() {
         ("items.1.str", "str2"),
         ("items.1.float", "1.234"),
     ]);
-    _test_json(json, &check_map);
+    _test_json(json, &check_map, one_piece);
 }
 
-fn _test_json(json: &str, check_map: &HashMap<&str, &str>) {
-    _test_json_ex(json, check_map, true); // TODO: enable this line
-    _test_json_ex(json, check_map, false);
+#[test]
+pub fn test_json_emojis() {
+    _test_json_emojis(true);
 }
-fn _test_json_ex(json: &str, check_map: &HashMap<&str, &str>, one_piece: bool) {
+#[test]
+pub fn test_json_emojis_chunked() {
+    _test_json_emojis(false);
+}
+fn _test_json_emojis(one_piece: bool) {
+    let json = r#"{"str":"😀"}"#;
+    let check_map = HashMap::from([("str", "😀")]);
+    _test_json(json, &check_map, one_piece);
+
+    let json = r#"{
+        "str" : "😀😁😂😃😄😅😆😇😈😉😊😋😌😍😎😏"
+    }"#;
+    let check_map = HashMap::from([("str", "😀😁😂😃😄😅😆😇😈😉😊😋😌😍😎😏")]);
+    _test_json(json, &check_map, one_piece);
+}
+
+
+// fn _test_json(json: &str, check_map: &HashMap<&str, &str>) {
+//     _test_json_ex(json, check_map, true); // TODO: enable this line
+//     _test_json_ex(json, check_map, false);
+// }
+fn _test_json(json: &str, check_map: &HashMap<&str, &str>, one_piece: bool) {
     let mut handler = TestJsonEntryHandler::new();
     let mut json_processor = DumbJsonProcessor::new(Box::new(&mut handler));
     if one_piece {
@@ -118,20 +160,20 @@ fn _test_json_ex(json: &str, check_map: &HashMap<&str, &str>, one_piece: bool) {
             panic!("res is not empty");
         }
     } else {
-        let json_piece = json.trim();
-        let len = json_piece.len();
+        let json_chars: Vec<char> = json.chars().collect();
+        //let json_piece = json.trim();
+        let len = json_chars.len();
         let mut start = 0;
         let mut end = 0;
         let mut progress = ProcessJsonProgress::new();
         while end < len {
-            //let mut rng = rand::thread_rng();
-            //end = rng.gen_range(start + 1, len + 1);
             end = start + 5;
             if end > len {
                 end = len;
             }
-            let json_piece = &json_piece[start..end];
-            let result = json_processor.push_json_piece(json_piece, &mut progress);
+            let json_piece_chars = &json_chars[start..end];
+            let json_piece: String = json_piece_chars.iter().collect();
+            let result = json_processor.push_json_piece(json_piece.as_str(), &mut progress);
             if result.is_err() {
                 panic!("result is err [{}]", result.unwrap_err());
             }
