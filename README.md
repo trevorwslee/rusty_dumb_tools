@@ -16,7 +16,7 @@ A [collection of simple tools](https://crates.io/crates/rusty_dumb_tools) in ***
 * [`crate::lblscreen::DumbLineByLineScreen`](https://docs.rs/rusty_dumb_tools/latest/rusty_dumb_tools/lblscreen/struct.DumbLineByLineScreen.html):
   A terminal / text-based "screen" update helper.
   It is extended from `crate::ltemp::DumbLineTemplate`, and should be helpful in managing the updates of the formatted lines that acts as a "screen".
-* [`crate::json::DumbJsonProcessor`]():
+* [`crate::json::DumbJsonProcessor`](https://docs.rs/rusty_dumb_tools/latest/rusty_dumb_tools/json/struct.DumbJsonProcessor.html):
   A simple JSON processor / stream parser, that processes input JSON (possibly streamed piece by piece).
   Instead of returning the parsed JSON as some object; as soon as JSON entries are recognized,
   the configured callback is called for those recognized JSON entries.
