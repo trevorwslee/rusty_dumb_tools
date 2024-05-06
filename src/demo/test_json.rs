@@ -12,10 +12,13 @@ pub fn test_json_in_place() {
             json_entry.field_name, json_entry.field_value
         );
         assert!(json_entry.field_name == "greeting");
-        assert!(json_entry.field_value.to_string() == "hi😉 how are you❓");
+        assert!(
+            json_entry.field_value.to_string()
+                == "Hi❗ How are u/U/ü/Ü/ú/Ù/ü/Û/姑❓  😉👨‍👩‍👧‍👦👍🏽 / 🍔🧑"
+        );
     });
     let mut json_processor = DumbJsonProcessor::new(Box::new(&mut handler));
-    let json = r#"{"greeting":"hi😉 how are you❓"}"#;
+    let json = r#"{ "greeting" : "Hi❗ How are u/U/ü/Ü/ú/Ù/ü/Û/姑❓  😉👨‍👩‍👧‍👦👍🏽 / 🍔🧑" }"#;
     let res = json_processor.push_json(json);
     assert!(res.is_ok() && res.unwrap().is_empty());
     print!("~~~")
@@ -32,6 +35,14 @@ pub fn test_json_simple_chunked() {
 fn _test_json_simple(one_piece: bool) {
     let json = r#"{"hello":"world"}"#;
     let check_map = HashMap::from([("hello", "world")]);
+    _test_json(json, &check_map, one_piece);
+
+    let json = r#"{"hello":"wo
+rld"}"#;
+    let check_map = HashMap::from([(
+        "hello", "wo
+rld",
+    )]);
     _test_json(json, &check_map, one_piece);
 
     let json = r#"{"hello":"world","hello2":"world2"}"#;
@@ -54,6 +65,24 @@ fn _test_json_simple(one_piece: bool) {
         ("str", "this is abc"),
         ("null", "null"),
     ]);
+    _test_json(json, &check_map, one_piece);
+}
+
+#[test]
+pub fn test_json_escaped() {
+    _test_json_escaped(true);
+}
+#[test]
+pub fn test_json_escaped_chunked() {
+    _test_json_escaped(false);
+}
+fn _test_json_escaped(one_piece: bool) {
+    let json = r#"{"hello":"\"\\\""}"#;
+    let check_map = HashMap::from([("hello", "\"\\\"")]);
+    _test_json(json, &check_map, one_piece);
+
+    let json = r#"{"hello":"\\n\\r\\t\\b\\f"}"#;
+    let check_map = HashMap::from([("hello", r#"\n\r\t\b\f"#)]);
     _test_json(json, &check_map, one_piece);
 }
 
@@ -141,6 +170,19 @@ fn _test_json_emojis(one_piece: bool) {
         "str" : "😀😁😂😃😄😅😆😇😈😉😊😋😌😍😎😏"
     }"#;
     let check_map = HashMap::from([("str", "😀😁😂😃😄😅😆😇😈😉😊😋😌😍😎😏")]);
+    _test_json(json, &check_map, one_piece);
+
+    // Emojis that are composed of multiple Unicode characters cannot be represented by a single char in Rust. These include emojis with skin tone modifiers, gender modifiers, or those that represent complex symbols like country flags.
+    // Here are a few examples:
+    // 1. *Emojis with skin tone modifiers*: These emojis use a base emoji followed by a skin tone modifier. For example, the emoji 👍🏽 (thumbs up with a medium skin tone) is composed of two Unicode characters: 👍 (thumbs up) and 🏽 (medium skin tone modifier).
+    // 2. *Emojis with gender modifiers*: These emojis use a base emoji followed by a gender modifier. For example, the emoji 👩‍⚕ (woman health worker) is composed of three Unicode characters: 👩 (woman), ‍ (Zero Width Joiner), and ⚕ (medical symbol).
+    // 3. *Country flag emojis*: These emojis are composed of two regional indicator symbols. For example, the emoji 🇺🇸 (flag of the United States) is composed of two Unicode characters: 🇺 (regional indicator symbol letter U) and 🇸 (regional indicator symbol letter S).
+    // 4. *Emojis with Zero Width Joiner (ZWJ) sequences*: These emojis are composed of multiple emojis joined by a Zero Width Joiner. For example, the emoji 👨‍👩‍👧‍👦 (family: man, woman, girl, boy) is composed of seven Unicode characters: 👨 (man), ‍ (ZWJ), 👩 (woman), ‍ (ZWJ), 👧 (girl), ‍ (ZWJ), and 👦 (boy).
+
+    let json = r#"{
+        "str" : "👍🏽👩‍⚕ 🇺🇸🇭🇰👨‍👩‍👧‍👦"
+    }"#;
+    let check_map = HashMap::from([("str", "👍🏽👩‍⚕ 🇺🇸🇭🇰👨‍👩‍👧‍👦")]);
     _test_json(json, &check_map, one_piece);
 }
 

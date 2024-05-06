@@ -71,10 +71,10 @@ const DEBUG_ON: bool = true;
 ///         json_entry.field_name, json_entry.field_value
 ///     );
 ///     assert!(json_entry.field_name == "greeting");
-///     assert!(json_entry.field_value.to_string() == "hi😉 how are you❓");
+///     assert!(json_entry.field_value.to_string() == "Hi❗ How are youüúüUÜÙÛ❓  👩‍⚕👨‍👩‍👧‍👦🇭🇰👍🏽😆");
 /// });
 /// let mut json_processor = DumbJsonProcessor::new(Box::new(&mut handler));
-/// let json = r#"{"greeting":"hi😉 how are you❓"}"#;
+/// let json = r#"{ "greeting" : "Hi❗ How are youüúüUÜÙÛ❓  👩‍⚕👨‍👩‍👧‍👦🇭🇰👍🏽😆" }"#;
 /// let res = json_processor.push_json(json);
 /// assert!(res.is_ok() && res.unwrap().is_empty());
 /// print!("~~~")
@@ -210,7 +210,11 @@ impl<'a> DumbJsonProcessor<'a> {
         //let graphemes = UnicodeSegmentation::graphemes(json_piece, true).collect::<Vec<&str>>();
         //let consumed_len = graphemes.join("").len();
         //stage.remaining = json_piece[consumed_len..].to_string();
-        stage.buffer = buffer;
+        if stage.buffer.is_empty() {
+            stage.buffer = buffer;
+        } else {
+            stage.buffer.extend(buffer);
+        }
         loop {
             let stream_parse_res = self._stream_parse(stage)?;
             if stream_parse_res.need_more_data {
@@ -568,6 +572,22 @@ impl<'a> DumbJsonProcessor<'a> {
             stage.count += 1
         }
         if stage.state == "^>\"" {
+            // if true {
+            //     //let mut startedoff_escaped = false;
+            //     if !stage.skipping.is_empty() {
+            //         let skipping_n = &stage.skipping[stage.skipping.len() - 1];
+            //         if skipping_n.len() == 1 {
+            //             let skipping_n = skipping_n.chars().next().unwrap();
+            //             if skipping_n == '\\' {
+            //                 //startedoff_escaped = true;
+            //                 let ori_buffer = stage.buffer.clone();
+            //                 stage.buffer = vec!["\\".to_string()];
+            //                 stage.buffer.extend(ori_buffer);
+            //                 stage.skipping.pop();
+            //             }
+            //         }
+            //     }
+            // }
             let skipped_to = self._skip_to(stage, '"', true);
             if skipped_to.is_none() {
                 return Ok(StreamParseRes::need_more_data());

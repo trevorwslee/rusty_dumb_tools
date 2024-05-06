@@ -1,6 +1,6 @@
 [package]
 name = "rusty_dumb_tools"
-version = "0.1.9"
+version = "0.1.10"
 edition = "2021"
 description = "A collection of simply tools Rust modules."
 repository = "https://github.com/trevorwslee/rusty_dumb_tools"

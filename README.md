@@ -164,6 +164,9 @@ MIT
 
 # Change History:
 
+* v0.1.10
+  - bug fix
+
 * v0.1.9
   - added DumbJsonProcessor
   - bug fix
