@@ -1,6 +1,9 @@
+#![deny(warnings)]
+#![allow(unused)]
+
 use std::collections::HashMap;
 
-use crate::json::{DumbJsonProcessor, InPlaceJsonEntryHandler, JsonEntry, JsonEntryHandler};
+use crate::json::{self, DumbJsonProcessor, InPlaceJsonEntryHandler, JsonEntry, JsonEntryHandler};
 
 use super::ProcessJsonProgress;
 
@@ -200,7 +203,37 @@ fn _test_multiple_jsons(one_piece: bool) {
     let mut progress = ProcessJsonProgress::new();
     _test_json_ex(json, &check_map, one_piece, &mut progress);
     _test_json_ex(json, &check_map, one_piece, &mut progress);
+
+    let json1 = r#"{"hello":"world"}"#;
+    let json2 = r#"{"hello":"world"}"#;
+    let check_map = HashMap::from([("hello", "world")]);
+    let mut progress = ProcessJsonProgress::new();
+    _test_json_ex(json1, &check_map, one_piece, &mut progress);
+    _test_json_ex(json2, &check_map, one_piece, &mut progress);
 }
+
+#[test]
+pub fn test_multiple_json_pieces() {
+    let json_pieces = vec![r#"{"hello1":"world1"}"#, r#"{"hello2":"world2"}"#];
+    let check_map = HashMap::from([("hello1", "world1"), ("hello2", "world2")]);
+    _test_multiple_json_pieces(json_pieces, check_map);
+
+    let json_pieces = vec![r#"{"hello1""#, r#":"world1"}{"hello2""#, r#":"world2"}"#];
+    let check_map = HashMap::from([("hello1", "world1"), ("hello2", "world2")]);
+    _test_multiple_json_pieces(json_pieces, check_map);
+}
+
+// #[test]
+// pub fn test_multiple_json_pieces() {
+//     let mut handler = TestJsonEntryHandler::new();
+//     let mut json_processor = DumbJsonProcessor::new(Box::new(&mut handler));
+//     for json_piece in json_pieces {
+//         let result = json_processor.push_json_piece(json_piece, &mut progress);
+//         if result.is_err() {
+//             panic!("chunk result is err [{}]", result.unwrap_err());
+//         }
+//     }
+// }
 
 // fn _test_json(json: &str, check_map: &HashMap<&str, &str>) {
 //     _test_json_ex(json, check_map, true); // TODO: enable this line
@@ -264,9 +297,33 @@ fn _test_json_ex(
         }
         let remaining = progress.get_remaining();
         if !remaining.is_empty() {
-            panic!("remaining is not empty");
+            panic!("remaining is not empty -- [{}]", remaining);
         }
     }
+    let res_map = handler.entry_map;
+    if res_map.len() != check_map.len() {
+        println!("res_map: {:?}", res_map);
+        println!("check_map: {:?}", check_map);
+        panic!("res_map.len() != check_map.len()");
+    }
+    for (k, v) in res_map.iter() {
+        assert!(check_map.contains_key(k.as_str()));
+        assert!(check_map.get(k.as_str()).unwrap() == v);
+    }
+}
+
+fn _test_multiple_json_pieces(json_pieces: Vec<&str>, check_map: HashMap<&str, &str>) {
+    let mut progress = ProcessJsonProgress::new();
+    let mut handler = TestJsonEntryHandler::new();
+    let mut json_processor = DumbJsonProcessor::new(Box::new(&mut handler));
+
+    for json_piece in json_pieces {
+        let result = json_processor.push_json_piece(json_piece, &mut progress);
+        if result.is_err() {
+            panic!("chunk result is err [{}]", result.unwrap_err());
+        }
+    }
+
     let res_map = handler.entry_map;
     if res_map.len() != check_map.len() {
         println!("res_map: {:?}", res_map);

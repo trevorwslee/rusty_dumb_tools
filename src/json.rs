@@ -169,7 +169,7 @@ impl<'a> DumbJsonProcessor<'a> {
         let graphemes =
             UnicodeSegmentation::graphemes(in_str.as_str(), true).collect::<Vec<&str>>();
         let consumed_len = graphemes.join("").len();
-        self.nc_remaining = json_piece[consumed_len..].to_string();
+        self.nc_remaining = in_json_piece[consumed_len..].to_string();
         let buffer = graphemes
             .iter()
             .map(|&x| x.to_string())
