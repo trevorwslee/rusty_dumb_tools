@@ -609,22 +609,21 @@ impl CalcImpl {
         self.last_pushed = None;
         self._push_all_to_scanned(false);
         self.result = if !self.scanned.is_empty() {
-            if self.scanned.len() != 1 {
-                panic!("'scanned' should have a single element ... self={:?}", self);
+            if (true) {
+                if self.scanned.len() == 0 {
+                    panic!("'scanned' should at least one element ... self={:?}", self);
+                }
+                let mut result = self.scanned.pop().unwrap();
+                while let Some(operand) = self.scanned.pop() {
+                    result = Op::IMPLICIT.evaluate_binary(result, operand);
+                }
+                result
+            } else {
+                if self.scanned.len() != 1 {
+                    panic!("'scanned' should have a single element ... self={:?}", self);
+                }
+                self.scanned.pop().unwrap()
             }
-            self.scanned.pop().unwrap()
-            // if self.support_imp_op && false {
-            //     let mut res = self.scanned.pop().unwrap();
-            //     while !self.scanned.is_empty() {
-            //         res = Op::IMPLICIT.evaluate_binary(res, self.scanned.pop().unwrap());
-            //     }
-            //     res
-            // } else {
-            //     if self.scanned.len() != 1 {
-            //         panic!("'scanned' should have a single element ... self={:?}", self);
-            //     }
-            //     self.scanned.pop().unwrap()
-            // }
         } else {
             self.result
         };

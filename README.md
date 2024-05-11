@@ -1,4 +1,4 @@
-# RustyDumbTools (v0.1.9)
+# RustyDumbTools (v0.1.10)
 
 A [collection of simple tools](https://crates.io/crates/rusty_dumb_tools) in ***Rust*** as ***Rust*** modules:
 * [`crate::arg::DumbArgParser`](https://docs.rs/rusty_dumb_tools/latest/rusty_dumb_tools/arg/struct.DumbArgParser.html):

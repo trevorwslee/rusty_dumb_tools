@@ -152,6 +152,9 @@ fn test_calculator_display() {
 
     calculator.push("neg");
     assert_eq!(calculator.get_display_sized(5), "-0.12");
+
+    // calculator.push("ac");
+    // assert_eq!(calculator.get_display_sized(5), "    0");
 }
 #[test]
 fn test_calculator_display_roundoff() {
@@ -344,4 +347,12 @@ fn test_history_unary_bug() {
         calculator.get_history_string(false).unwrap(),
         "neg((sin(3+4))+cos(5))"
     );
+}
+#[test]
+fn test_calculator_bug() {
+    let mut calculator = DumbCalculator::new();
+    calculator.push("2");
+    calculator.push("square");
+    calculator.push_chars("(1+3)=");
+    assert_eq!(calculator.get_display(), "16");
 }
