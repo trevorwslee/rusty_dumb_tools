@@ -212,7 +212,10 @@ fn test_calculator_display_e() {
     calculator.reset();
     calculator.push_chars("0.00001");
     calculator.push("neg");
-    assert_eq!(calculator.get_display_sized(7), "    0.0");
+    assert_eq!(
+        calculator.get_display_sized(7),
+        "      0" /*"    0.0"*/
+    );
     assert_eq!(calculator.get_display_sized(8), "-0.00001");
     assert_eq!(calculator.get_display_sized(9), " -0.00001");
 }
@@ -328,6 +331,41 @@ fn test_history_unary_finalized() {
     );
 }
 #[test]
+fn test_calculator_angle_mode() {
+    let mut calculator = DumbCalculator::new();
+    calculator.use_angle_mode("deg");
+    calculator.push_chars("90");
+    calculator.push("cos");
+    assert_eq!(calculator.get_display_sized(5), "    0");
+
+    let mut calculator = DumbCalculator::new();
+    calculator.use_angle_mode("rad");
+    calculator.push_chars("0.5");
+    calculator.push("cos");
+    assert_eq!(calculator.get_display_sized(5), "0.878");
+}
+#[test]
+fn test_calculator_memory() {
+    let mut calculator = DumbCalculator::new();
+    calculator.push("2");
+    calculator.push("ms");
+    calculator.push_chars("+3=");
+    assert_eq!(calculator.get_display(), "5");
+    calculator.push("m+");
+    calculator.push_chars("*2=");
+    assert_eq!(calculator.get_display(), "10");
+    calculator.push("mr");
+    assert_eq!(calculator.get_display(), "7");
+    calculator.push_chars("*3=");
+    assert_eq!(calculator.get_display(), "21");
+    calculator.push("m-");
+    calculator.push("mr");
+    assert_eq!(calculator.get_display(), "-14");
+    calculator.push("mc");
+    calculator.push("mr");
+    assert_eq!(calculator.get_display(), "0");
+}
+#[test]
 fn test_history_unary_bug() {
     let mut calculator = DumbCalculator::new();
     calculator.push_chars("((2)");
@@ -355,4 +393,11 @@ fn test_calculator_bug() {
     calculator.push("square");
     calculator.push_chars("(1+3)=");
     assert_eq!(calculator.get_display(), "16");
+}
+#[test]
+fn test_calculator_bug_2() {
+    let mut calculator = DumbCalculator::new();
+    calculator.push("90");
+    calculator.push("cos");
+    assert_eq!(calculator.get_display_sized(5), "    0");
 }

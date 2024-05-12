@@ -23,6 +23,7 @@ pub struct DumbCalculator {
     calc: calc::DumbCalcProcessor,
     undo_stack: Option<Vec<UndoStep>>,
     history_stack: Option<Vec<String>>,
+    memory: Option<f64>,
 }
 
 /// a simple calculator that accepts input keys acting like a real calculator;
@@ -76,6 +77,7 @@ impl DumbCalculator {
             calc: calc::DumbCalcProcessor::new(),
             undo_stack: undo_stack,
             history_stack: history_stack,
+            memory: None,
         }
     }
     /// push a "key input":
@@ -141,7 +143,14 @@ impl DumbCalculator {
                 }
                 EnteringMode::Error => EnteringMode::Error,
             };
-            self.calc.push(key)?;
+            match key {
+                "mc" | "mr" | "ms" | "m+" | "m-" => {
+                    self.on_memory_key(key);
+                }
+                _ => {
+                    self.calc.push(key)?;
+                }
+            }
         }
         Ok(())
     }
@@ -197,7 +206,12 @@ impl DumbCalculator {
             undo_stack.push(undo);
         }
     }
-    /// reset the calculator
+    /// use the "angle mode" for trigonometric functions
+    /// * angle_mode: "deg" or "rad"
+    pub fn use_angle_mode(&mut self, angle_mode: &str) {
+        self.calc.use_angle_mode(angle_mode);
+    }
+    /// reset the calculator (but will not reset memory)
     pub fn reset(&mut self) {
         self.entering = EnteringMode::Not;
         self.calc.reset();
@@ -207,6 +221,10 @@ impl DumbCalculator {
         if let Some(history_stack) = &mut self.history_stack {
             history_stack.clear();
         }
+    }
+    /// get memory
+    pub fn get_memory(&self) -> Option<f64> {
+        self.memory
     }
     /// get history of the "key input", if history is enabled
     pub fn get_history(&self) -> Option<&[String]> {
@@ -386,6 +404,15 @@ impl DumbCalculator {
     }
     fn _get_display(&self, result_width: Option<usize>) -> String {
         let mut display_result = self.__get_display(result_width);
+        if true {
+            let dr = display_result.replace('-', "");
+            let dr = dr.replace('.', "");
+            let dr = dr.replace('0', "");
+            let dr = dr.trim();
+            if dr.is_empty() {
+                display_result = "0".to_string();
+            }
+        }
         if let Some(result_width) = result_width {
             if result_width == 0 {
                 panic!("result_width is zero")
@@ -528,6 +555,32 @@ impl DumbCalculator {
     }
     pub fn count_opened_brackets(&self) -> u16 {
         self.calc.count_opened_brackets()
+    }
+    fn on_memory_key(&mut self, key: &str) -> Result<(), DumbError> {
+        let mut ori_memory = self.memory.unwrap_or(0.0);
+        if key == "mr" {
+            let ori_memory = ori_memory.to_string();
+            self.calc.push(ori_memory.as_str())?;
+            return Ok(());
+        }
+        let result = match self.calc.get_result() {
+            CalcResult::Final(r) => r,
+            CalcResult::Intermediate(r) => r,
+            CalcResult::Error(e) => return Ok(()),
+        };
+        let new_memory = match key {
+            "mc" => 0.0,
+            "ms" => result,
+            "m+" => ori_memory + result,
+            "m-" => ori_memory - result,
+            _ => panic!("unknown memory key: {}", key),
+        };
+        if new_memory == 0.0 {
+            self.memory = None;
+        } else {
+            self.memory = Some(new_memory);
+        }
+        return Ok(());
     }
 }
 
