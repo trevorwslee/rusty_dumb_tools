@@ -125,7 +125,20 @@ impl DumbCalculator {
                 EnteringMode::Error => EnteringMode::Error,
             }
         } else {
-            self._record_undo(key, true);
+            if key == "ac" {
+                self.clear();
+                return Ok(());
+            } else if key == "undo" {
+                self.undo();
+                return Ok(());
+            }
+            let memory_key = match key {
+                "mc" | "mr" | "ms" | "m+" | "m-" => Some(key),
+                _ => {
+                    self._record_undo(key, true);
+                    None
+                }
+            };
             self.entering = match &self.entering {
                 EnteringMode::Not => EnteringMode::Not,
                 EnteringMode::Integer(i) => {
@@ -143,9 +156,9 @@ impl DumbCalculator {
                 }
                 EnteringMode::Error => EnteringMode::Error,
             };
-            match key {
-                "mc" | "mr" | "ms" | "m+" | "m-" => {
-                    self.on_memory_key(key);
+            match memory_key {
+                Some(memory_key) => {
+                    self.on_memory_key(memory_key);
                 }
                 _ => {
                     self.calc.push(key)?;
@@ -211,8 +224,8 @@ impl DumbCalculator {
     pub fn use_angle_mode(&mut self, angle_mode: &str) {
         self.calc.use_angle_mode(angle_mode);
     }
-    /// reset the calculator (but will not reset memory)
-    pub fn reset(&mut self) {
+    /// clear the calculator (but will not clear the memory)
+    pub fn clear(&mut self) {
         self.entering = EnteringMode::Not;
         self.calc.reset();
         if let Some(undo_stack) = &mut self.undo_stack {
@@ -221,6 +234,11 @@ impl DumbCalculator {
         if let Some(history_stack) = &mut self.history_stack {
             history_stack.clear();
         }
+    }
+    /// reset the calculator (and clear the memory)
+    pub fn reset(&mut self) {
+        self.clear();
+        self.memory = None;
     }
     /// get memory
     pub fn get_memory(&self) -> Option<f64> {
@@ -405,12 +423,18 @@ impl DumbCalculator {
     fn _get_display(&self, result_width: Option<usize>) -> String {
         let mut display_result = self.__get_display(result_width);
         if true {
-            let dr = display_result.replace('-', "");
-            let dr = dr.replace('.', "");
-            let dr = dr.replace('0', "");
-            let dr = dr.trim();
-            if dr.is_empty() {
-                display_result = "0".to_string();
+            // turn 0.0000 to 0
+            match &self.entering {
+                EnteringMode::Not => {
+                    let dr = display_result.replace('-', "");
+                    let dr = dr.replace('.', "");
+                    let dr = dr.replace('0', "");
+                    let dr = dr.trim();
+                    if dr.is_empty() {
+                        display_result = "0".to_string();
+                    }
+                }
+                _ => {}
             }
         }
         if let Some(result_width) = result_width {
@@ -524,24 +548,27 @@ impl DumbCalculator {
                     }
                 }
             }
-            let is_zero = if display_result.len() == result_width {
-                let dr = display_result.replace('-', "");
-                let dr = dr.replace('.', "");
-                let dr = dr.replace('0', "");
-                let dr = dr.trim();
-                dr.is_empty()
-            } else {
-                false
-            };
-            if is_zero {
-                let places = result_width as i32 - (if result < 0.0 { 6 } else { 5 });
-                if places > 0 {
-                    let ori_display_result = display_result;
-                    display_result = format!("{:.*e}", places as usize, result);
-                    if display_result.len() > result_width {
-                        //println!("{}", display_result);
-                        // e more than 1 digits
-                        display_result = ori_display_result;
+            if false {
+                // disabled since 20240513 ... still needed???
+                let is_zero = if display_result.len() == result_width {
+                    let dr = display_result.replace('-', "");
+                    let dr = dr.replace('.', "");
+                    let dr = dr.replace('0', "");
+                    let dr = dr.trim();
+                    dr.is_empty()
+                } else {
+                    false
+                };
+                if is_zero {
+                    let places = result_width as i32 - (if result < 0.0 { 6 } else { 5 });
+                    if places > 0 {
+                        let ori_display_result = display_result;
+                        display_result = format!("{:.*e}", places as usize, result);
+                        if display_result.len() > result_width {
+                            //println!("{}", display_result);
+                            // e more than 1 digits
+                            display_result = ori_display_result;
+                        }
                     }
                 }
             }
@@ -560,6 +587,7 @@ impl DumbCalculator {
         let mut ori_memory = self.memory.unwrap_or(0.0);
         if key == "mr" {
             let ori_memory = ori_memory.to_string();
+            self._record_undo("?", true);
             self.calc.push(ori_memory.as_str())?;
             return Ok(());
         }

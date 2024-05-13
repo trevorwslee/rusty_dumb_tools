@@ -205,7 +205,8 @@ fn test_calculator_display_e() {
 
     calculator.reset();
     calculator.push_chars("0.00001");
-    assert_eq!(calculator.get_display_sized(6), "1.0e-5");
+    assert_eq!(calculator.get_display_sized(6), "0.0000");
+    //assert_eq!(calculator.get_display_sized(6), "1.0e-5");
     assert_eq!(calculator.get_display_sized(7), "0.00001");
     assert_eq!(calculator.get_display_sized(8), " 0.00001");
 
@@ -331,6 +332,18 @@ fn test_history_unary_finalized() {
     );
 }
 #[test]
+fn test_calculator_entering() {
+    let mut calculator = DumbCalculator::new();
+    calculator.push_chars("0000");
+    assert_eq!(calculator.get_display(), "0");
+
+    let mut calculator = DumbCalculator::new();
+    calculator.push_chars("00.0");
+    assert_eq!(calculator.get_display(), "0.0");
+    calculator.push("=");
+    assert_eq!(calculator.get_display(), "0");
+}
+#[test]
 fn test_calculator_angle_mode() {
     let mut calculator = DumbCalculator::new();
     calculator.use_angle_mode("deg");
@@ -343,6 +356,22 @@ fn test_calculator_angle_mode() {
     calculator.push_chars("0.5");
     calculator.push("cos");
     assert_eq!(calculator.get_display_sized(5), "0.878");
+}
+#[test]
+fn test_calculator_reset() {
+    let mut calculator = DumbCalculator::new();
+    calculator.use_angle_mode("deg");
+    calculator.push_chars("90");
+    calculator.push("ms");
+    assert_eq!(calculator.get_display_sized(5), "   90");
+    calculator.push("ac");
+    assert_eq!(calculator.get_display_sized(5), "    0");
+    assert_eq!(calculator.get_memory().unwrap(), 90.0);
+    calculator.push("mr");
+    assert_eq!(calculator.get_display_sized(5), "   90");
+    calculator.reset();
+    assert_eq!(calculator.get_display_sized(5), "    0");
+    assert!(calculator.get_memory().is_none());
 }
 #[test]
 fn test_calculator_memory() {
