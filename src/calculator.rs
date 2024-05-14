@@ -88,6 +88,10 @@ impl DumbCalculator {
     ///   - unary operators; e.g. "neg", "sin", "cos", "tan", etc
     /// * a constant accepted by [`crate::calc::DumbCalcProcessor::push`] like "PI", etc
     /// * "="
+    /// there are some special "key input":
+    /// * "ac": clear the calculator
+    /// * "undo": undo the last "key input" done by [`DumbCalculator::push`], if undo is enabled
+    /// * "mc", "mr", "ms", "m+", "m-": memory keys
     pub fn push(&mut self, key: &str) -> Result<(), DumbError> {
         if key == "." {
             self._record_undo(key, false);

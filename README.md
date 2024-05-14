@@ -179,7 +179,7 @@ MIT
   - bug fix
   
 * v0.1.8
-  - bug fix ... for calculator, 8/2(1+3) now is 1 (not 16)
+  - bug fix ... for DumbCalculator, 8/2(1+3) now is 1 (not 16)
 
 * v0.1.7
   - bug fix

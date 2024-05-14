@@ -374,6 +374,20 @@ fn test_calculator_reset() {
     assert!(calculator.get_memory().is_none());
 }
 #[test]
+fn test_calculator_push_undo() {
+    let mut calculator = DumbCalculator::new();
+    calculator.push_chars("123");
+    calculator.push("undo");
+    calculator.push("undo");
+    assert_eq!(calculator.get_display(), "1");
+    calculator.push("*");
+    calculator.push("undo");
+    calculator.push("+");
+    calculator.push_chars("2");
+    calculator.push("=");
+    assert_eq!(calculator.get_display(), "3");
+}
+#[test]
 fn test_calculator_memory() {
     let mut calculator = DumbCalculator::new();
     calculator.push("2");
