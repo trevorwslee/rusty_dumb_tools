@@ -12,11 +12,6 @@ use std::{collections::HashMap, env, vec};
 use rusty_dumb_tools::{demo, json, prelude::*};
 
 fn main() {
-    // if true {
-    //     json::test_json_processor();
-    //     return;
-    // }
-
     let version = env!("CARGO_PKG_VERSION");
     println!("The version of this crate is: {}", version);
 
@@ -30,10 +25,6 @@ fn main() {
         test_chars();
         return;
     }
-    // if false {
-    //     demo::demo_calculator_gui::handle_demo_calculator_gui();
-    //     return;
-    // }
     if false {
         demo::run_demo(Some(vec!["calculator", "rich"]));
         //demo::demo_calculator::debug_demo_calculator(true);
@@ -44,21 +35,7 @@ fn main() {
         return;
     }
 
-    // let released = if env::var("CARGO_PKG_NAME").is_ok() {
-    //     println!("Running with cargo run");
-    //     false
-    // } else {
-    //     println!("Running as an installed binary");
-    //     true
-    // };
-
-    // if true {
-    //     demo::run_demo(Some(vec!["arg", "-h"]));
-    //     return;
-    // }
-
-    let released: bool = true;
-    if released {
+    if true {
         released_main();
     } else {
         debug_main();

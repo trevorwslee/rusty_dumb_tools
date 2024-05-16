@@ -11,7 +11,7 @@ use crate::{
     dap_arg,
 };
 
-pub fn create_demo_parser_calc() -> DumbArgParser {
+pub fn create_demo_calc_parser() -> DumbArgParser {
     let mut parser = DumbArgParser::new();
     parser.set_description("DumbCalcProcessor command-line input demo.");
     dap_arg!("input", value = "123")

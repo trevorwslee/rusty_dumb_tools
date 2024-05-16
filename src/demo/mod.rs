@@ -7,6 +7,7 @@ pub mod demo_arg;
 pub mod demo_calc;
 //pub mod demo_calculator;
 //pub mod demo_calculator_gui;
+pub mod demo_json;
 pub mod demo_lblscreen;
 pub mod demo_ltemp;
 
@@ -27,7 +28,8 @@ use crate::prelude::*;
 
 use self::{
     demo_arg::handle_demo_arg,
-    demo_calc::{create_demo_parser_calc, handle_demo_calc, handle_demo_calc_repl},
+    demo_calc::{create_demo_calc_parser, handle_demo_calc, handle_demo_calc_repl},
+    demo_json::{create_demo_json_parser, handle_demo_json},
     demo_lblscreen::handle_demo_lblscreen,
     demo_ltemp::handle_demo_ltemp,
 };
@@ -62,8 +64,7 @@ pub fn create_demo_parser() -> DumbArgParser {
         .set_with_desc_enums(vec![
             "calc:DumbCalcProcessor command-line input demo",
             "calc-repl:DumbCalcProcessor REPL demo",
-            //"calculator:DumbCalculator text-based UI demo",
-            //"calculator-gui:DumbCalculator GUI demo",
+            "json:DumbJsonProcessor demo",
             "ltemp:DumbLineTemplate demo",
             "lblscreen:DumbLineByLineScreen demo",
             "arg:DumbArgParser demo (more like debugging)",
@@ -84,21 +85,18 @@ pub fn handle_sub_demo(parser: DumbArgParser) {
     };
     match demo.as_str() {
         "calc" => {
-            let mut demo_parser = create_demo_parser_calc();
+            let mut demo_parser = create_demo_calc_parser();
             parser.process_rest_args("demo", &mut demo_parser);
             handle_demo_calc(demo_parser);
         }
         "calc-repl" => {
             handle_demo_calc_repl();
         }
-        // "calculator" => {
-        //     let mut demo_parser = create_demo_parser_calculator();
-        //     parser.process_rest_args("demo", &mut demo_parser);
-        //     handle_demo_calculator(demo_parser);
-        // }
-        // "calculator-gui" => {
-        //     handle_demo_calculator_gui();
-        // }
+        "json" => {
+            let mut demo_parser = create_demo_json_parser();
+            parser.process_rest_args("demo", &mut demo_parser);
+            handle_demo_json(demo_parser);
+        }
         "ltemp" => {
             let mut sub_demo_parser = demo_ltemp::create_demo_ltemp_parser();
             parser.process_rest_args("demo", &mut sub_demo_parser);

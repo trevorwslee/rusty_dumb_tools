@@ -6,7 +6,7 @@ use unicode_segmentation::UnicodeSegmentation;
 
 use crate::prelude::DumbError;
 
-const DEBUG_ON: bool = true;
+const DEBUG_ON: bool = false;
 
 // fn main() {
 //     let s = "Hello, world! 👋🌍".to_string();

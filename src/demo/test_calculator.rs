@@ -223,7 +223,7 @@ fn test_calculator_display_e() {
     assert_eq!(calculator.get_display_sized(6), "1.23e5");
 }
 #[test]
-fn test_calculator_display_e_2() {
+fn test_calculator_display_small_e() {
     let mut calculator = DumbCalculator::new();
     calculator.push_chars("0.0001*0.0001");
     calculator.push("=");
@@ -231,6 +231,20 @@ fn test_calculator_display_e_2() {
     assert_eq!(calculator.get_display_sized(9), "1.0000e-8");
     assert_eq!(calculator.get_display_sized(6), "1.0e-8");
     assert_eq!(calculator.get_display_sized(5), "    0");
+
+    let mut calculator = DumbCalculator::new();
+    calculator.push_chars("0.0001*0.0001");
+    calculator.push("=");
+    assert_eq!(calculator.get_display_sized(10), "0.00000001");
+    calculator.push_chars("*0.1");
+    calculator.push("=");
+    assert_eq!(calculator.get_display_sized(10), "1.00000e-9");
+    calculator.push_chars("*0.1");
+    calculator.push("=");
+    assert_eq!(calculator.get_display_sized(10), "~~~~~~~~~~"); // exponential notation uses a single digit
+    calculator.push_chars("*10");
+    calculator.push("=");
+    assert_eq!(calculator.get_display_sized(10), "1.00000e-9");
 }
 #[test]
 fn test_calculator_display_error() {
