@@ -543,6 +543,15 @@ impl DumbCalculator {
                             }
                             _ => {}
                         }
+                        if true {
+                            if result != 0.0 && display_result == "0.0" {
+                                let dp = result_width as i32 - 5;
+                                if dp > 0 {
+                                    display_result = format!("{:.*e}", dp as usize, result);
+                                    //println!("{}", display_result)
+                                }
+                            }
+                        }
                     }
                 }
                 if display_result.len() > result_width {
