@@ -1,12 +1,15 @@
 //! A simple JSON processor / stream parser -- [`crate::json::DumbJsonProcessor`]
 
+#![deny(warnings)]
+#![allow(unused)]
+
 use std::fmt;
 
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::prelude::DumbError;
 
-const DEBUG_ON: bool = false;
+const DEBUG_ON: bool = false; // TODO: disable DEBUG
 
 // fn main() {
 //     let s = "Hello, world! 👋🌍".to_string();
@@ -126,6 +129,7 @@ pub struct DumbJsonProcessor<'a> {
     // count: i16,
     //first_stage: ProcessorStage,
     nc_remaining: String,
+    nc_remaining_bytes: Vec<u8>,
 }
 
 impl<'a> DumbJsonProcessor<'a> {
@@ -144,6 +148,7 @@ impl<'a> DumbJsonProcessor<'a> {
             // count: 0,
             //first_stage: ProcessorStage::new(String::new(), false),
             nc_remaining: String::new(),
+            nc_remaining_bytes: Vec::new(),
         }
     }
     /// push a JSON piece to the processor; note that the JSON piece can be a complete JSON, or part of a JSON;
@@ -170,6 +175,9 @@ impl<'a> DumbJsonProcessor<'a> {
             UnicodeSegmentation::graphemes(in_str.as_str(), true).collect::<Vec<&str>>();
         let consumed_len = graphemes.join("").len();
         self.nc_remaining = in_json_piece[consumed_len..].to_string();
+        // if !self.nc_remaining_bytes.is_empty() {
+        //     panic!("not consistent calling of `push`")
+        // }
         let buffer = graphemes
             .iter()
             .map(|&x| x.to_string())
@@ -197,6 +205,36 @@ impl<'a> DumbJsonProcessor<'a> {
         } else {
             return Err(DumbError::from("JSON is not complete"));
         }
+    }
+    /// like [`DumbJsonProcessor::push_json_piece`] but accepts `[u8]` bytes
+    pub fn push_json_bytes<'b>(
+        &mut self,
+        bytes: &[u8],
+        progress: &'b mut ProcessJsonProgress,
+    ) -> Result<&'b mut ProcessJsonProgress, DumbError> {
+        let mut in_bytes: Vec<u8> = Vec::new();
+        if !self.nc_remaining_bytes.is_empty() {
+            let nc_remaining_bytes = self.nc_remaining_bytes.clone();
+            self.nc_remaining_bytes = Vec::new();
+            in_bytes.extend(nc_remaining_bytes);
+        }
+        in_bytes.extend(bytes.to_vec());
+        let mut json_piece = String::new();
+        let mut invalid_bytes: Vec<u8> = Vec::new();
+        loop {
+            let lossy = String::from_utf8_lossy(&in_bytes);
+            json_piece = lossy.to_string();
+            if !json_piece.ends_with("\u{FFFD}") {
+                break;
+            }
+            let lb = in_bytes.pop(); // try with one less byte
+            match lb {
+                Some(lb) => invalid_bytes.push(lb),
+                None => break,
+            }
+        }
+        self.nc_remaining_bytes.extend(invalid_bytes);
+        self.push_json_piece(json_piece.as_str(), progress)
     }
     fn _push_json_piece(
         &mut self,
@@ -241,7 +279,7 @@ impl<'a> DumbJsonProcessor<'a> {
         what: char,
         allow_escape: bool,
     ) -> Option<i32> {
-        let ori_buffer = stage.buffer.clone(); // TODO: make clone once when stage.buffer changed
+        let ori_buffer = stage.buffer.clone(); // TODO: make clone only when stage.buffer changed
         let buf_len = stage.buffer.len();
         //let buf_chars: Vec<char> = self.buffer.chars().collect();
         let mut escaping = false;
@@ -291,7 +329,7 @@ impl<'a> DumbJsonProcessor<'a> {
     //     let mut i = 0;
     //     let mut max_i = buf_len;
     //     while i < max_i {
-    //         let c = stage.buffer.chars().nth(i).unwrap(); // TODO: enhance
+    //         let c = stage.buffer.chars().nth(i).unwrap();
     //         if escaping {
     //             escaping = false;
     //             if self.unescape_escaped {

@@ -2,7 +2,8 @@
 #![allow(unused)]
 
 use std::{
-   io::{BufRead, Error, Read, Write}, net::TcpStream
+    io::{BufRead, Error, Read, Write},
+    net::TcpStream,
 };
 
 use crate::prelude::*;
@@ -25,9 +26,6 @@ fn make_connection(country: &String) -> Result<TcpStream, Error> {
     );
     stream.write_all(request.as_bytes())?;
     Ok(stream)
-    // let mut response = String::new();
-    // stream.read_to_string(&mut response)?;
-    // Ok(response)
 }
 fn make_connection_get_response(country: &String) -> Result<String, Error> {
     match make_connection(country) {
@@ -55,22 +53,8 @@ fn process_connection(stream: &mut TcpStream) -> Result<(), String> {
                 if size == 0 {
                     return Ok(());
                 }
-                panic!("not implemented")
-                // let mut iter = Utf8Chunks::new(&buf[..size]);
-                // let first_valid = if let Some(chunk) = iter.next() {
-                //     let valid = chunk.valid();
-                //     if chunk.invalid().is_empty() {
-                //         debug_assert_eq!(valid.len(), v.len());
-                //         Cow::Borrowed(valid);
-                //     }
-                //     valid
-                // } else {
-                //     Cow::Borrowed("");
-                // };
-        
-
-                // let piece = String::from_utf8_lossy(&buf[..size]);
-                // json_processor.push_json_piece(json_piece, &mut progress)
+                let bytes = &buf[..size];
+                json_processor.push_json_bytes(bytes, &mut progress);
             }
             Err(e) => {
                 return Err(format!("! error: [{}]", e));
@@ -82,64 +66,67 @@ fn process_connection(stream: &mut TcpStream) -> Result<(), String> {
 pub fn handle_demo_json(parser: DumbArgParser) {
     let country = parser.get::<String>("country").unwrap();
     println!("! query universities of country: [{}] ...", country);
-    // let stream = make_connection(&country);
-    // println!("!");
-    // println!("!");
-    // let result = match stream {
-    //     Ok(stream) => {
-    //         process_connection(&mut stream)
-    //     }
-    //     Err(e) => {
-    //         Err(format!("! error: [{}]", e))
-    //     }
-    // };
-    // println!("!");
-    // println!("!");
-    // match result {
-    //     Ok(_) => {}
-    //     Err(e) => {
-    //         println!("{}", e);
-    //     }
-    // }
-    match make_connection_get_response(&country) {
-        Ok(response) => {
-            let jsons = response
-                .chars()
-                .skip(response.find("\r\n\r\n").unwrap() + 4)
-                .collect::<String>();
-            //println!("let jsons = r#\"{}\"#;", jsons);
-            let mut handler = InPlaceJsonEntryHandler::new(|json_entry| {
-                println!(
-                    "* `{}` => `{}`",
-                    json_entry.field_name, json_entry.field_value
-                );
-            });
-            let mut json_processor = DumbJsonProcessor::new(Box::new(&mut handler));
-            if true {
-                let mut input = String::new();
-                input.push_str("{\"universiunities\":");
-                input.push_str(&jsons);
-                input.push_str("}");
-                //println!("{}", input);
-                json_processor.push_json(&input);
-            } else {
-                // TODO: the following is very slow ... find out why
-                let mut progress = ProcessJsonProgress::new();
-                let mut input = jsons;
-                loop {
-                    json_processor.push_json_piece(&input, &mut progress);
-                    if progress.is_done() {
-                        input = progress.get_remaining();
-                        if input.is_empty() {
-                            break;
-                        }
-                    }
-                    println!("... more jsons ...");
-                }
+    if true {
+        let stream = make_connection(&country);
+        println!("!");
+        println!("!");
+        let result = match stream {
+            Ok(mut stream) => {
+                process_connection(&mut stream)
+            }
+            Err(e) => {
+                Err(format!("! error: [{}]", e))
+            }
+        };
+        println!("!");
+        println!("!");
+        match result {
+            Ok(_) => {}
+            Err(e) => {
+                println!("{}", e);
             }
         }
-        Err(e) => {
-            println!("! error: [{}]", e);
+    } else {
+        match make_connection_get_response(&country) {
+            Ok(response) => {
+                let jsons = response
+                    .chars()
+                    .skip(response.find("\r\n\r\n").unwrap() + 4)
+                    .collect::<String>();
+                //println!("let jsons = r#\"{}\"#;", jsons);
+                let mut handler = InPlaceJsonEntryHandler::new(|json_entry| {
+                    println!(
+                        "* `{}` => `{}`",
+                        json_entry.field_name, json_entry.field_value
+                    );
+                });
+                let mut json_processor = DumbJsonProcessor::new(Box::new(&mut handler));
+                if true {
+                    let mut input = String::new();
+                    input.push_str("{\"universiunities\":");
+                    input.push_str(&jsons);
+                    input.push_str("}");
+                    //println!("{}", input);
+                    json_processor.push_json(&input);
+                } else {
+                    // TODO: the following is very slow ... find out why
+                    let mut progress = ProcessJsonProgress::new();
+                    let mut input = jsons;
+                    loop {
+                        json_processor.push_json_piece(&input, &mut progress);
+                        if progress.is_done() {
+                            input = progress.get_remaining();
+                            if input.is_empty() {
+                                break;
+                            }
+                        }
+                        println!("... more jsons ...");
+                    }
+                }
+            }
+            Err(e) => {
+                println!("! error: [{}]", e);
+            }
         }
     }
 }
