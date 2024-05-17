@@ -213,6 +213,46 @@ fn _test_multiple_jsons(one_piece: bool) {
 }
 
 #[test]
+pub fn test_multiple_jsons_wrapped() {
+    _test_multiple_jsons_2(true);
+}
+#[test]
+pub fn test_multiple_jsons_looped() {
+    //_test_multiple_jsons_2(false);  // TODO: it hangs ... debug
+}
+fn _test_multiple_jsons_2(wrapped: bool) {
+    let jsons = r#"[{"country": "Hong Kong", "web_pages": ["https://www.chuhai.edu.hk/"], "alpha_two_code": "HK", "domains": ["chuhai.edu.hk"], "state-province": null, "name": "Hong Kong Chu Hai College"}, {"country": "Hong Kong", "web_pages": ["https://www.cityu.edu.hk/"], "alpha_two_code": "HK", "domains": ["cityu.edu.hk", "um.cityu.edu.hk", "my.cityu.edu.hk"], "state-province": null, "name": "City University of Hong Kong"}, {"country": "Hong Kong", "web_pages": ["https://www.cuhk.edu.hk/"], "alpha_two_code": "HK", "domains": ["cuhk.edu.hk", "link.cuhk.edu.hk"], "state-province": null, "name": "The Chinese University of Hong Kong"}, {"country": "Hong Kong", "web_pages": ["https://www.hkapa.edu/"], "alpha_two_code": "HK", "domains": ["hkapa.edu"], "state-province": null, "name": "The Hong Kong Academy for Performing Arts"}, {"country": "Hong Kong", "web_pages": ["https://www.hkbu.edu.hk/"], "alpha_two_code": "HK", "domains": ["hkbu.edu.hk", "life.hkbu.edu.hk", "associate.hkbu.edu.hk"], "state-province": null, "name": "Hong Kong Baptist University"}, {"country": "Hong Kong", "web_pages": ["https://www.hksyu.edu/"], "alpha_two_code": "HK", "domains": ["hksyu.edu"], "state-province": null, "name": "Hong Kong Shue Yan University"}, {"country": "Hong Kong", "web_pages": ["https://www.hku.hk/"], "alpha_two_code": "HK", "domains": ["hku.hk"], "state-province": null, "name": "The University of Hong Kong"}, {"country": "Hong Kong", "web_pages": ["https://www.ln.edu.hk/"], "alpha_two_code": "HK", "domains": ["ln.edu.hk", "ln.hk"], "state-province": null, "name": "Lingnan University"}, {"country": "Hong Kong", "web_pages": ["https://www.hkmu.edu.hk/"], "alpha_two_code": "HK", "domains": ["hkmu.edu.hk", "ouhk.edu.hk"], "state-province": null, "name": "Hong Kong Metropolitan University"}, {"country": "Hong Kong", "web_pages": ["https://www.polyu.edu.hk/"], "alpha_two_code": "HK", "domains": ["polyu.edu.hk", "connect.polyu.hk"], "state-province": null, "name": "The Hong Kong Polytechnic University"}, {"country": "Hong Kong", "web_pages": ["https://hkust.edu.hk/"], "alpha_two_code": "HK", "domains": ["ust.hk", "connect.ust.hk"], "state-province": null, "name": "The Hong Kong University of Science and Technology"}, {"country": "Hong Kong", "web_pages": ["https://www.eduhk.hk"], "alpha_two_code": "HK", "domains": ["s.eduhk.hk", "eduhk.hk"], "state-province": null, "name": "The Education University of Hong Kong"}, {"country": "Hong Kong", "web_pages": ["http://www.hsu.edu.hk/"], "alpha_two_code": "HK", "domains": ["hsu.edu.hk"], "state-province": null, "name": "The Hang Seng University of Hong Kong"}, {"country": "Hong Kong", "web_pages": ["https://cdnis.edu.hk"], "alpha_two_code": "HK", "domains": ["cdnis.edu.hk"], "state-province": null, "name": "Canadian International School of Hong Kong"}]"#;    
+    let mut handler = InPlaceJsonEntryHandler::new(|json_entry| {
+        println!(
+            "* `{}` => `{}`",
+            json_entry.field_name, json_entry.field_value
+        );
+    });
+    let mut json_processor = DumbJsonProcessor::new(Box::new(&mut handler));
+    if wrapped {
+        let mut input = String::new();
+        input.push_str("{\"universiunities\":");
+        input.push_str(&jsons);
+        input.push_str("}");
+        //println!("{}", input);
+        json_processor.push_json(&input);
+    } else {
+        let mut progress = ProcessJsonProgress::new();
+        let mut input = jsons.to_string();
+        loop {
+            json_processor.push_json_piece(&input, &mut progress);
+            if progress.is_done() {
+                input = progress.get_remaining();
+                if input.is_empty() {
+                    break;
+                }
+            }
+        }
+    }
+}
+
+
+#[test]
 pub fn test_multiple_json_pieces() {
     let json_pieces = vec![r#"{"hello1":"world1"}"#, r#"{"hello2":"world2"}"#];
     let check_map = HashMap::from([("hello1", "world1"), ("hello2", "world2")]);

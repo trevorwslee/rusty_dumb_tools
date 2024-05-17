@@ -2,8 +2,7 @@
 #![allow(unused)]
 
 use std::{
-    io::{Read, Write},
-    net::TcpStream,
+   io::{Error, Read, Write}, net::TcpStream
 };
 
 use crate::prelude::*;
@@ -18,38 +17,49 @@ pub fn create_demo_json_parser() -> DumbArgParser {
     parser
 }
 
+fn make_connection(country: &String) -> Result<String, Error> {
+    let mut stream = TcpStream::connect("universities.hipolabs.com:80")?;
+    let request = format!(
+        "GET /search?country={} HTTP/1.1\r\nHost: universities.hipolabs.com\r\nAccept: application/json\r\nConnection: close\r\n\r\n",
+        country.replace(" ", "%20")
+    );
+    stream.write_all(request.as_bytes())?;
+    let mut response = String::new();
+    stream.read_to_string(&mut response)?;
+    Ok(response)
+}
 pub fn handle_demo_json(parser: DumbArgParser) {
     let country = parser.get::<String>("country").unwrap();
     println!("! query universities of country: [{}] ...", country);
-    //let query = format!("search?country={}", country);
-    let response = match TcpStream::connect("universities.hipolabs.com:80") {
-        Ok(mut stream) => {
-            let request = format!(
-              "GET /search?country={} HTTP/1.1\r\nHost: universities.hipolabs.com\r\nAccept: application/json\r\nConnection: close\r\n\r\n",
-              country.replace(" ", "%20")
-          );
-            //println!("[\n{}\n]", request);
-            match stream.write_all(request.as_bytes()) {
-                Ok(_) => {
-                    println!("...");
-                    let mut response = String::new();
-                    match stream.read_to_string(&mut response) {
-                        Ok(_) => Ok(response),
-                        Err(e) => Err(format!("failed to read response: {}", e)),
-                    }
-                }
-                Err(e) => Err(format!("failed to send request: {}", e)),
-            }
-        }
-        Err(e) => Err(format!("failed to connect: {}", e)),
-    };
+    let response = make_connection(&country);
+    // let response = match TcpStream::connect("universities.hipolabs.com:80") {
+    //     Ok(mut stream) => {
+    //         let request = format!(
+    //           "GET /search?country={} HTTP/1.1\r\nHost: universities.hipolabs.com\r\nAccept: application/json\r\nConnection: close\r\n\r\n",
+    //           country.replace(" ", "%20")
+    //       );
+    //         //println!("[\n{}\n]", request);
+    //         match stream.write_all(request.as_bytes()) {
+    //             Ok(_) => {
+    //                 println!("...");
+    //                 let mut response = String::new();
+    //                 match stream.read_to_string(&mut response) {
+    //                     Ok(_) => Ok(response),
+    //                     Err(e) => Err(format!("failed to read response: {}", e)),
+    //                 }
+    //             }
+    //             Err(e) => Err(format!("failed to send request: {}", e)),
+    //         }
+    //     }
+    //     Err(e) => Err(format!("failed to connect: {}", e)),
+    // };
     match response {
         Ok(response) => {
             let jsons = response
                 .chars()
                 .skip(response.find("\r\n\r\n").unwrap() + 4)
                 .collect::<String>();
-            //println!("! jsons: [{}]", jsons);
+            //println!("let jsons = r#\"{}\"#;", jsons);
             let mut handler = InPlaceJsonEntryHandler::new(|json_entry| {
                 println!(
                     "* `{}` => `{}`",
