@@ -2,7 +2,7 @@
 #![allow(unused)]
 
 use std::{
-   io::{Error, Read, Write}, net::TcpStream
+   io::{BufRead, Error, Read, Write}, net::TcpStream
 };
 
 use crate::prelude::*;
@@ -17,43 +17,91 @@ pub fn create_demo_json_parser() -> DumbArgParser {
     parser
 }
 
-fn make_connection(country: &String) -> Result<String, Error> {
-    let mut stream = TcpStream::connect("universities.hipolabs.com:80")?;
+fn make_connection(country: &String) -> Result<TcpStream, Error> {
+    let mut stream: TcpStream = TcpStream::connect("universities.hipolabs.com:80")?;
     let request = format!(
         "GET /search?country={} HTTP/1.1\r\nHost: universities.hipolabs.com\r\nAccept: application/json\r\nConnection: close\r\n\r\n",
         country.replace(" ", "%20")
     );
     stream.write_all(request.as_bytes())?;
-    let mut response = String::new();
-    stream.read_to_string(&mut response)?;
-    Ok(response)
+    Ok(stream)
+    // let mut response = String::new();
+    // stream.read_to_string(&mut response)?;
+    // Ok(response)
+}
+fn make_connection_get_response(country: &String) -> Result<String, Error> {
+    match make_connection(country) {
+        Ok(mut stream) => {
+            let mut response = String::new();
+            stream.read_to_string(&mut response)?;
+            Ok(response)
+        }
+        Err(e) => Err(e),
+    }
+}
+fn process_connection(stream: &mut TcpStream) -> Result<(), String> {
+    let mut handler = InPlaceJsonEntryHandler::new(|json_entry| {
+        println!(
+            "* `{}` => `{}`",
+            json_entry.field_name, json_entry.field_value
+        );
+    });
+    let mut json_processor = DumbJsonProcessor::new(Box::new(&mut handler));
+    let mut progress = ProcessJsonProgress::new();
+    let mut buf = [0; 32];
+    loop {
+        match stream.read(&mut buf) {
+            Ok(size) => {
+                if size == 0 {
+                    return Ok(());
+                }
+                panic!("not implemented")
+                // let mut iter = Utf8Chunks::new(&buf[..size]);
+                // let first_valid = if let Some(chunk) = iter.next() {
+                //     let valid = chunk.valid();
+                //     if chunk.invalid().is_empty() {
+                //         debug_assert_eq!(valid.len(), v.len());
+                //         Cow::Borrowed(valid);
+                //     }
+                //     valid
+                // } else {
+                //     Cow::Borrowed("");
+                // };
+        
+
+                // let piece = String::from_utf8_lossy(&buf[..size]);
+                // json_processor.push_json_piece(json_piece, &mut progress)
+            }
+            Err(e) => {
+                return Err(format!("! error: [{}]", e));
+            }
+        }
+    }
+    //Ok(())
 }
 pub fn handle_demo_json(parser: DumbArgParser) {
     let country = parser.get::<String>("country").unwrap();
     println!("! query universities of country: [{}] ...", country);
-    let response = make_connection(&country);
-    // let response = match TcpStream::connect("universities.hipolabs.com:80") {
-    //     Ok(mut stream) => {
-    //         let request = format!(
-    //           "GET /search?country={} HTTP/1.1\r\nHost: universities.hipolabs.com\r\nAccept: application/json\r\nConnection: close\r\n\r\n",
-    //           country.replace(" ", "%20")
-    //       );
-    //         //println!("[\n{}\n]", request);
-    //         match stream.write_all(request.as_bytes()) {
-    //             Ok(_) => {
-    //                 println!("...");
-    //                 let mut response = String::new();
-    //                 match stream.read_to_string(&mut response) {
-    //                     Ok(_) => Ok(response),
-    //                     Err(e) => Err(format!("failed to read response: {}", e)),
-    //                 }
-    //             }
-    //             Err(e) => Err(format!("failed to send request: {}", e)),
-    //         }
+    // let stream = make_connection(&country);
+    // println!("!");
+    // println!("!");
+    // let result = match stream {
+    //     Ok(stream) => {
+    //         process_connection(&mut stream)
     //     }
-    //     Err(e) => Err(format!("failed to connect: {}", e)),
+    //     Err(e) => {
+    //         Err(format!("! error: [{}]", e))
+    //     }
     // };
-    match response {
+    // println!("!");
+    // println!("!");
+    // match result {
+    //     Ok(_) => {}
+    //     Err(e) => {
+    //         println!("{}", e);
+    //     }
+    // }
+    match make_connection_get_response(&country) {
         Ok(response) => {
             let jsons = response
                 .chars()
