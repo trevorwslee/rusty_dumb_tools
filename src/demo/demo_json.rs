@@ -71,12 +71,8 @@ pub fn handle_demo_json(parser: DumbArgParser) {
         println!("!");
         println!("!");
         let result = match stream {
-            Ok(mut stream) => {
-                process_connection(&mut stream)
-            }
-            Err(e) => {
-                Err(format!("! error: [{}]", e))
-            }
+            Ok(mut stream) => process_connection(&mut stream),
+            Err(e) => Err(format!("! error: [{}]", e)),
         };
         println!("!");
         println!("!");
