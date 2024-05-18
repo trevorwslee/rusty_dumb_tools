@@ -19,6 +19,11 @@ fn main() {
     let version = env!("CARGO_PKG_VERSION");
     println!("The version of this crate is: {}", version);
 
+    // if true {
+    //     test_query_universities(false);
+    //     return;
+    // }
+
     if false {
         arg_parser_sample(false);
         return;

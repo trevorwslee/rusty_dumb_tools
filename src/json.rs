@@ -11,6 +11,37 @@ use crate::prelude::DumbError;
 
 const DEBUG_ON: bool = false;
 
+// pub fn test_query_universities(wrapped: bool) {
+//     let jsons = r#"[{"country": "Hong Kong", "web_pages": ["https://www.chuhai.edu.hk/"], "alpha_two_code": "HK", "domains": ["chuhai.edu.hk"], "state-province": null, "name": "Hong Kong Chu Hai College"}, {"country": "Hong Kong", "web_pages": ["https://www.cityu.edu.hk/"], "alpha_two_code": "HK", "domains": ["cityu.edu.hk", "um.cityu.edu.hk", "my.cityu.edu.hk"], "state-province": null, "name": "City University of Hong Kong"}, {"country": "Hong Kong", "web_pages": ["https://www.cuhk.edu.hk/"], "alpha_two_code": "HK", "domains": ["cuhk.edu.hk", "link.cuhk.edu.hk"], "state-province": null, "name": "The Chinese University of Hong Kong"}, {"country": "Hong Kong", "web_pages": ["https://www.hkapa.edu/"], "alpha_two_code": "HK", "domains": ["hkapa.edu"], "state-province": null, "name": "The Hong Kong Academy for Performing Arts"}, {"country": "Hong Kong", "web_pages": ["https://www.hkbu.edu.hk/"], "alpha_two_code": "HK", "domains": ["hkbu.edu.hk", "life.hkbu.edu.hk", "associate.hkbu.edu.hk"], "state-province": null, "name": "Hong Kong Baptist University"}, {"country": "Hong Kong", "web_pages": ["https://www.hksyu.edu/"], "alpha_two_code": "HK", "domains": ["hksyu.edu"], "state-province": null, "name": "Hong Kong Shue Yan University"}, {"country": "Hong Kong", "web_pages": ["https://www.hku.hk/"], "alpha_two_code": "HK", "domains": ["hku.hk"], "state-province": null, "name": "The University of Hong Kong"}, {"country": "Hong Kong", "web_pages": ["https://www.ln.edu.hk/"], "alpha_two_code": "HK", "domains": ["ln.edu.hk", "ln.hk"], "state-province": null, "name": "Lingnan University"}, {"country": "Hong Kong", "web_pages": ["https://www.hkmu.edu.hk/"], "alpha_two_code": "HK", "domains": ["hkmu.edu.hk", "ouhk.edu.hk"], "state-province": null, "name": "Hong Kong Metropolitan University"}, {"country": "Hong Kong", "web_pages": ["https://www.polyu.edu.hk/"], "alpha_two_code": "HK", "domains": ["polyu.edu.hk", "connect.polyu.hk"], "state-province": null, "name": "The Hong Kong Polytechnic University"}, {"country": "Hong Kong", "web_pages": ["https://hkust.edu.hk/"], "alpha_two_code": "HK", "domains": ["ust.hk", "connect.ust.hk"], "state-province": null, "name": "The Hong Kong University of Science and Technology"}, {"country": "Hong Kong", "web_pages": ["https://www.eduhk.hk"], "alpha_two_code": "HK", "domains": ["s.eduhk.hk", "eduhk.hk"], "state-province": null, "name": "The Education University of Hong Kong"}, {"country": "Hong Kong", "web_pages": ["http://www.hsu.edu.hk/"], "alpha_two_code": "HK", "domains": ["hsu.edu.hk"], "state-province": null, "name": "The Hang Seng University of Hong Kong"}, {"country": "Hong Kong", "web_pages": ["https://cdnis.edu.hk"], "alpha_two_code": "HK", "domains": ["cdnis.edu.hk"], "state-province": null, "name": "Canadian International School of Hong Kong"}]"#;
+//     let mut handler = InPlaceJsonEntryHandler::new(|json_entry| {
+//         println!(
+//             "* `{}` => `{}`",
+//             json_entry.field_name, json_entry.field_value
+//         );
+//     });
+//     let mut json_processor = DumbJsonProcessor::new(Box::new(&mut handler));
+//     if wrapped {
+//         let mut input = String::new();
+//         input.push_str("{\"universities\":");
+//         input.push_str(&jsons);
+//         input.push_str("}");
+//         //println!("{}", input);
+//         json_processor.push_json(&input);
+//     } else {
+//         let mut progress = ProcessJsonProgress::new();
+//         let mut input = jsons.to_string();
+//         loop {
+//             json_processor.push_json_piece(&input, &mut progress);
+//             input = progress.get_remaining();
+//             println!("*** [{}] ...{}", input.chars().take(10).collect::<String>(), input.len());
+//             //break;
+//             if input.is_empty() {
+//                 break;
+//             }
+//         }
+//     }
+// }
+
 // fn main() {
 //     let s = "Hello, world! 👋🌍".to_string();
 //     let graphemes = UnicodeSegmentation::graphemes(s.as_str(), true).collect::<Vec<&str>>();
@@ -200,6 +231,9 @@ impl<'a> DumbJsonProcessor<'a> {
         if result.is_some() {
             let remaining = self.nc_remaining.clone() + &result.unwrap();
             self.nc_remaining = String::new();
+            if !self.nc_remaining_bytes.is_empty() {
+                panic!("nc_remaining_bytes not empty not expected")
+            }
             result = Some(remaining)
         }
         progress.result = result;
@@ -750,6 +784,13 @@ impl ProcessJsonProgress {
     pub fn is_done(&self) -> bool {
         return self.result.is_some();
     }
+    pub fn has_remaining(&self) -> bool {
+        match &self.result {
+            Some(v) => !v.trim().is_empty(),
+            None => false,
+        }
+    }
+    /// will only be valid if [DumbJsonProcessor::push_json_bytes] is not used for providing JSON data
     pub fn get_remaining(&self) -> String {
         match &self.result {
             Some(v) => v.clone(),
