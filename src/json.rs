@@ -244,7 +244,12 @@ impl<'a> DumbJsonProcessor<'a> {
                 None => break,
             }
         }
-        self.nc_remaining_bytes.extend(invalid_bytes);
+        if !invalid_bytes.is_empty() {
+            invalid_bytes.reverse();
+            self.nc_remaining_bytes.extend(invalid_bytes);
+        } else {
+            self.nc_remaining_bytes = Vec::new();
+        }
         self.push_json_piece(json_piece.as_str(), progress)
     }
     fn _push_json_piece(

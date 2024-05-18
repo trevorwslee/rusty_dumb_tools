@@ -49,7 +49,7 @@ pub fn arg_parser_sample(provide_sample_args: bool) {
     println!(". multi-arg: {:?}", parser.get_multi::<String>("multi-arg"));
 }
 </pre>
-If run with <i>provide_sample_args</i> set to true, output will be like
+If run with <i>provide_sample_args</i> set to true, i.e.no arguments provided, output will be like
 <pre>
 | !!!
 | !!! INVALID INPUT ARGUMENT: argument [str-arg] not provided
@@ -243,7 +243,9 @@ pub fn demo_lblscreen() {
 </details>
 <br>
 
-After running `cargo run -- json 'hong kong'`, the screen will show something like
+After running `cargo run -- json 'hong kong'`,
+which will query the info about universities of some country with API provided by [universities.hipolabs.com](http://universities.hipolabs.com/),
+the screen will show something like
 ```
 *** query universities of country: [hong kong] ...
 * `name` => `Hong Kong Chu Hai College`

@@ -14,7 +14,9 @@ pub fn create_demo_json_parser() -> DumbArgParser {
     let mut parser = DumbArgParser::new();
     parser.set_description("DumbCalcProcessor command-line input demo.");
     dap_arg!("country", default = "hong kong")
-        .set_description("country in which to query universities for")
+        .set_description(
+            "country of info about universities queried via API http://universities.hipolabs.com/",
+        )
         .add_to(&mut parser)
         .unwrap();
     dap_arg!("-a", flag2 = "--all", fixed = true)

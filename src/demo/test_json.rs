@@ -202,7 +202,7 @@ pub fn test_json_emojis_chunked() {
 }
 #[test]
 pub fn test_json_emojis_chunked_by_bytes() {
-    //_test_json_emojis(false, true);  // FIXME: failed ... check why
+    _test_json_emojis(false, true);
 }
 fn _test_json_emojis(one_piece: bool, by_bytes: bool) {
     let json = r#"{"str":"😀"}"#;
@@ -226,6 +226,20 @@ fn _test_json_emojis(one_piece: bool, by_bytes: bool) {
         "str" : "👍🏽👩‍⚕ 🇺🇸🇭🇰👨‍👩‍👧‍👦"
     }"#;
     let check_map = HashMap::from([("str", "👍🏽👩‍⚕ 🇺🇸🇭🇰👨‍👩‍👧‍👦")]);
+    _test_json(json, &check_map, one_piece, by_bytes);
+}
+
+#[test]
+pub fn test_json_emojis_bug() {
+    let one_piece = false;
+    let by_bytes = true;
+
+    let json = r#"{"str":"😀"}"#;
+    let check_map = HashMap::from([("str", "😀")]);
+    _test_json(json, &check_map, one_piece, by_bytes);
+
+    let json = r#"{"str":"👨‍👩‍👧‍👦"}"#;
+    let check_map = HashMap::from([("str", "👨‍👩‍👧‍👦")]);
     _test_json(json, &check_map, one_piece, by_bytes);
 }
 
