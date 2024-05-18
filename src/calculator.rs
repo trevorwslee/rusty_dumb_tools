@@ -545,19 +545,34 @@ impl DumbCalculator {
                         }
                         if true {
                             if result != 0.0 && display_result == "0.0" {
-                                let dp = result_width as i32 - 5;
-                                if dp > 0 {
-                                    display_result = format!("{:.*e}", dp as usize, result);
-                                    //println!("{}", display_result)
-                                }
+                                display_result = "?".repeat(result_width + 1); // just so that will oversize, and will be handled later
+                                                                               // let dp = result_width as i32 - 5;
+                                                                               // if dp > 0 {
+                                                                               //     display_result = format!("{:.*e}", dp as usize, result);
+                                                                               //     //println!("{}", display_result)
+                                                                               // }
                             }
                         }
                     }
                 }
-                if display_result.len() > result_width {
-                    let places = result_width as i32 - (if result < 0.0 { 5 } else { 4 });
-                    if places > 0 {
-                        display_result = format!("{:.*e}", places as usize, result);
+                for i in 0..=2 {
+                    if display_result.len() > result_width {
+                        let mut places = result_width as i32 - (if result < 0.0 { 5 } else { 4 });
+                        if (f64::abs(result) < 1.0) {
+                            places -= 1;
+                        }
+                        places -= i;
+                        if places > 0 {
+                            display_result = format!("{:.*e}", places as usize, result);
+                        }
+                    }
+                    if display_result.len() > result_width {
+                        if (f64::abs(result) < 1.0) {
+                            display_result = "0".to_string();
+                            break;
+                        }
+                    } else {
+                        break;
                     }
                 }
             }

@@ -206,14 +206,13 @@ fn test_calculator_display_e() {
     calculator.reset();
     calculator.push_chars("0.00001");
     assert_eq!(calculator.get_display_sized(6), "0.0000");
-    //assert_eq!(calculator.get_display_sized(6), "1.0e-5");
     assert_eq!(calculator.get_display_sized(7), "0.00001");
     assert_eq!(calculator.get_display_sized(8), " 0.00001");
 
     calculator.reset();
     calculator.push_chars("0.00001");
     calculator.push("neg");
-    assert_eq!(calculator.get_display_sized(7), "~~~~~~~");
+    assert_eq!(calculator.get_display_sized(7), "-1.0e-5");
     assert_eq!(calculator.get_display_sized(8), "-0.00001");
     assert_eq!(calculator.get_display_sized(9), " -0.00001");
 
@@ -221,6 +220,27 @@ fn test_calculator_display_e() {
     calculator.push_chars("123456.7");
     calculator.push("=");
     assert_eq!(calculator.get_display_sized(6), "1.23e5");
+}
+#[test]
+fn test_calculator_display_e_2() {
+    let mut calculator = DumbCalculator::new();
+    calculator.push_chars("0.00001");
+    assert_eq!(calculator.get_display_sized(6), "0.0000");
+    calculator.push("=");
+    assert_eq!(calculator.get_display_sized(6), "1.0e-5");
+}
+#[test]
+fn test_calculator_display_big_e() {
+    let mut calculator = DumbCalculator::new();
+    calculator.push_chars("1000000*1000000");
+    calculator.push("=");
+    assert_eq!(calculator.get_display_sized(8), "1.000e12");
+    calculator.push_chars("*10");
+    calculator.push("=");
+    assert_eq!(calculator.get_display_sized(8), "1.000e13");
+    calculator.push_chars("*123456.789");
+    calculator.push("=");
+    assert_eq!(calculator.get_display_sized(8), "1.235e18");
 }
 #[test]
 fn test_calculator_display_small_e() {
@@ -241,7 +261,7 @@ fn test_calculator_display_small_e() {
     assert_eq!(calculator.get_display_sized(10), "1.00000e-9");
     calculator.push_chars("*0.1");
     calculator.push("=");
-    assert_eq!(calculator.get_display_sized(10), "~~~~~~~~~~"); // exponential notation uses a single digit
+    assert_eq!(calculator.get_display_sized(10), "         0");
     calculator.push_chars("*10");
     calculator.push("=");
     assert_eq!(calculator.get_display_sized(10), "1.00000e-9");
