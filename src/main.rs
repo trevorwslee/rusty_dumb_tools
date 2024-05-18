@@ -9,11 +9,20 @@ mod debug;
 use std::{collections::HashMap, env, vec};
 
 //use crossterm::style::Colorize;
-use rusty_dumb_tools::{demo, json, prelude::*};
+use rusty_dumb_tools::{
+    demo::{self, demo_arg::arg_parser_sample},
+    json,
+    prelude::*,
+};
 
 fn main() {
     let version = env!("CARGO_PKG_VERSION");
     println!("The version of this crate is: {}", version);
+
+    if false {
+        arg_parser_sample(false);
+        return;
+    }
 
     if false {
         println!("ABC…XYZ...({})", "…".len());

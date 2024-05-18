@@ -47,7 +47,6 @@ use self::{
 pub fn run_demo(in_args: Option<Vec<&str>>) {
     let mut parser = create_demo_parser();
     if let Some(in_args) = in_args {
-        //let in_args = in_args.unwrap();
         parser.process_args(in_args);
     } else {
         parser.parse_args();

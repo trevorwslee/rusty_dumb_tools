@@ -9,7 +9,7 @@ use std::fmt;
 
 use crate::prelude::DumbError;
 
-const DEBUG_ON: bool = false; // TODO: disable DEBUG
+const DEBUG_ON: bool = false;
 
 // fn main() {
 //     let s = "Hello, world! 👋🌍".to_string();

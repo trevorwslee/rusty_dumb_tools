@@ -1,3 +1,5 @@
+//! core [`crate::json`] sub-demo code
+
 #![deny(warnings)]
 #![allow(unused)]
 
@@ -11,14 +13,38 @@ use crate::prelude::*;
 pub fn create_demo_json_parser() -> DumbArgParser {
     let mut parser = DumbArgParser::new();
     parser.set_description("DumbCalcProcessor command-line input demo.");
-    dap_arg!("country", default = "united kingdom")
+    dap_arg!("country", default = "hong kong")
         .set_description("country in which to query universities for")
+        .add_to(&mut parser)
+        .unwrap();
+    dap_arg!("-a", flag2 = "--all", fixed = true)
+        .set_description("show all fields")
         .add_to(&mut parser)
         .unwrap();
     parser
 }
+pub fn handle_demo_json(parser: DumbArgParser) {
+    let country = parser.get::<String>("country").unwrap();
+    let show_all = parser.get_or_default::<bool>("-a", false);
+    println!("*** query universities of country: [{}] ...", country);
+    demo_query_universities(&country, show_all);
+}
 
-fn make_connection(country: &String) -> Result<TcpStream, Error> {
+pub fn demo_query_universities(country: &str, show_all: bool) {
+    let stream = make_connection(&country);
+    let result = match stream {
+        Ok(mut stream) => process_connection(&mut stream, show_all),
+        Err(e) => Err(format!("XXX error: [{}]", e)),
+    };
+    match result {
+        Ok(_) => {}
+        Err(e) => {
+            println!("{}", e);
+        }
+    }
+}
+
+fn make_connection(country: &str) -> Result<TcpStream, Error> {
     let mut stream: TcpStream = TcpStream::connect("universities.hipolabs.com:80")?;
     let request = format!(
         "GET /search?country={} HTTP/1.1\r\nHost: universities.hipolabs.com\r\nAccept: application/json\r\nConnection: close\r\n\r\n",
@@ -37,12 +63,15 @@ fn make_connection_get_response(country: &String) -> Result<String, Error> {
         Err(e) => Err(e),
     }
 }
-fn process_connection(stream: &mut TcpStream) -> Result<(), String> {
-    let mut handler = InPlaceJsonEntryHandler::new(|json_entry| {
-        println!(
-            "* `{}` => `{}`",
-            json_entry.field_name, json_entry.field_value
-        );
+fn process_connection(stream: &mut TcpStream, show_all: bool) -> Result<(), String> {
+    let mut handler = InPlaceJsonEntryHandler::new(move |json_entry| {
+        let show = show_all || json_entry.field_name == "name";
+        if show {
+            println!(
+                "* `{}` => `{}`",
+                json_entry.field_name, json_entry.field_value
+            );
+        }
     });
     let mut json_processor = DumbJsonProcessor::new(Box::new(&mut handler));
     let mut progress = ProcessJsonProgress::new();
@@ -57,71 +86,7 @@ fn process_connection(stream: &mut TcpStream) -> Result<(), String> {
                 json_processor.push_json_bytes(bytes, &mut progress);
             }
             Err(e) => {
-                return Err(format!("! error: [{}]", e));
-            }
-        }
-    }
-    //Ok(())
-}
-pub fn handle_demo_json(parser: DumbArgParser) {
-    let country = parser.get::<String>("country").unwrap();
-    println!("! query universities of country: [{}] ...", country);
-    if true {
-        let stream = make_connection(&country);
-        println!("!");
-        println!("!");
-        let result = match stream {
-            Ok(mut stream) => process_connection(&mut stream),
-            Err(e) => Err(format!("! error: [{}]", e)),
-        };
-        println!("!");
-        println!("!");
-        match result {
-            Ok(_) => {}
-            Err(e) => {
-                println!("{}", e);
-            }
-        }
-    } else {
-        match make_connection_get_response(&country) {
-            Ok(response) => {
-                let jsons = response
-                    .chars()
-                    .skip(response.find("\r\n\r\n").unwrap() + 4)
-                    .collect::<String>();
-                //println!("let jsons = r#\"{}\"#;", jsons);
-                let mut handler = InPlaceJsonEntryHandler::new(|json_entry| {
-                    println!(
-                        "* `{}` => `{}`",
-                        json_entry.field_name, json_entry.field_value
-                    );
-                });
-                let mut json_processor = DumbJsonProcessor::new(Box::new(&mut handler));
-                if true {
-                    let mut input = String::new();
-                    input.push_str("{\"universiunities\":");
-                    input.push_str(&jsons);
-                    input.push_str("}");
-                    //println!("{}", input);
-                    json_processor.push_json(&input);
-                } else {
-                    // TODO: the following is very slow ... find out why
-                    let mut progress = ProcessJsonProgress::new();
-                    let mut input = jsons;
-                    loop {
-                        json_processor.push_json_piece(&input, &mut progress);
-                        if progress.is_done() {
-                            input = progress.get_remaining();
-                            if input.is_empty() {
-                                break;
-                            }
-                        }
-                        println!("... more jsons ...");
-                    }
-                }
-            }
-            Err(e) => {
-                println!("! error: [{}]", e);
+                return Err(format!("XXX error: [{}]", e));
             }
         }
     }

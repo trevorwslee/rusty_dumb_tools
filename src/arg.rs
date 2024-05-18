@@ -193,9 +193,7 @@ fn debug_arg_sap() {
 /// dap_arg!("str-arg").add_to(&mut parser);  // positional argument "str-arg" (of type String)
 /// dap_arg!("i32-arg", value=123).add_to(&mut parser);  // positional argument "i32-arg" of type i32 (inferred from the value 123)
 /// dap_arg!("multi-arg").set_multi().add_to(&mut parser);  // positional multi-argument "multi-arg" that will accept multiple values (one + rest)
-/// // parser.show_help(None, false);
-/// // assert_eq!("<program> [-h] [-v] [-n name] str-arg i32-arg multi-arg", parser.compose_usage());
-/// parser.parse_args();
+/// parser.parse_args();  // parse from command-line arguments
 /// println!(". -v: {:?}", parser.get::<bool>("-v"));
 /// println!(". --verbose: {:?}", parser.get::<bool>("--verbose"));  // will be the same parameter value as "-v"
 /// println!(". --name: {:?}", parser.get::<String>("--name"));  // can use "-n" as well
@@ -333,13 +331,21 @@ impl DumbArgParser {
     /// ```
     /// note: except that all types can be implicitly converted to [`String`], no other implicit type conversion; if type does not agree, will panic
     pub fn get<T: ArgValueTrait>(&self, arg_name: &str) -> Option<T> {
+        return self._get(arg_name, None);
+    }
+    /// like [`DumbArgParser::get`] but returns a default value if the argument value is not supplied;
+    /// note that if the argument is specified to have default (set with [`DumbArgBuilder::default()`]), that default will be used instead of the one provided here
+    pub fn get_or_default<T: ArgValueTrait>(&self, arg_name: &str, default: T) -> T {
+        return self._get(arg_name, Some(default)).unwrap();
+    }
+    fn _get<T: ArgValueTrait>(&self, arg_name: &str, default: Option<T>) -> Option<T> {
         let arg_idx = match self.input_arg_index_map.get(arg_name) {
             Some(arg_idx) => arg_idx,
-            None => return None,
+            None => return default,
         };
         let arg_value = match &self.input_arg_values[*arg_idx] {
             Some(arg_value) => arg_value,
-            None => return None,
+            None => return default,
         };
         match T::from_arg_value(arg_value.clone()) {
             Ok(value) => Some(*value),

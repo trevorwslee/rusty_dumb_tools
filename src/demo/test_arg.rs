@@ -161,6 +161,20 @@ fn test_flag_args() {
     assert_eq!(888, parser.get::<i32>("i32").unwrap());
 }
 #[test]
+fn test_flag_args_get_default() {
+    println!("*** FLAG ARGUMENTS (GET DEFAULTS) ***");
+    let mut parser = DumbArgParser::new();
+    dap_arg!("-c", flag2 = "--C", fixed = 999).add_to(&mut parser);
+    let in_args: Vec<&str> = vec![]; // flags can be before or after positional
+    parser.process_args(in_args);
+    assert_eq!(999, parser.get_or_default::<i32>("-c", 999));
+    assert_eq!(999, parser.get_or_default::<i32>("--C", 999));
+    assert_eq!(
+        "999",
+        parser.get_or_default::<String>("unknown", "999".to_string())
+    );
+}
+#[test]
 fn test_arg_range() {
     println!("*** ARGUMENT RANGE ***");
     let mut parser = DumbArgParser::new();

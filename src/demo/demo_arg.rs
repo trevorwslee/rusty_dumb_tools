@@ -1,6 +1,8 @@
 //! core [`crate::arg`] sub-demo code
 
 #![deny(warnings)]
+#![allow(unused)]
+#![deny(warnings)]
 
 use crate::{
     arg::{DumbArgBuilder, DumbArgParser},
@@ -57,4 +59,26 @@ pub fn create_debug_arg_parser() -> DumbArgParser {
         .add_to(&mut parser)
         .unwrap();
     parser
+}
+
+pub fn arg_parser_sample(provide_sample_args: bool) {
+    let mut parser = DumbArgParser::new();
+    parser.set_description("This is a simple argument parser.");
+    dap_arg!("-v", flag2 = "--verbose", fixed = true).add_to(&mut parser); // argument flag "-v" / "--verbose" with fixed value (true) when the flag is present
+    dap_arg!("-n", flag2 = "--name", default = "nobody").add_to(&mut parser); // argument "-n" / "--name" requiring input value, with default "nobody"
+    dap_arg!("str-arg").add_to(&mut parser); // positional argument "str-arg" (of type String)
+    dap_arg!("i32-arg", value = 123).add_to(&mut parser); // positional argument "i32-arg" of type i32 (inferred from the value 123)
+    dap_arg!("multi-arg").set_multi().add_to(&mut parser); // positional multi-argument "multi-arg" that will accept multiple values (one + rest)
+    if provide_sample_args {
+        let in_args: Vec<&str> = vec!["-v", "STR", "888", "m1", "m2", "m3"]; // explicitly provide arguments
+        parser.process_args(in_args); // parse from command-line arguments
+    } else {
+        parser.parse_args(); // parse from command-line arguments
+    }
+    println!(". -v: {:?}", parser.get::<bool>("-v"));
+    println!(". --verbose: {:?}", parser.get::<bool>("--verbose")); // will be the same parameter value as "-v"
+    println!(". --name: {:?}", parser.get::<String>("--name")); // can use "-n" as well
+    println!(". str-arg: {:?}", parser.get::<String>("str-arg"));
+    println!(". i32-arg: {:?}", parser.get::<i32>("i32-arg"));
+    println!(". multi-arg: {:?}", parser.get_multi::<String>("multi-arg"));
 }
