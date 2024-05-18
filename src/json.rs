@@ -230,26 +230,45 @@ impl<'a> DumbJsonProcessor<'a> {
             in_bytes.extend(nc_remaining_bytes);
         }
         in_bytes.extend(bytes.to_vec());
-        let mut json_piece = String::new();
-        let mut invalid_bytes: Vec<u8> = Vec::new();
-        loop {
-            let lossy = String::from_utf8_lossy(&in_bytes);
-            json_piece = lossy.to_string();
-            if !json_piece.ends_with("\u{FFFD}") {
-                break;
+        let mut json_piece = match String::from_utf8(in_bytes.clone()) {
+            Ok(str) => str,
+            Err(_) => {
+                if true {
+                    //let mut piece = String::new();
+                    //let mut invalid_bytes: Vec<u8> = Vec::new();
+                    let in_lossy = String::from_utf8_lossy(&in_bytes);
+                    let in_piece = in_lossy.to_string();
+                    if in_piece.ends_with("\u{FFFD}") {
+                        self.nc_remaining_bytes.extend(in_bytes);
+                        String::new()
+                    } else {
+                        in_piece
+                    }
+                } else {
+                    let mut piece = String::new();
+                    let mut inv_invalid_bytes: Vec<u8> = Vec::new();
+                    loop {
+                        let lossy = String::from_utf8_lossy(&in_bytes);
+                        piece = lossy.to_string();
+                        if !piece.ends_with("\u{FFFD}") {
+                            break;
+                        }
+                        let lb = in_bytes.pop(); // try with one less byte
+                        match lb {
+                            Some(lb) => inv_invalid_bytes.push(lb),
+                            None => break,
+                        }
+                    }
+                    if !inv_invalid_bytes.is_empty() {
+                        inv_invalid_bytes.reverse();
+                        self.nc_remaining_bytes.extend(inv_invalid_bytes);
+                    } else {
+                        self.nc_remaining_bytes = Vec::new();
+                    }
+                    piece
+                }
             }
-            let lb = in_bytes.pop(); // try with one less byte
-            match lb {
-                Some(lb) => invalid_bytes.push(lb),
-                None => break,
-            }
-        }
-        if !invalid_bytes.is_empty() {
-            invalid_bytes.reverse();
-            self.nc_remaining_bytes.extend(invalid_bytes);
-        } else {
-            self.nc_remaining_bytes = Vec::new();
-        }
+        };
         self.push_json_piece(json_piece.as_str(), progress)
     }
     fn _push_json_piece(
