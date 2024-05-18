@@ -1,6 +1,6 @@
 # [RustyDumbTools](https://github.com/trevorwslee/rusty_dumb_tools) (v0.1.12)
 
-A [collection of simple tools](https://crates.io/crates/rusty_dumb_tools) in ***Rust*** as ***Rust*** modules:
+A collection of [simple tools in ***Rust***](https://crates.io/crates/rusty_dumb_tools) as ***Rust*** modules:
 * [`crate::arg::DumbArgParser`](https://docs.rs/rusty_dumb_tools/latest/rusty_dumb_tools/arg/struct.DumbArgParser.html):
   A simple argument parser.
   It can be useful for handling command line argument parsing for a ***Rust*** program.
