@@ -266,7 +266,10 @@ fn test_args() {
     println!(". string: {:?}", parser.get::<String>("-name"));
     let usage = parser.compose_usage();
     let parameters = parser.compose_inputs();
-    assert_eq!("pgm [-h] [-v] [-v2] [-name name] <str-arg> <i32-arg>", usage);
+    assert_eq!(
+        "pgm [-h] [-v] [-v2] [-name name] <str-arg> <i32-arg>",
+        usage
+    );
     assert_eq!("STR-ARG -v2 -name nobody 999", parameters);
 }
 #[test]
