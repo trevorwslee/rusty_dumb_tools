@@ -35,7 +35,7 @@ use crate::{arg, shared::DumbError};
 /// sap_arg!("-v", "--verbose").fixed(true).add_to(&mut parser); // e.g. ... -v ... -- this will turn "on" -v with value true
 /// sap_arg!("position1").add_to(&mut parser); // e.g. ... -f flag-value positional-1-value
 /// sap_arg!("position2").default("def").add_to(&mut parser); // e.g. ... -f flag-value positional-1-value positional-2-value
-/// assert_eq!("<program> [-h] -f flag [-v] position1 [position2]", parser.compose_usage());
+/// assert_eq!("<program> [-h] -f flag [-v] <position1> [position2]", parser.compose_usage());
 /// ```
 /// also see [`DumbArgParser`]
 #[macro_export]
@@ -58,7 +58,7 @@ macro_rules! sap_arg {
 /// dap_arg!("-v", flag2="--verbose", fixed=true).add_to(&mut parser); // e.g. ... -v ... -- this will turn "on" -v with value true
 /// dap_arg!("position1").add_to(&mut parser); // e.g. ... -f flag-value positional-1-value
 /// dap_arg!("position2", default="def").add_to(&mut parser); // e.g. ... -f flag-value positional-1-value positional-2-value
-/// assert_eq!("<program> [-h] -f flag [-v] position1 [position2]", parser.compose_usage());
+/// assert_eq!("<program> [-h] -f flag [-v] <position1> [position2]", parser.compose_usage());
 /// ```
 ///
 /// the compulsory argument is the name of the argument, be it a positional argument or a flag argument like "-v";
@@ -865,7 +865,7 @@ impl DumbArgParser {
                 ArgKey::Name(name) => name,
                 _ => panic!(),
             };
-            print!("| . {name}");
+            print!("| . <{name}>");
             self._show_help_arg_desc(position_arg);
             // print!("| . {name}");
             // if position_arg.nature == ArgNature::Optional {
@@ -975,7 +975,7 @@ impl DumbArgParser {
             let f = if position_arg.nature == ArgNature::Optional {
                 format!(" [{name}]")
             } else {
-                format!(" {name}")
+                format!(" <{name}>")
             };
             //println!("==============POS===== f: {}", f);
             usage.push_str(f.as_str());

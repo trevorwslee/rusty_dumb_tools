@@ -1,4 +1,4 @@
-# [RustyDumbTools](https://github.com/trevorwslee/rusty_dumb_tools) (v0.1.12)
+# [RustyDumbTools](https://github.com/trevorwslee/rusty_dumb_tools) (v0.1.13)
 
 A collection of [simple tools in ***Rust***](https://crates.io/crates/rusty_dumb_tools) as ***Rust*** modules:
 * [`crate::arg::DumbArgParser`](https://docs.rs/rusty_dumb_tools/latest/rusty_dumb_tools/arg/struct.DumbArgParser.html):
@@ -23,10 +23,9 @@ A collection of [simple tools in ***Rust***](https://crates.io/crates/rusty_dumb
   
  
  
-<br>
-<details>
-<summary><b>Sample code of using <i>DumbArgParser</i></b></summary>
-<pre>
+## Sample Code for `DumbArgParser`
+
+```
 pub fn arg_parser_sample(provide_sample_args: bool) {
     let mut parser = DumbArgParser::new();
     parser.set_description("This is a simple argument parser.");
@@ -48,32 +47,85 @@ pub fn arg_parser_sample(provide_sample_args: bool) {
     println!(". i32-arg: {:?}", parser.get::<i32>("i32-arg"));
     println!(". multi-arg: {:?}", parser.get_multi::<String>("multi-arg"));
 }
-</pre>
-If run with <i>provide_sample_args</i> set to true, i.e.no arguments provided, output will be like
-<pre>
+```
+
+If run with `provide_sample_args` set to `true`, i.e. no arguments provided, output will be like
+```
 | !!!
 | !!! INVALID INPUT ARGUMENT: argument [str-arg] not provided
 | !!!
-| USAGE: rusty_dumb_tools [-h] [-v] [-n name] str-arg i32-arg multi-arg
+| USAGE: rusty_dumb_tools [-h] [-v] [-n name] <str-arg> <i32-arg> <multi-arg>
 | : This is a simple argument parser.
 | . -h, --help : HELP
 | . -v, --verbose : FLAG [true]
 | . -n name, --name name : OPTIONAL; default [nobody]
-| . str-arg : REQUIRED; e.g.
-| . i32-arg : REQUIRED; e.g. 123
-| . multi-arg ... : REQUIRED; e.g.  ...
-</pre>
-If run with <i>provide_sample_args</i> set to false, output will be like
-<pre>
+| . <str-arg> : REQUIRED; e.g.
+| . <i32-arg> : REQUIRED; e.g. 123
+| . <multi-arg> ... : REQUIRED; e.g.  ...
+```
+If run with `provide_sample_args` set to `false`, output will be like
+```
 . -v: Some(true)
 . --verbose: Some(true)
 . --name: Some("nobody")
 . str-arg: Some("STR")
 . i32-arg: Some(888)
-. multi-arg: Some(["m1", "m2", "m3"])</pre>
-</details>
-<br>
+. multi-arg: Some(["m1", "m2", "m3"])
+```
 
+Next section will present a demo of using the tools. The sub-demo "selection" is actually implemented using `DumbArgParser` with "sub-selection" for the selected sub-demo like
+```
+pub fn run_demo() {
+    let mut parser = create_demo_parser();
+    parser.parse_args();
+    handle_sub_demo(parser);
+}
+pub fn create_demo_parser() -> DumbArgParser {
+    let mut parser = DumbArgParser::new();
+    parser.set_description("Demos of rusty_dumb_tools.");
+    dap_arg!("demo", value = "calc")
+        .set_description("a demo")
+        .set_with_desc_enums(vec![
+            "calc:DumbCalcProcessor command-line input demo",
+            ...
+        ])
+        .set_rest()
+        .add_to(&mut parser)
+        .unwrap();
+    parser
+}
+pub fn handle_sub_demo(parser: DumbArgParser) {
+    let demo = match parser.get::<String>("demo") {
+        Some(t) => t,
+        None => {
+            panic!("No demo specified.");
+        }
+    };
+    match demo.as_str() {
+        "calc" => {
+            let mut demo_parser = create_demo_calc_parser();
+            parser.process_rest_args("demo", &mut demo_parser);
+            handle_demo_calc(demo_parser);
+        }
+        ...
+        _ => panic!("Unknown sub-demo: {}", demo),
+    };
+}
+fn create_demo_calc_parser() -> DumbArgParser {
+    let mut parser = DumbArgParser::new();
+    parser.set_description("DumbCalcProcessor command-line input demo.");
+    dap_arg!("input", value = "123")
+        .set_multi()
+        .set_description("infix expression")
+        .add_to(&mut parser)
+        .unwrap();
+    parser
+}
+pub fn handle_demo_calc(parser: DumbArgParser) {
+    let input = parser.get_multi::<String>("input").unwrap();
+    ...
+}
+```
 
 # Demo
 
@@ -89,7 +141,7 @@ Assuming new ***Rust*** project with `Cargo.toml` and `main.rs` like
 ```
 ...
 [dependencies]
-rusty_dumb_tools = "0.1"
+rusty_dumb_tools = "0.13"
 ...
 ```
 
@@ -119,10 +171,10 @@ the demo can be ***cargo*** run like
 
 The output of running `cargo run -- -h`:
 ```
-| USAGE: rusty_dumb_tools [-h] demo
+| USAGE: rusty_dumb_tools [-h] <demo>
 | : Demos of rusty_dumb_tools.
 | . -h, --help : HELP
-| . demo ... : REQUIRED; e.g. calc ...
+| . <demo> ... : REQUIRED; e.g. calc ...
 |   : a demo
 |   : . [calc] : DumbCalcProcessor command-line input demo
 |   : . [calc-repl] : DumbCalcProcessor REPL demo
@@ -134,10 +186,10 @@ The output of running `cargo run -- -h`:
 
 The output of running `cargo run -- calc -h`:
 ```
-| USAGE: rusty_dumb_tools calc [-h] input
+| USAGE: rusty_dumb_tools calc [-h] <input>
 | : DumbCalcProcessor command-line input demo.
 | . -h, --help : HELP
-| . input ... : REQUIRED; e.g. 123 ...
+| . <input> ... : REQUIRED; e.g. 123 ...
 |   : infix expression
 ```
 
@@ -357,6 +409,9 @@ MIT
 
 
 # Change History:
+
+* v0.1.13
+  - bug fix
 
 * v0.1.12
   - added supply bytes to DumbJsonProcessor

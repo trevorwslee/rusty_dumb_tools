@@ -261,10 +261,15 @@ fn test_calculator_display_small_e() {
     assert_eq!(calculator.get_display_sized(10), "1.00000e-9");
     calculator.push_chars("*0.1");
     calculator.push("=");
-    assert_eq!(calculator.get_display_sized(10), "         0");
+    assert_eq!(calculator.get_display_sized(10), "1.0000e-10");
     calculator.push_chars("*10");
     calculator.push("=");
     assert_eq!(calculator.get_display_sized(10), "1.00000e-9");
+
+    let mut calculator = DumbCalculator::new();
+    calculator.push_chars("0.0000001*0.0000001");
+    calculator.push("=");
+    assert_eq!(calculator.get_display_sized(10), "1.0000e-14");
 }
 #[test]
 fn test_calculator_display_error() {

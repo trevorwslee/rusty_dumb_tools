@@ -566,13 +566,13 @@ impl DumbCalculator {
                             display_result = format!("{:.*e}", places as usize, result);
                         }
                     }
-                    if display_result.len() > result_width {
-                        if (f64::abs(result) < 1.0) {
-                            display_result = "0".to_string();
-                            break;
-                        }
-                    } else {
+                    if display_result.len() <= result_width {
                         break;
+                    }
+                }
+                if display_result.len() > result_width {
+                    if (f64::abs(result) < 1.0) {
+                        display_result = "0".to_string();
                     }
                 }
             }
