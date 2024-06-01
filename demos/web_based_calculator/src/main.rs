@@ -36,6 +36,8 @@ fn App() -> impl IntoView {
             <div class="item display"> {
                 // since want to re-render when "clicked_value" signal changes, need to use a closure
                 move || {
+                    // get the calculator instance and make it mutable
+                    let mut calculator = calculator_ref.borrow_mut();
                     // get the "input" from the signal
                     let mut clicked_chars = clicked_value.get();
                     if clicked_chars == "alt" {
@@ -45,11 +47,10 @@ fn App() -> impl IntoView {
                     } else if clicked_chars == "am" {
                         let angle_mode = angle_mode.get();
                         let new_angle_mode = if angle_mode == "deg" { "rad" } else { "deg" };
+                        calculator.use_angle_mode(angle_mode.as_str());
                         set_angle_mode.set(new_angle_mode.to_string());
                         clicked_chars = "".to_owned()
                     }
-                    // get the calculator instance and make it mutable
-                    let mut calculator = calculator_ref.borrow_mut();
                     if clicked_chars == "<" {
                         calculator.undo();
                     } else if clicked_chars == "ac" {

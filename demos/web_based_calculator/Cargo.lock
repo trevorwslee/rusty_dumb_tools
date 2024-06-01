@@ -968,10 +968,7 @@ dependencies = [
 
 [[package]]
 name = "rusty_dumb_tools"
-version = "0.1.10"
-dependencies = [
- "unicode-segmentation",
-]
+version = "0.1.13"
 
 [[package]]
 name = "ryu"

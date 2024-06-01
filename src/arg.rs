@@ -890,7 +890,14 @@ impl DumbArgParser {
         } else if arg.nature == ArgNature::Optional {
             println!(" : OPTIONAL; default [{}]", arg.value);
         } else {
-            print!(" : REQUIRED; e.g. {}", arg.value);
+            print!(" : REQUIRED");
+            let show_example = match &arg.value {
+                ArgValue::String(value) => !value.is_empty(),
+                _ => true,
+            };
+            if show_example {
+                print!("; e.g. {}", arg.value);
+            }
             if arg.multi_mode != ArgMultiMode::None {
                 print!(" ...");
             }

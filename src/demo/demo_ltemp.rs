@@ -59,7 +59,7 @@ pub fn show_table(name: &str) {
     println!("{}", line1);
     println!("{}", line2);
     println!("{}", line3);
-    println!();
+    println!("{}", "?".repeat(31)); // just for testing, initially fill the line with ? ... the line will be updated later
     println!("{}", "=".repeat(31));
 
     let lt_comps = dlt_comps![
