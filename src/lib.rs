@@ -47,6 +47,7 @@ pub mod calculator;
 pub mod json;
 pub mod lblscreen;
 pub mod ltemp;
+pub mod progress;
 
 pub mod demo;
 
