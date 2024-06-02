@@ -13,11 +13,20 @@ use rusty_dumb_tools::{
     demo::{self, demo_arg::arg_parser_sample},
     json,
     prelude::*,
+    progress,
 };
 
 fn main() {
     let version = env!("CARGO_PKG_VERSION");
     println!("The version of this crate is: {}", version);
+
+    if true {
+        progress::debug_progress(false, 500, 1);
+        progress::debug_progress_single(false, 1000);
+        progress::debug_progress_single(true, 1000);
+        progress::debug_progress_single(false, 1000);
+        return;
+    }
 
     // if true {
     //     test_query_universities(false);
