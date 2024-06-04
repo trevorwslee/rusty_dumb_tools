@@ -10,16 +10,6 @@ use std::{
     time::Duration,
 };
 
-// #[macro_export]
-// macro_rules! dpiter {
-//     ($x:expr, description=$description:expr) => {{
-//         DumbProgressIterator::new_with_desc($x, $description.to_string())
-//     }};
-//     ($x:expr) => {{
-//         DumbProgressIterator::new($x)
-//     }};
-// }
-
 #[macro_export]
 macro_rules! dpiter {
     ($x:expr
@@ -31,7 +21,24 @@ macro_rules! dpiter {
         };
         $(setting.name = Some($name);)?
         $(setting.desc = Some($desc);)?
-        DumbProgressIterator::new($x.to_progress_source(), setting)
+        let source = DumbProgressSource::new(Box::new($x.iter()));
+        DumbProgressIterator::new(source, setting)
+    }};
+}
+
+#[macro_export]
+macro_rules! dpintoiter {
+    ($x:expr
+        $(, name=$name:expr)?
+        $(, desc=$desc:expr)?
+    ) => {{
+        let mut setting = DumbProgressSetting {
+            ..DumbProgressSetting::default()
+        };
+        $(setting.name = Some($name);)?
+        $(setting.desc = Some($desc);)?
+        let source = DumbProgressSource::new(Box::new($x.into_iter()));
+        DumbProgressIterator::new(source, setting)
     }};
 }
 
@@ -49,9 +56,8 @@ pub fn debug_progress(show_items: bool, sleep_millis: u64, level: usize) {
     //     iter
     // };
     let name = format!("L{}", level);
-    let mut iter = dpiter!(items, name = name, desc = desc);
-    //let boxed_iterator = Box::new(items.iter());
-    //let source = DumbProgressSource::new(boxed_iterator);
+    let mut iter = dpintoiter!(items, name = name, desc = desc);
+    //let source = DumbProgressSource::new(Box::new(items.into_iter()));
     //let mut iter = { DumbProgressIterator::new_with_desc(source, desc) };
     while let Some(item) = iter.next() {
         if show_items {
@@ -64,6 +70,11 @@ pub fn debug_progress(show_items: bool, sleep_millis: u64, level: usize) {
             debug_progress(show_items, sleep_millis, level - 1);
         }
     }
+    // if true {
+    //     for item in items.iter() {
+    //         println!("- iter(): {}", item);
+    //     }
+    // }
 }
 pub fn debug_progress_single(show_items: bool, sleep_millis: u64) {
     if true {
@@ -91,93 +102,9 @@ pub fn debug_progress_single(show_items: bool, sleep_millis: u64) {
             }
         }
     }
-    // if false {
-    //     let items = vec![
-    //         String::from("apple"),
-    //         String::from("banana"),
-    //         String::from("cherry"),
-    //     ];
-    //     {
-    //         // let mut builder = DumbProgressIteratorBuilder::new(Box::new(items.iter()));
-    //         // //builder.set_description(desc);
-    //         // let mut iter = builder.build();
-    //         //let mut iter = dpiter!(Box::new(items.iter()));
-    //         let mut iter = { DumbProgressIterator::new_simple(Box::new(items.into_iter())) };
-    //         while let Some(item) = iter.next() {
-    //             if show_items {
-    //                 println!("          * into_iter(): {}", item);
-    //             }
-    //             if sleep_millis > 0 {
-    //                 thread::sleep(Duration::from_millis(sleep_millis));
-    //             }
-    //         }
-    //     }
-    //     // for item in items.iter() {
-    //     //     println!("- iter(): {}", item);
-    //     // }
-    // }
-
-    // if false {
-    //     let items = vec!["apple", "banana", "cherry", "date"];
-    //     let mut iter = DPIVector::new(&items);
-    //     while let Some(item) = iter.next() {
-    //         println!("Processing item: {}", item);
-    //     }
-    // }
-
-    // if false {
-    //     let items = vec![
-    //         String::from("apple"),
-    //         String::from("banana"),
-    //         String::from("cherry"),
-    //         String::from("date"),
-    //     ];
-    //     let mut owned_item_iter = items.into_iter();
-    //     let mut iter = DPIIntoIter::new(&mut owned_item_iter);
-    //     while let Some(item) = iter.next() {
-    //         println!("Processing item: {}", item);
-    //     }
-    // }
-
-    // if false {
-    //     let items = vec!["apple", "banana", "cherry", "date"];
-    //     let mut item_iter = items.iter();
-    //     let mut iter = DPISliceIter::new(&mut item_iter);
-    //     while let Some(item) = iter.next() {
-    //         println!("Processing item: {}", item);
-    //     }
-    // }
 }
 
 const DEF_SHOW_GAP_MILLIS: u32 = 100;
-
-// struct DumbProgressIteratorBuilder<'a, T> {
-//     boxed_iterator: Option<Box<dyn Iterator<Item = T> + 'a>>,
-//     description: Option<String>,
-// }
-
-// impl<'a, T> DumbProgressIteratorBuilder<'a, T> {
-//     pub fn new(boxed_iterator: Box<dyn Iterator<Item = T> + 'a>) -> DumbProgressIteratorBuilder<T> {
-//         DumbProgressIteratorBuilder {
-//             boxed_iterator: Some(boxed_iterator),
-//             description: None
-//         }
-//     }
-//     pub fn set_description(&mut self, description: &str) -> &mut Self {
-//         self.description = Some(description.to_string());
-//         self
-//     }
-//     pub fn build(&mut self) -> DumbProgressIterator<T> {
-//         let progress_entry_id = get_the_progress_shower_ref()
-//             .borrow_mut()
-//             .register_progress(Progress::Counter(0), self.description.take());
-//         DumbProgressIterator {
-//             boxed_iterator: self.boxed_iterator.take().unwrap(),
-//             //description: self.description.take(),
-//             progress_entry_id,
-//         }
-//     }
-// }
 
 pub struct DumbProgressIterator<'a, T> {
     boxed_iterator: Box<dyn Iterator<Item = T> + 'a>,
@@ -245,6 +172,20 @@ impl<'a, T> Drop for DumbProgressIterator<'a, T> {
             .unregister_progress(self.progress_entry_id);
     }
 }
+
+
+pub struct DumbProgressSource<'a, T> {
+    boxed_iterator: Box<dyn Iterator<Item = T> + 'a>,
+}
+
+impl<'a, T> DumbProgressSource<'a, T> {
+    pub fn new(boxed_iterator: Box<dyn Iterator<Item = T> + 'a>) -> DumbProgressSource<'a, T> {
+        DumbProgressSource {
+            boxed_iterator: boxed_iterator,
+        }
+    }
+}
+
 
 #[derive(Debug, Clone)]
 pub struct DumbProgressSetting {
@@ -522,36 +463,26 @@ fn get_the_progress_shower_ref() -> &'static RefCell<ProgressShower> {
 //     }
 // }
 
+// pub trait DumbProgressSourceRefTrait<'a, T> {
+//     fn to_progress_source(&'a self) -> DumbProgressSource<'a, &T>;
+//     fn into_progress_source(&'a self) -> DumbProgressSource<'a, &T>;
+// }
 
-pub struct DumbProgressSource<'a, T> {
-    boxed_iterator: Box<dyn Iterator<Item = T> + 'a>,
-}
-
-impl<'a, T> DumbProgressSource<'a, T> {
-    pub fn new(boxed_iterator: Box<dyn Iterator<Item = T> + 'a>) -> DumbProgressSource<'a, T> {
-        DumbProgressSource {
-            boxed_iterator: boxed_iterator,
-        }
-    }
-}
-
-pub trait DumbProgressProviderTrait<'a, T> {
-    fn to_progress_source(&'a self) -> DumbProgressSource<'a, &T>;
-}
-
-// impl<'a, T> DumbProgressProviderTrait<'a, T> for dyn Iterator<Item = &T> + 'a {
+// // impl<'a, T> DumbProgressProviderTrait<'a, T> for dyn Iterator<Item = &T> + 'a {
+// //     fn to_progress_source(&'a self) -> DumbProgressSource<'a, &T> {
+// //         let boxed_iterator = Box::new(self);
+// //         DumbProgressSource {
+// //             boxed_iterator,
+// //         }
+// //     }
+// // }
+// impl<'a, T> DumbProgressSourceRefTrait<'a, T> for Vec<T> {
 //     fn to_progress_source(&'a self) -> DumbProgressSource<'a, &T> {
-//         let boxed_iterator = Box::new(self);
-//         DumbProgressSource {
-//             boxed_iterator,
-//         }
+//         let boxed_iterator = Box::new(self.iter());
+//         DumbProgressSource::new(boxed_iterator)
+//     }
+//     fn into_progress_source(&'a self) -> DumbProgressSource<'a, &T> {
+//         let boxed_iterator = Box::new(self.into_iter());
+//         DumbProgressSource::new(boxed_iterator)
 //     }
 // }
-impl<'a, T> DumbProgressProviderTrait<'a, T> for Vec<T> {
-    fn to_progress_source(&'a self) -> DumbProgressSource<'a, &T> {
-        //let items = self;
-        let boxed_iterator = Box::new(self.iter());
-        DumbProgressSource::new(boxed_iterator)
-    }
-}
-
