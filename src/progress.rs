@@ -1,20 +1,39 @@
 #![deny(warnings)]
 #![allow(unused)]
 
-use std::{cell::RefCell, io::{self, Write}, mem::MaybeUninit, sync::Once, thread, time::Duration};
+use std::{
+    cell::RefCell,
+    io::{self, Write},
+    mem::MaybeUninit,
+    sync::Once,
+    thread,
+    time::Duration,
+};
 
+// #[macro_export]
+// macro_rules! dpiter {
+//     ($x:expr, description=$description:expr) => {{
+//         DumbProgressIterator::new_with_desc($x, $description.to_string())
+//     }};
+//     ($x:expr) => {{
+//         DumbProgressIterator::new($x)
+//     }};
+// }
 
 #[macro_export]
 macro_rules! dpiter {
-    ($x:expr, description=$description:expr) => {{
-        DumbProgressIterator::new_with_desc($x, $description.to_string())
-    }};
-    ($x:expr) => {{
-        DumbProgressIterator::new($x)
+    ($x:expr
+        $(, name=$name:expr)?
+        $(, desc=$desc:expr)?
+    ) => {{
+        let mut setting = DumbProgressSetting {
+            ..DumbProgressSetting::default()
+        };
+        $(setting.name = Some($name);)?
+        $(setting.desc = Some($desc);)?
+        DumbProgressIterator::new($x.to_progress_source(), setting)
     }};
 }
-  
-
 
 pub fn debug_progress(show_items: bool, sleep_millis: u64, level: usize) {
     let items = vec![
@@ -29,8 +48,11 @@ pub fn debug_progress(show_items: bool, sleep_millis: u64, level: usize) {
     //     let mut iter = builder.build();
     //     iter
     // };
-    let mut iter = dpiter!(Box::new(items.iter()), description=desc.as_str());
-    //let mut iter = { DumbProgressIterator::new_with_desc(Box::new(items.iter()), desc) };
+    let name = format!("L{}", level);
+    let mut iter = dpiter!(items, name = name, desc = desc);
+    //let boxed_iterator = Box::new(items.iter());
+    //let source = DumbProgressSource::new(boxed_iterator);
+    //let mut iter = { DumbProgressIterator::new_with_desc(source, desc) };
     while let Some(item) = iter.next() {
         if show_items {
             println!("          * iter(): {}", item);
@@ -51,8 +73,9 @@ pub fn debug_progress_single(show_items: bool, sleep_millis: u64) {
             String::from("cherry"),
         ];
         {
-            let mut iter = dpiter!(Box::new(items.iter()));
-            //let mut iter = { DumbProgressIterator::new(Box::new(items.iter())) };
+            let mut iter = dpiter!(items);
+            //let progress_source = items.to_progress_source();
+            //let mut iter = { DumbProgressIterator::new(progress_source, DumbProgressSetting::default()) };
             while let Some(item) = iter.next() {
                 if show_items {
                     println!("          * iter(): {}", item);
@@ -62,69 +85,71 @@ pub fn debug_progress_single(show_items: bool, sleep_millis: u64) {
                 }
             }
         }
-        if false {
+        if true {
             for item in items.iter() {
                 println!("- iter(): {}", item);
             }
         }
     }
-    if false {
-        let items = vec![
-            String::from("apple"),
-            String::from("banana"),
-            String::from("cherry"),
-        ];
-        {
-            // let mut builder = DumbProgressIteratorBuilder::new(Box::new(items.iter()));
-            // //builder.set_description(desc);
-            // let mut iter = builder.build();
-            //let mut iter = dpiter!(Box::new(items.iter()));
-            let mut iter = { DumbProgressIterator::new(Box::new(items.into_iter())) };
-            while let Some(item) = iter.next() {
-                if show_items {
-                    println!("          * into_iter(): {}", item);
-                }
-                if sleep_millis > 0 {
-                    thread::sleep(Duration::from_millis(sleep_millis));
-                }
-            }
-        }
-        // for item in items.iter() {
-        //     println!("- iter(): {}", item);
-        // }
-    }
+    // if false {
+    //     let items = vec![
+    //         String::from("apple"),
+    //         String::from("banana"),
+    //         String::from("cherry"),
+    //     ];
+    //     {
+    //         // let mut builder = DumbProgressIteratorBuilder::new(Box::new(items.iter()));
+    //         // //builder.set_description(desc);
+    //         // let mut iter = builder.build();
+    //         //let mut iter = dpiter!(Box::new(items.iter()));
+    //         let mut iter = { DumbProgressIterator::new_simple(Box::new(items.into_iter())) };
+    //         while let Some(item) = iter.next() {
+    //             if show_items {
+    //                 println!("          * into_iter(): {}", item);
+    //             }
+    //             if sleep_millis > 0 {
+    //                 thread::sleep(Duration::from_millis(sleep_millis));
+    //             }
+    //         }
+    //     }
+    //     // for item in items.iter() {
+    //     //     println!("- iter(): {}", item);
+    //     // }
+    // }
 
-    if false {
-        let items = vec!["apple", "banana", "cherry", "date"];
-        let mut iter = DPIVector::new(&items);
-        while let Some(item) = iter.next() {
-            println!("Processing item: {}", item);
-        }
-    }
+    // if false {
+    //     let items = vec!["apple", "banana", "cherry", "date"];
+    //     let mut iter = DPIVector::new(&items);
+    //     while let Some(item) = iter.next() {
+    //         println!("Processing item: {}", item);
+    //     }
+    // }
 
-    if false {
-        let items = vec![
-            String::from("apple"),
-            String::from("banana"),
-            String::from("cherry"),
-            String::from("date"),
-        ];
-        let mut owned_item_iter = items.into_iter();
-        let mut iter = DPIIntoIter::new(&mut owned_item_iter);
-        while let Some(item) = iter.next() {
-            println!("Processing item: {}", item);
-        }
-    }
+    // if false {
+    //     let items = vec![
+    //         String::from("apple"),
+    //         String::from("banana"),
+    //         String::from("cherry"),
+    //         String::from("date"),
+    //     ];
+    //     let mut owned_item_iter = items.into_iter();
+    //     let mut iter = DPIIntoIter::new(&mut owned_item_iter);
+    //     while let Some(item) = iter.next() {
+    //         println!("Processing item: {}", item);
+    //     }
+    // }
 
-    if false {
-        let items = vec!["apple", "banana", "cherry", "date"];
-        let mut item_iter = items.iter();
-        let mut iter = DPISliceIter::new(&mut item_iter);
-        while let Some(item) = iter.next() {
-            println!("Processing item: {}", item);
-        }
-    }
+    // if false {
+    //     let items = vec!["apple", "banana", "cherry", "date"];
+    //     let mut item_iter = items.iter();
+    //     let mut iter = DPISliceIter::new(&mut item_iter);
+    //     while let Some(item) = iter.next() {
+    //         println!("Processing item: {}", item);
+    //     }
+    // }
 }
+
+const DEF_SHOW_GAP_MILLIS: u32 = 100;
 
 // struct DumbProgressIteratorBuilder<'a, T> {
 //     boxed_iterator: Option<Box<dyn Iterator<Item = T> + 'a>>,
@@ -133,7 +158,7 @@ pub fn debug_progress_single(show_items: bool, sleep_millis: u64) {
 
 // impl<'a, T> DumbProgressIteratorBuilder<'a, T> {
 //     pub fn new(boxed_iterator: Box<dyn Iterator<Item = T> + 'a>) -> DumbProgressIteratorBuilder<T> {
-//         DumbProgressIteratorBuilder { 
+//         DumbProgressIteratorBuilder {
 //             boxed_iterator: Some(boxed_iterator),
 //             description: None
 //         }
@@ -154,25 +179,41 @@ pub fn debug_progress_single(show_items: bool, sleep_millis: u64) {
 //     }
 // }
 
-struct DumbProgressIterator<'a, T> {
+pub struct DumbProgressIterator<'a, T> {
     boxed_iterator: Box<dyn Iterator<Item = T> + 'a>,
     //description: Option<String>,
     progress_entry_id: usize,
 }
 
 impl<'a, T> DumbProgressIterator<'a, T> {
-    pub fn new(boxed_iterator: Box<dyn Iterator<Item = T> + 'a>) -> DumbProgressIterator<T> {
-        DumbProgressIterator::_new(boxed_iterator, None)
+    pub fn new_simple(progress_source: DumbProgressSource<'a, T>) -> DumbProgressIterator<T> {
+        DumbProgressIterator::new_ex(progress_source, DumbProgressSetting::default())
     }
-    fn new_with_desc(boxed_iterator: Box<dyn Iterator<Item = T> + 'a>, description: String) -> DumbProgressIterator<T> {
-        DumbProgressIterator::_new(boxed_iterator, Some(description))
+    pub fn new(
+        progress_source: DumbProgressSource<'a, T>,
+        setting: DumbProgressSetting,
+    ) -> DumbProgressIterator<T> {
+        DumbProgressIterator::new_ex(progress_source, setting)
     }
-    fn _new(boxed_iterator: Box<dyn Iterator<Item = T> + 'a>, description: Option<String>) -> DumbProgressIterator<T> {
+    fn new_with_desc(
+        progress_source: DumbProgressSource<'a, T>,
+        desc: String,
+    ) -> DumbProgressIterator<T> {
+        let setting = DumbProgressSetting {
+            desc: Some(desc),
+            ..DumbProgressSetting::default()
+        };
+        DumbProgressIterator::new_ex(progress_source, setting)
+    }
+    fn new_ex(
+        progress_source: DumbProgressSource<'a, T>,
+        setting: DumbProgressSetting,
+    ) -> DumbProgressIterator<T> {
         let progress_entry_id = get_the_progress_shower_ref()
             .borrow_mut()
-            .register_progress(Progress::Counter(0), description);
+            .register_progress(Progress::Counter(0), setting);
         DumbProgressIterator {
-            boxed_iterator,
+            boxed_iterator: progress_source.boxed_iterator,
             //description,
             progress_entry_id,
         }
@@ -206,35 +247,56 @@ impl<'a, T> Drop for DumbProgressIterator<'a, T> {
 }
 
 #[derive(Debug, Clone)]
+pub struct DumbProgressSetting {
+    name: Option<String>,
+    desc: Option<String>,
+}
+
+impl Default for DumbProgressSetting {
+    fn default() -> Self {
+        Self {
+            name: None,
+            desc: None,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 enum Progress {
     Counter(usize),
 }
 
 #[derive(Debug, Clone)]
-struct ProgressEntry {
-    id: usize,
+pub struct DumbProgressEntry {
+    entry_id: usize,
     progress: Progress,
-    description: Option<String>,
+    setting: DumbProgressSetting,
 }
 
-// impl ProgressEntry {
-//     fn new(id: usize, progress: Progress) -> ProgressEntry {
-//         ProgressEntry { id, progress }
-//     }
-// }
+impl DumbProgressEntry {
+    fn new(entry_id: usize, progress: Progress, setting: DumbProgressSetting) -> DumbProgressEntry {
+        DumbProgressEntry {
+            entry_id,
+            progress,
+            setting,
+        }
+    }
+}
 
 struct ProgressShower {
     next_entry_id: usize,
-    progress_entries: Vec<ProgressEntry>,
-    //showing_progress_entry_count: usize,
+    show_gap_millis: u32,
+    progress_entries: Vec<DumbProgressEntry>,
+    last_shown_entry_count: Option<usize>,
+    last_shown_time: Option<std::time::Instant>,
 }
 impl ProgressShower {
-    fn register_progress(&mut self, progress: Progress, description: Option<String>) -> usize {
+    fn register_progress(&mut self, progress: Progress, setting: DumbProgressSetting) -> usize {
         let entry_id = self.next_entry_id;
-        let progress_entry = ProgressEntry {
-            id: entry_id, 
-            progress: progress,
-            description: description,
+        let progress_entry = DumbProgressEntry {
+            entry_id,
+            progress,
+            setting,
         };
         self.progress_entries.push(progress_entry);
         self.next_entry_id += 1;
@@ -245,7 +307,7 @@ impl ProgressShower {
         let idx = self
             .progress_entries
             .iter()
-            .position(|entry| entry.id == entry_id);
+            .position(|entry| entry.entry_id == entry_id);
         if let Some(idx) = idx {
             self.progress_entries = self.progress_entries[0..idx].to_vec();
             //self.showing_progress_entry_count = 0;
@@ -256,7 +318,7 @@ impl ProgressShower {
         let idx = self
             .progress_entries
             .iter()
-            .position(|entry| entry.id == entry_id);
+            .position(|entry| entry.entry_id == entry_id);
         if let Some(idx) = idx {
             match self.progress_entries[idx].progress {
                 Progress::Counter(ref mut counter) => {
@@ -270,7 +332,7 @@ impl ProgressShower {
         let idx = self
             .progress_entries
             .iter()
-            .position(|entry| entry.id == entry_id);
+            .position(|entry| entry.entry_id == entry_id);
         if let Some(idx) = idx {
             self._show_progress(true);
         }
@@ -278,28 +340,68 @@ impl ProgressShower {
     fn _show_progress(&mut self, last_progress: bool) {
         let progress_entry_count = self.progress_entries.len();
         if progress_entry_count > 0 {
-            print!("\r");
-            if !last_progress {
-                print!("|");
-            }
-            for i in 0..progress_entry_count {
-                let entry = self.progress_entries.get(i).unwrap();
-                match entry.progress {
-                    Progress::Counter(counter) => {
-                        if !last_progress {
-                            print!(" {} | ", counter);
-                        }
+            let mut show_it = last_progress;
+            if !show_it {
+                if let Some(last_shown_entry_count) = self.last_shown_entry_count {
+                    if last_shown_entry_count != progress_entry_count {
+                        show_it = true;
                     }
                 }
             }
-            if !last_progress {
-                let last_entry = self.progress_entries.get(progress_entry_count - 1).unwrap();
-                if let Some(description) = &last_entry.description {
-                    print!(" {} ", description);
+            if !show_it {
+                if let Some(last_shown_time) = self.last_shown_time {
+                    let now: std::time::Instant = std::time::Instant::now();
+                    let millis_form_last = now.duration_since(last_shown_time).as_millis();
+                    if millis_form_last >= self.show_gap_millis as u128 {
+                        show_it = true;
+                    }
+                } else {
+                    show_it = true;
                 }
-                print!("... \x1B[K");  // clear rest of line
             }
-            io::stdout().flush().unwrap();
+            show_it = true; // TODO: enable ... but this will cause skipping of progress
+            if show_it {
+                print!("\r");
+                if progress_entry_count > 0 {
+                    for i in 0..progress_entry_count {
+                        let entry = self.progress_entries.get(i).unwrap();
+                        match entry.progress {
+                            Progress::Counter(counter) => {
+                                if !last_progress {
+                                    if i > 0 {
+                                        print!("|");
+                                    }
+                                    print!(" ");
+                                    if let Some(name) = &entry.setting.name {
+                                        print!("{}: ", name);
+                                    }
+                                    print!("{} ", counter);
+                                }
+                            }
+                        }
+                    }
+                    if !last_progress {
+                        let last_entry =
+                            self.progress_entries.get(progress_entry_count - 1).unwrap();
+                        if let Some(desc) = &last_entry.setting.desc {
+                            print!("-- {} ", desc);
+                        }
+                        print!("... \x1B[K"); // clear rest of line
+                    }
+                    io::stdout().flush().unwrap();
+                }
+                if !last_progress {
+                    // only track if not the last progress
+                    self.last_shown_entry_count = Some(progress_entry_count);
+                    self.last_shown_time = Some(std::time::Instant::now());
+                } else {
+                    self.last_shown_entry_count = None;
+                    self.last_shown_time = None;
+                }
+            } else {
+                print!("\x1B[K"); // clear rest of line
+                io::stdout().flush().unwrap();
+            }
         }
     }
     fn _old_show_progress(&mut self, last_progress: bool) {
@@ -317,17 +419,17 @@ impl ProgressShower {
                             print!("\r│ {} ", counter);
                             io::stdout().flush().unwrap();
                         } else if true {
-                            print!("\r>>> Progress {}: {} ", entry.id, counter);
+                            print!("\r>>> Progress {}: {} ", entry.entry_id, counter);
                             io::stdout().flush().unwrap();
                         } else if true {
-                            println!(">>> Progress {}: {}", entry.id, counter);
-                            print!("\x1B[1A"); // move up   
+                            println!(">>> Progress {}: {}", entry.entry_id, counter);
+                            print!("\x1B[1A"); // move up
                         } else {
-                            let indicator = format!(">>> Progress {}: {}", entry.id, counter);
+                            let indicator = format!(">>> Progress {}: {}", entry.entry_id, counter);
                             print!("{}", indicator);
                             io::stdout().flush().unwrap();
                             for _ in 0..indicator.len() {
-                                print!("\x1B[1D");  // move left
+                                print!("\x1B[1D"); // move left
                             }
                             io::stdout().flush().unwrap();
                         }
@@ -349,6 +451,9 @@ fn get_the_progress_shower_ref() -> &'static RefCell<ProgressShower> {
             let singleton = ProgressShower {
                 next_entry_id: 0,
                 progress_entries: Vec::new(),
+                show_gap_millis: DEF_SHOW_GAP_MILLIS,
+                last_shown_entry_count: None,
+                last_shown_time: None,
             };
             // Store it to the static var, i.e. initialize it
             SINGLETON.write(RefCell::new(singleton));
@@ -359,60 +464,94 @@ fn get_the_progress_shower_ref() -> &'static RefCell<ProgressShower> {
     }
 }
 
-struct DPIVector<'a, T> {
-    items: &'a Vec<T>,
-    current: usize,
+// struct DPIVector<'a, T> {
+//     items: &'a Vec<T>,
+//     current: usize,
+// }
+
+// impl<'a, T> DPIVector<'a, T> {
+//     pub fn new(items: &'a Vec<T>) -> DPIVector<'a, T> {
+//         DPIVector { items, current: 0 }
+//     }
+// }
+
+// impl<'a, T> Iterator for DPIVector<'a, T> {
+//     type Item = &'a T;
+//     fn next(&mut self) -> Option<Self::Item> {
+//         if self.current < self.items.len() {
+//             let item = &self.items[self.current];
+//             self.current += 1;
+//             Some(item)
+//         } else {
+//             None
+//         }
+//     }
+// }
+
+// struct DPIIntoIter<'a, T> {
+//     iter: &'a mut std::vec::IntoIter<T>,
+// }
+
+// impl<'a, T> DPIIntoIter<'a, T> {
+//     pub fn new(iter: &'a mut std::vec::IntoIter<T>) -> DPIIntoIter<'a, T> {
+//         DPIIntoIter { iter }
+//     }
+// }
+
+// impl<'a, T> Iterator for DPIIntoIter<'a, T> {
+//     type Item = T;
+//     fn next(&mut self) -> Option<Self::Item> {
+//         self.iter.next()
+//     }
+// }
+
+// struct DPISliceIter<'a, T> {
+//     iter: &'a mut std::slice::Iter<'a, T>,
+// }
+
+// impl<'a, T> DPISliceIter<'a, T> {
+//     pub fn new(iter: &'a mut std::slice::Iter<'a, T>) -> DPISliceIter<'a, T> {
+//         DPISliceIter { iter }
+//     }
+// }
+
+// impl<'a, T> Iterator for DPISliceIter<'a, T> {
+//     type Item = &'a T;
+//     fn next(&mut self) -> Option<Self::Item> {
+//         self.iter.next()
+//     }
+// }
+
+
+pub struct DumbProgressSource<'a, T> {
+    boxed_iterator: Box<dyn Iterator<Item = T> + 'a>,
 }
 
-impl<'a, T> DPIVector<'a, T> {
-    pub fn new(items: &'a Vec<T>) -> DPIVector<'a, T> {
-        DPIVector { items, current: 0 }
-    }
-}
-
-impl<'a, T> Iterator for DPIVector<'a, T> {
-    type Item = &'a T;
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.current < self.items.len() {
-            let item = &self.items[self.current];
-            self.current += 1;
-            Some(item)
-        } else {
-            None
+impl<'a, T> DumbProgressSource<'a, T> {
+    pub fn new(boxed_iterator: Box<dyn Iterator<Item = T> + 'a>) -> DumbProgressSource<'a, T> {
+        DumbProgressSource {
+            boxed_iterator: boxed_iterator,
         }
     }
 }
 
-struct DPIIntoIter<'a, T> {
-    iter: &'a mut std::vec::IntoIter<T>,
+pub trait DumbProgressProviderTrait<'a, T> {
+    fn to_progress_source(&'a self) -> DumbProgressSource<'a, &T>;
 }
 
-impl<'a, T> DPIIntoIter<'a, T> {
-    pub fn new(iter: &'a mut std::vec::IntoIter<T>) -> DPIIntoIter<'a, T> {
-        DPIIntoIter { iter }
+// impl<'a, T> DumbProgressProviderTrait<'a, T> for dyn Iterator<Item = &T> + 'a {
+//     fn to_progress_source(&'a self) -> DumbProgressSource<'a, &T> {
+//         let boxed_iterator = Box::new(self);
+//         DumbProgressSource {
+//             boxed_iterator,
+//         }
+//     }
+// }
+impl<'a, T> DumbProgressProviderTrait<'a, T> for Vec<T> {
+    fn to_progress_source(&'a self) -> DumbProgressSource<'a, &T> {
+        //let items = self;
+        let boxed_iterator = Box::new(self.iter());
+        DumbProgressSource::new(boxed_iterator)
     }
 }
 
-impl<'a, T> Iterator for DPIIntoIter<'a, T> {
-    type Item = T;
-    fn next(&mut self) -> Option<Self::Item> {
-        self.iter.next()
-    }
-}
-
-struct DPISliceIter<'a, T> {
-    iter: &'a mut std::slice::Iter<'a, T>,
-}
-
-impl<'a, T> DPISliceIter<'a, T> {
-    pub fn new(iter: &'a mut std::slice::Iter<'a, T>) -> DPISliceIter<'a, T> {
-        DPISliceIter { iter }
-    }
-}
-
-impl<'a, T> Iterator for DPISliceIter<'a, T> {
-    type Item = &'a T;
-    fn next(&mut self) -> Option<Self::Item> {
-        self.iter.next()
-    }
-}
