@@ -25,6 +25,22 @@ macro_rules! dpiter {
         DumbProgressIterator::new(source, setting)
     }};
 }
+#[macro_export]
+macro_rules! dpiter_t {
+    ($x:expr
+        $(, name=$name:expr)?
+        $(, desc=$desc:expr)?
+    ) => {{
+        let mut setting = DumbProgressSetting {
+            ..DumbProgressSetting::default()
+        };
+        setting.total = Some($x.len());
+        $(setting.name = Some($name);)?
+        $(setting.desc = Some($desc);)?
+        let source = DumbProgressSource::new(Box::new($x.iter()));
+        DumbProgressIterator::new(source, setting)
+    }};
+}
 
 #[macro_export]
 macro_rules! dpintoiter {
@@ -35,6 +51,22 @@ macro_rules! dpintoiter {
         let mut setting = DumbProgressSetting {
             ..DumbProgressSetting::default()
         };
+        $(setting.name = Some($name);)?
+        $(setting.desc = Some($desc);)?
+        let source = DumbProgressSource::new(Box::new($x.into_iter()));
+        DumbProgressIterator::new(source, setting)
+    }};
+}
+#[macro_export]
+macro_rules! dpintoiter_t {
+    ($x:expr
+        $(, name=$name:expr)?
+        $(, desc=$desc:expr)?
+    ) => {{
+        let mut setting = DumbProgressSetting {
+            ..DumbProgressSetting::default()
+        };
+        setting.total = Some($x.len());
         $(setting.name = Some($name);)?
         $(setting.desc = Some($desc);)?
         let source = DumbProgressSource::new(Box::new($x.into_iter()));
@@ -56,7 +88,7 @@ pub fn debug_progress(show_items: bool, sleep_millis: u64, level: usize) {
     //     iter
     // };
     let name = format!("L{}", level);
-    let mut iter = dpintoiter!(items, name = name, desc = desc);
+    let mut iter = dpintoiter_t!(items, name = name, desc = desc);
     //let source = DumbProgressSource::new(Box::new(items.into_iter()));
     //let mut iter = { DumbProgressIterator::new_with_desc(source, desc) };
     while let Some(item) = iter.next() {
@@ -84,7 +116,7 @@ pub fn debug_progress_single(show_items: bool, sleep_millis: u64) {
             String::from("cherry"),
         ];
         {
-            let mut iter = dpiter!(items);
+            let mut iter = dpiter_t!(items);
             //let progress_source = items.to_progress_source();
             //let mut iter = { DumbProgressIterator::new(progress_source, DumbProgressSetting::default()) };
             while let Some(item) = iter.next() {
@@ -173,7 +205,6 @@ impl<'a, T> Drop for DumbProgressIterator<'a, T> {
     }
 }
 
-
 pub struct DumbProgressSource<'a, T> {
     boxed_iterator: Box<dyn Iterator<Item = T> + 'a>,
 }
@@ -186,9 +217,9 @@ impl<'a, T> DumbProgressSource<'a, T> {
     }
 }
 
-
 #[derive(Debug, Clone)]
 pub struct DumbProgressSetting {
+    total: Option<usize>,
     name: Option<String>,
     desc: Option<String>,
 }
@@ -196,6 +227,7 @@ pub struct DumbProgressSetting {
 impl Default for DumbProgressSetting {
     fn default() -> Self {
         Self {
+            total: None,
             name: None,
             desc: None,
         }
@@ -241,7 +273,7 @@ impl ProgressShower {
         };
         self.progress_entries.push(progress_entry);
         self.next_entry_id += 1;
-        self._show_progress(false);
+        self._show_progress(false, false);
         entry_id
     }
     fn unregister_progress(&mut self, entry_id: usize) {
@@ -266,7 +298,7 @@ impl ProgressShower {
                     *counter += 1;
                 }
             }
-            self._show_progress(false);
+            self._show_progress(true, false);
         }
     }
     fn end_progress(&mut self, entry_id: usize) {
@@ -275,10 +307,10 @@ impl ProgressShower {
             .iter()
             .position(|entry| entry.entry_id == entry_id);
         if let Some(idx) = idx {
-            self._show_progress(true);
+            self._show_progress(false, true);
         }
     }
-    fn _show_progress(&mut self, last_progress: bool) {
+    fn _show_progress(&mut self, track_timing: bool, last_progress: bool) {
         let progress_entry_count = self.progress_entries.len();
         if progress_entry_count > 0 {
             let mut show_it = last_progress;
@@ -300,7 +332,7 @@ impl ProgressShower {
                     show_it = true;
                 }
             }
-            show_it = true; // TODO: enable ... but this will cause skipping of progress
+            //show_it = true;  // just for testing
             if show_it {
                 print!("\r");
                 if progress_entry_count > 0 {
@@ -316,7 +348,22 @@ impl ProgressShower {
                                     if let Some(name) = &entry.setting.name {
                                         print!("{}: ", name);
                                     }
-                                    print!("{} ", counter);
+                                    print!("{}", counter);
+                                    if let Some(total) = entry.setting.total {
+                                        if total > 0 {
+                                            let graphical_progress = i as i32 > progress_entry_count as i32 - 3;
+                                            print!("/{}", total);
+                                            let percent = (counter as f64 / total as f64) * 100.0;
+                                            if graphical_progress {
+                                                print!(" ");
+                                                let dot_count = (percent / 10.0).round() as usize;
+                                                print!("{}{}", "🟢".repeat(dot_count), "⚪".repeat(10 - dot_count));
+                                            } else {
+                                                print!(" ({:.2}%)", percent);
+                                            }
+                                        }
+                                    }
+                                    print!(" ");
                                 }
                             }
                         }
@@ -325,24 +372,22 @@ impl ProgressShower {
                         let last_entry =
                             self.progress_entries.get(progress_entry_count - 1).unwrap();
                         if let Some(desc) = &last_entry.setting.desc {
-                            print!("-- {} ", desc);
+                            print!("– {} ", desc);
                         }
-                        print!("... \x1B[K"); // clear rest of line
+                        print!("… ");
                     }
                     io::stdout().flush().unwrap();
                 }
-                if !last_progress {
-                    // only track if not the last progress
+                if track_timing {
                     self.last_shown_entry_count = Some(progress_entry_count);
                     self.last_shown_time = Some(std::time::Instant::now());
                 } else {
                     self.last_shown_entry_count = None;
                     self.last_shown_time = None;
                 }
-            } else {
-                print!("\x1B[K"); // clear rest of line
-                io::stdout().flush().unwrap();
-            }
+            } 
+            print!("\x1B[K"); // clear rest of line
+            io::stdout().flush().unwrap();
         }
     }
     fn _old_show_progress(&mut self, last_progress: bool) {
