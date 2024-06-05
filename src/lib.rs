@@ -59,9 +59,15 @@ pub mod prelude {
     pub use crate::dap_arg;
     pub use crate::dlt_comps;
     pub use crate::dltc;
+    pub use crate::dpintoiter;
+    pub use crate::dpintoiter_t;
+    pub use crate::dpiter;
+    pub use crate::dpiter_t;
+    pub use crate::dprange;
     pub use crate::json::*;
     pub use crate::lblscreen::*;
     pub use crate::ltemp::*;
+    pub use crate::progress::*;
     pub use crate::sap_arg;
     pub use crate::shared::*;
 }

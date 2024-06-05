@@ -19,10 +19,10 @@ macro_rules! dpiter {
         let mut setting = DumbProgressSetting {
             ..DumbProgressSetting::default()
         };
-        $(setting.name = Some($name);)?
-        $(setting.desc = Some($desc);)?
-        let source = DumbProgressSource::new(Box::new($x.iter()));
-        DumbProgressIterator::new(source, setting)
+        setting.total = None;
+        $(setting.name = Some($name.to_string());)?
+        $(setting.desc = Some($desc.to_string());)?
+        DumbProgressIterator::new(Box::new($x.iter()), setting)
     }};
 }
 #[macro_export]
@@ -35,10 +35,9 @@ macro_rules! dpiter_t {
             ..DumbProgressSetting::default()
         };
         setting.total = Some($x.len());
-        $(setting.name = Some($name);)?
-        $(setting.desc = Some($desc);)?
-        let source = DumbProgressSource::new(Box::new($x.iter()));
-        DumbProgressIterator::new(source, setting)
+        $(setting.name = Some($name.to_string());)?
+        $(setting.desc = Some($desc.to_string());)?
+        DumbProgressIterator::new(Box::new($x.iter()), setting)
     }};
 }
 
@@ -51,10 +50,10 @@ macro_rules! dpintoiter {
         let mut setting = DumbProgressSetting {
             ..DumbProgressSetting::default()
         };
-        $(setting.name = Some($name);)?
-        $(setting.desc = Some($desc);)?
-        let source = DumbProgressSource::new(Box::new($x.into_iter()));
-        DumbProgressIterator::new(source, setting)
+        setting.total = None;
+        $(setting.name = Some($name.to_string());)?
+        $(setting.desc = Some($desc.to_string());)?
+        DumbProgressIterator::new(Box::new($x.into_iter()), setting)
     }};
 }
 #[macro_export]
@@ -67,10 +66,24 @@ macro_rules! dpintoiter_t {
             ..DumbProgressSetting::default()
         };
         setting.total = Some($x.len());
-        $(setting.name = Some($name);)?
-        $(setting.desc = Some($desc);)?
-        let source = DumbProgressSource::new(Box::new($x.into_iter()));
-        DumbProgressIterator::new(source, setting)
+        $(setting.name = Some($name.to_string());)?
+        $(setting.desc = Some($desc.to_string());)?
+        DumbProgressIterator::new(Box::new($x.into_iter()), setting)
+    }};
+}
+#[macro_export]
+macro_rules! dprange {
+    ($x:expr
+        $(, name=$name:expr)?
+        $(, desc=$desc:expr)?
+    ) => {{
+        let mut setting = DumbProgressSetting {
+            ..DumbProgressSetting::default()
+        };
+        setting.total = Some($x.len());
+        $(setting.name = Some($name.to_string());)?
+        $(setting.desc = Some($desc.to_string());)?
+        DumbProgressIterator::new(Box::new($x.into_iter()), setting)
     }};
 }
 
@@ -137,6 +150,8 @@ pub fn debug_progress_single(show_items: bool, sleep_millis: u64) {
 }
 
 const DEF_SHOW_GAP_MILLIS: u32 = 100;
+const PREFER_EMOJIS: bool = false;
+const MAX_PROGRESS_BAR_COUNT: i32 = 3;
 
 pub struct DumbProgressIterator<'a, T> {
     boxed_iterator: Box<dyn Iterator<Item = T> + 'a>,
@@ -145,34 +160,34 @@ pub struct DumbProgressIterator<'a, T> {
 }
 
 impl<'a, T> DumbProgressIterator<'a, T> {
-    pub fn new_simple(progress_source: DumbProgressSource<'a, T>) -> DumbProgressIterator<T> {
-        DumbProgressIterator::new_ex(progress_source, DumbProgressSetting::default())
+    pub fn new_simple(boxed_iterator: Box<dyn Iterator<Item = T> + 'a>) -> DumbProgressIterator<T> {
+        DumbProgressIterator::new_ex(boxed_iterator, DumbProgressSetting::default())
     }
     pub fn new(
-        progress_source: DumbProgressSource<'a, T>,
+        boxed_iterator: Box<dyn Iterator<Item = T> + 'a>,
         setting: DumbProgressSetting,
     ) -> DumbProgressIterator<T> {
-        DumbProgressIterator::new_ex(progress_source, setting)
+        DumbProgressIterator::new_ex(boxed_iterator, setting)
     }
     fn new_with_desc(
-        progress_source: DumbProgressSource<'a, T>,
+        boxed_iterator: Box<dyn Iterator<Item = T> + 'a>,
         desc: String,
     ) -> DumbProgressIterator<T> {
         let setting = DumbProgressSetting {
             desc: Some(desc),
             ..DumbProgressSetting::default()
         };
-        DumbProgressIterator::new_ex(progress_source, setting)
+        DumbProgressIterator::new_ex(boxed_iterator, setting)
     }
     fn new_ex(
-        progress_source: DumbProgressSource<'a, T>,
+        boxed_iterator: Box<dyn Iterator<Item = T> + 'a>,
         setting: DumbProgressSetting,
     ) -> DumbProgressIterator<T> {
         let progress_entry_id = get_the_progress_shower_ref()
             .borrow_mut()
             .register_progress(Progress::Counter(0), setting);
         DumbProgressIterator {
-            boxed_iterator: progress_source.boxed_iterator,
+            boxed_iterator,
             //description,
             progress_entry_id,
         }
@@ -205,23 +220,23 @@ impl<'a, T> Drop for DumbProgressIterator<'a, T> {
     }
 }
 
-pub struct DumbProgressSource<'a, T> {
-    boxed_iterator: Box<dyn Iterator<Item = T> + 'a>,
-}
+// pub struct DumbProgressSource<'a, T> {
+//     boxed_iterator: Box<dyn Iterator<Item = T> + 'a>,
+// }
 
-impl<'a, T> DumbProgressSource<'a, T> {
-    pub fn new(boxed_iterator: Box<dyn Iterator<Item = T> + 'a>) -> DumbProgressSource<'a, T> {
-        DumbProgressSource {
-            boxed_iterator: boxed_iterator,
-        }
-    }
-}
+// impl<'a, T> DumbProgressSource<'a, T> {
+//     pub fn new(boxed_iterator: Box<dyn Iterator<Item = T> + 'a>) -> DumbProgressSource<'a, T> {
+//         DumbProgressSource {
+//             boxed_iterator: boxed_iterator,
+//         }
+//     }
+// }
 
 #[derive(Debug, Clone)]
 pub struct DumbProgressSetting {
-    total: Option<usize>,
-    name: Option<String>,
-    desc: Option<String>,
+    pub total: Option<usize>,
+    pub name: Option<String>,
+    pub desc: Option<String>,
 }
 
 impl Default for DumbProgressSetting {
@@ -240,15 +255,15 @@ enum Progress {
 }
 
 #[derive(Debug, Clone)]
-pub struct DumbProgressEntry {
+struct ProgressEntry {
     entry_id: usize,
     progress: Progress,
     setting: DumbProgressSetting,
 }
 
-impl DumbProgressEntry {
-    fn new(entry_id: usize, progress: Progress, setting: DumbProgressSetting) -> DumbProgressEntry {
-        DumbProgressEntry {
+impl ProgressEntry {
+    fn new(entry_id: usize, progress: Progress, setting: DumbProgressSetting) -> ProgressEntry {
+        ProgressEntry {
             entry_id,
             progress,
             setting,
@@ -259,14 +274,14 @@ impl DumbProgressEntry {
 struct ProgressShower {
     next_entry_id: usize,
     show_gap_millis: u32,
-    progress_entries: Vec<DumbProgressEntry>,
+    progress_entries: Vec<ProgressEntry>,
     last_shown_entry_count: Option<usize>,
     last_shown_time: Option<std::time::Instant>,
 }
 impl ProgressShower {
     fn register_progress(&mut self, progress: Progress, setting: DumbProgressSetting) -> usize {
         let entry_id = self.next_entry_id;
-        let progress_entry = DumbProgressEntry {
+        let progress_entry = ProgressEntry {
             entry_id,
             progress,
             setting,
@@ -336,30 +351,62 @@ impl ProgressShower {
             if show_it {
                 print!("\r");
                 if progress_entry_count > 0 {
+                    let divider = if PREFER_EMOJIS {
+                        "💠" //"🔹" //"➕"//"🚪"
+                    } else {
+                        "|"
+                    };
                     for i in 0..progress_entry_count {
                         let entry = self.progress_entries.get(i).unwrap();
                         match entry.progress {
                             Progress::Counter(counter) => {
                                 if !last_progress {
-                                    if i > 0 {
-                                        print!("|");
-                                    }
+                                    print!("{}", divider);
                                     print!(" ");
                                     if let Some(name) = &entry.setting.name {
                                         print!("{}: ", name);
                                     }
-                                    print!("{}", counter);
+                                    if let Some(total) = entry.setting.total {
+                                        if counter <= 9 {
+                                            print!("{}", counter);
+                                        } else if counter <= 99 {
+                                            print!("{:2}", counter);
+                                        } else {
+                                            print!("{:3}", counter);
+                                        }
+                                    } else {
+                                        print!("{}", counter);
+                                    }
                                     if let Some(total) = entry.setting.total {
                                         if total > 0 {
-                                            let graphical_progress = i as i32 > progress_entry_count as i32 - 3;
+                                            let graphical_progress = i as i32
+                                                > progress_entry_count as i32
+                                                    - 1
+                                                    - MAX_PROGRESS_BAR_COUNT;
                                             print!("/{}", total);
-                                            let percent = (counter as f64 / total as f64) * 100.0;
+                                            let percent = counter as f32 / total as f32 * 100.0;
                                             if graphical_progress {
                                                 print!(" ");
+                                                let (filled_dot, half_filled_dot, empty_dot) =
+                                                    if PREFER_EMOJIS {
+                                                        if true {
+                                                            ("🟦", "⏹️", "⬜") // ⏺️
+                                                        } else if false {
+                                                            ("🌑", "🌓", "🌕")
+                                                        } else {
+                                                            ("🟢", "🟢", "⚪")
+                                                        }
+                                                    } else {
+                                                        ("■", "■", "□") // ◧▣
+                                                    };
                                                 let dot_count = (percent / 10.0).round() as usize;
-                                                print!("{}{}", "🟢".repeat(dot_count), "⚪".repeat(10 - dot_count));
+                                                print!(
+                                                    "{}{}",
+                                                    filled_dot.repeat(dot_count),
+                                                    empty_dot.repeat(10 - dot_count)
+                                                );
                                             } else {
-                                                print!(" ({:.2}%)", percent);
+                                                print!(" ({}%)", percent as i32);
                                             }
                                         }
                                     }
@@ -374,7 +421,7 @@ impl ProgressShower {
                         if let Some(desc) = &last_entry.setting.desc {
                             print!("– {} ", desc);
                         }
-                        print!("… ");
+                        print!("{} … ", divider);
                     }
                     io::stdout().flush().unwrap();
                 }
@@ -385,7 +432,7 @@ impl ProgressShower {
                     self.last_shown_entry_count = None;
                     self.last_shown_time = None;
                 }
-            } 
+            }
             print!("\x1B[K"); // clear rest of line
             io::stdout().flush().unwrap();
         }

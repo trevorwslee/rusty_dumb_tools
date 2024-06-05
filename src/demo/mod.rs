@@ -10,6 +10,7 @@ pub mod demo_calc;
 pub mod demo_json;
 pub mod demo_lblscreen;
 pub mod demo_ltemp;
+pub mod demo_progress;
 
 #[cfg(test)]
 pub mod test_arg;
@@ -23,6 +24,8 @@ pub mod test_json;
 pub mod test_lblscreen;
 #[cfg(test)]
 pub mod test_ltemp;
+#[cfg(test)]
+pub mod test_progress;
 
 use crate::prelude::*;
 

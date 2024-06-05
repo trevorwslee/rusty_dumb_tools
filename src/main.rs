@@ -10,7 +10,11 @@ use std::{collections::HashMap, env, vec};
 
 //use crossterm::style::Colorize;
 use rusty_dumb_tools::{
-    demo::{self, demo_arg::arg_parser_sample},
+    demo::{
+        self,
+        demo_arg::arg_parser_sample,
+        demo_progress::{try_progress, try_progress_range, try_progress_single},
+    },
     json,
     prelude::*,
     progress,
@@ -21,6 +25,15 @@ fn main() {
     println!("The version of this crate is: {}", version);
 
     if true {
+        try_progress_range(false, 1000, 2, true);
+        try_progress_range(true, 1000, 2, true);
+        try_progress(1000, 2, true);
+        try_progress_single(false, 1000, true);
+        try_progress_single(true, 1000, true);
+        try_progress_single(false, 1000, true);
+        return;
+    }
+    if false {
         progress::debug_progress(false, 1000, 2);
         progress::debug_progress_single(false, 1000);
         progress::debug_progress_single(true, 1000);
