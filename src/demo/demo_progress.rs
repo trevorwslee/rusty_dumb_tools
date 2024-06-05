@@ -3,6 +3,7 @@ use std::{thread, time::Duration};
 use crate::prelude::*;
 
 pub fn try_progress(sleep_millis: u64, level: usize, try_with_total: bool) {
+    DumbProgressSetting::set_style(DumbProgressStyle::Default);
     let items = vec![
         String::from("apple"),
         String::from("banana"),
@@ -13,7 +14,7 @@ pub fn try_progress(sleep_millis: u64, level: usize, try_with_total: bool) {
     let mut iter = if try_with_total {
         dpintoiter!(items, name = name, desc = desc)
     } else {
-        dpintoiter_nt!(items, name = name, desc = desc)
+        dpiw!(items.into_iter(), name = name, desc = desc)
     };
     while let Some(_item) = iter.next() {
         // if show_items {
@@ -33,6 +34,7 @@ pub fn try_progress(sleep_millis: u64, level: usize, try_with_total: bool) {
     // }
 }
 pub fn try_progress_single(show_items: bool, sleep_millis: u64, try_with_total: bool) {
+    DumbProgressSetting::set_style(DumbProgressStyle::Default);
     if true {
         let items = vec![
             String::from("apple"),
@@ -43,7 +45,7 @@ pub fn try_progress_single(show_items: bool, sleep_millis: u64, try_with_total: 
             let mut iter = if try_with_total {
                 dpiter!(items, name = "ITER")
             } else {
-                dpiter_nt!(items, name = "ITER")
+                dpiw!(items.iter(), name = "ITER")
             };
             while let Some(item) = iter.next() {
                 if show_items {
@@ -67,6 +69,7 @@ pub fn try_progress_range(
     _level: usize,
     _try_with_total: bool,
 ) {
+    DumbProgressSetting::set_style(DumbProgressStyle::Simple);
     let iter = dprange!(0..3, name = "Range");
     for i in iter {
         if show_items {

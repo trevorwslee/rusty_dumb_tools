@@ -60,9 +60,10 @@ pub mod prelude {
     pub use crate::dlt_comps;
     pub use crate::dltc;
     pub use crate::dpintoiter;
-    pub use crate::dpintoiter_nt;
+    //pub use crate::dpintoiter_nt;
     pub use crate::dpiter;
-    pub use crate::dpiter_nt;
+    pub use crate::dpiw;
+    //pub use crate::dpiter_nt;
     pub use crate::dprange;
     pub use crate::json::*;
     pub use crate::lblscreen::*;

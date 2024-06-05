@@ -11,6 +11,23 @@ use std::{
 };
 
 #[macro_export]
+macro_rules! dpiw {
+    ($x:expr
+        $(, name=$name:expr)?
+        $(, desc=$desc:expr)?
+        $(, total=$total:expr)?
+    ) => {{
+        let mut setting = DumbProgressSetting {
+            ..DumbProgressSetting::default()
+        };
+        $(setting.total = Some($total);)?
+        $(setting.name = Some($name.to_string());)?
+        $(setting.desc = Some($desc.to_string());)?
+        DumbProgressIterator::new(Box::new($x), setting)
+    }};
+}
+
+#[macro_export]
 macro_rules! dpiter {
     ($x:expr
         $(, name=$name:expr)?
@@ -25,21 +42,21 @@ macro_rules! dpiter {
         DumbProgressIterator::new(Box::new($x.iter()), setting)
     }};
 }
-#[macro_export]
-macro_rules! dpiter_nt {
-    ($x:expr
-        $(, name=$name:expr)?
-        $(, desc=$desc:expr)?
-    ) => {{
-        let mut setting = DumbProgressSetting {
-            ..DumbProgressSetting::default()
-        };
-        setting.total = None;
-        $(setting.name = Some($name.to_string());)?
-        $(setting.desc = Some($desc.to_string());)?
-        DumbProgressIterator::new(Box::new($x.iter()), setting)
-    }};
-}
+// #[macro_export]
+// macro_rules! dpiter_nt {
+//     ($x:expr
+//         $(, name=$name:expr)?
+//         $(, desc=$desc:expr)?
+//     ) => {{
+//         let mut setting = DumbProgressSetting {
+//             ..DumbProgressSetting::default()
+//         };
+//         setting.total = None;
+//         $(setting.name = Some($name.to_string());)?
+//         $(setting.desc = Some($desc.to_string());)?
+//         DumbProgressIterator::new(Box::new($x.iter()), setting)
+//     }};
+// }
 
 #[macro_export]
 macro_rules! dpintoiter {
@@ -56,21 +73,21 @@ macro_rules! dpintoiter {
         DumbProgressIterator::new(Box::new($x.into_iter()), setting)
     }};
 }
-#[macro_export]
-macro_rules! dpintoiter_nt {
-    ($x:expr
-        $(, name=$name:expr)?
-        $(, desc=$desc:expr)?
-    ) => {{
-        let mut setting = DumbProgressSetting {
-            ..DumbProgressSetting::default()
-        };
-        setting.total = None;
-        $(setting.name = Some($name.to_string());)?
-        $(setting.desc = Some($desc.to_string());)?
-        DumbProgressIterator::new(Box::new($x.into_iter()), setting)
-    }};
-}
+// #[macro_export]
+// macro_rules! dpintoiter_nt {
+//     ($x:expr
+//         $(, name=$name:expr)?
+//         $(, desc=$desc:expr)?
+//     ) => {{
+//         let mut setting = DumbProgressSetting {
+//             ..DumbProgressSetting::default()
+//         };
+//         setting.total = None;
+//         $(setting.name = Some($name.to_string());)?
+//         $(setting.desc = Some($desc.to_string());)?
+//         DumbProgressIterator::new(Box::new($x.into_iter()), setting)
+//     }};
+// }
 
 #[macro_export]
 macro_rules! dprange {
@@ -88,71 +105,71 @@ macro_rules! dprange {
     }};
 }
 
-pub fn debug_progress(show_items: bool, sleep_millis: u64, level: usize) {
-    let items = vec![
-        String::from("apple"),
-        String::from("banana"),
-        String::from("cherry"),
-    ];
-    let desc = format!("level {}", level);
-    // let mut iter = {
-    //     let mut builder = DumbProgressIteratorBuilder::new(Box::new(items.iter()));
-    //     builder.set_description(desc.as_str());
-    //     let mut iter = builder.build();
-    //     iter
-    // };
-    let name = format!("L{}", level);
-    let mut iter = dpintoiter!(items, name = name, desc = desc);
-    //let source = DumbProgressSource::new(Box::new(items.into_iter()));
-    //let mut iter = { DumbProgressIterator::new_with_desc(source, desc) };
-    while let Some(item) = iter.next() {
-        if show_items {
-            println!("          * iter(): {}", item);
-        }
-        if sleep_millis > 0 {
-            thread::sleep(Duration::from_millis(sleep_millis));
-        }
-        if level > 0 {
-            debug_progress(show_items, sleep_millis, level - 1);
-        }
-    }
-    // if true {
-    //     for item in items.iter() {
-    //         println!("- iter(): {}", item);
-    //     }
-    // }
-}
-pub fn debug_progress_single(show_items: bool, sleep_millis: u64) {
-    if true {
-        let items = vec![
-            String::from("apple"),
-            String::from("banana"),
-            String::from("cherry"),
-        ];
-        {
-            let mut iter = dpiter!(items);
-            //let progress_source = items.to_progress_source();
-            //let mut iter = { DumbProgressIterator::new(progress_source, DumbProgressSetting::default()) };
-            while let Some(item) = iter.next() {
-                if show_items {
-                    println!("          * iter(): {}", item);
-                }
-                if sleep_millis > 0 {
-                    thread::sleep(Duration::from_millis(sleep_millis));
-                }
-            }
-        }
-        if true {
-            for item in items.iter() {
-                println!("- iter(): {}", item);
-            }
-        }
-    }
-}
+// pub fn debug_progress(show_items: bool, sleep_millis: u64, level: usize) {
+//     let items = vec![
+//         String::from("apple"),
+//         String::from("banana"),
+//         String::from("cherry"),
+//     ];
+//     let desc = format!("level {}", level);
+//     // let mut iter = {
+//     //     let mut builder = DumbProgressIteratorBuilder::new(Box::new(items.iter()));
+//     //     builder.set_description(desc.as_str());
+//     //     let mut iter = builder.build();
+//     //     iter
+//     // };
+//     let name = format!("L{}", level);
+//     let mut iter = dpintoiter!(items, name = name, desc = desc);
+//     //let source = DumbProgressSource::new(Box::new(items.into_iter()));
+//     //let mut iter = { DumbProgressIterator::new_with_desc(source, desc) };
+//     while let Some(item) = iter.next() {
+//         if show_items {
+//             println!("          * iter(): {}", item);
+//         }
+//         if sleep_millis > 0 {
+//             thread::sleep(Duration::from_millis(sleep_millis));
+//         }
+//         if level > 0 {
+//             debug_progress(show_items, sleep_millis, level - 1);
+//         }
+//     }
+//     // if true {
+//     //     for item in items.iter() {
+//     //         println!("- iter(): {}", item);
+//     //     }
+//     // }
+// }
+// pub fn debug_progress_single(show_items: bool, sleep_millis: u64) {
+//     if true {
+//         let items = vec![
+//             String::from("apple"),
+//             String::from("banana"),
+//             String::from("cherry"),
+//         ];
+//         {
+//             let mut iter = dpiw!(items.iter());
+//             //let progress_source = items.to_progress_source();
+//             //let mut iter = { DumbProgressIterator::new(progress_source, DumbProgressSetting::default()) };
+//             while let Some(item) = iter.next() {
+//                 if show_items {
+//                     println!("          * iter(): {}", item);
+//                 }
+//                 if sleep_millis > 0 {
+//                     thread::sleep(Duration::from_millis(sleep_millis));
+//                 }
+//             }
+//         }
+//         if true {
+//             for item in items.iter() {
+//                 println!("- iter(): {}", item);
+//             }
+//         }
+//     }
+// }
 
-const DEF_SHOW_GAP_MILLIS: u32 = 100;
-const PREFER_EMOJIS: bool = false;
-const MAX_PROGRESS_BAR_COUNT: i32 = 3;
+const DEF_SHOW_GAP_MILLIS: u16 = 100;
+const DEF_PREFER_EMOJIS: bool = true;
+const MAX_NESTED_PROGRESS_BAR_COUNT: u8 = 2;
 
 pub struct DumbProgressIterator<'a, T> {
     boxed_iterator: Box<dyn Iterator<Item = T> + 'a>,
@@ -234,10 +251,29 @@ impl<'a, T> Drop for DumbProgressIterator<'a, T> {
 // }
 
 #[derive(Debug, Clone)]
+pub enum DumbProgressStyle {
+    Simple,
+    Default,
+}
+
+#[derive(Debug, Clone)]
 pub struct DumbProgressSetting {
     pub total: Option<usize>,
     pub name: Option<String>,
-    pub desc: Option<String>,
+    pub desc: Option<String>
+}
+
+impl DumbProgressSetting {
+    pub fn set_style(style: DumbProgressStyle) {
+        get_the_progress_shower_ref()
+            .borrow_mut()
+            .set_style(style);
+    }
+    pub fn set_max_nested_progress_bar_count(count: u8) {
+        get_the_progress_shower_ref()
+            .borrow_mut()
+            .set_max_nested_progress_bar_count(count);
+    }
 }
 
 impl Default for DumbProgressSetting {
@@ -274,12 +310,23 @@ impl ProgressEntry {
 
 struct ProgressShower {
     next_entry_id: usize,
-    show_gap_millis: u32,
+    show_gap_millis: u16,
+    prefer_emojis: bool,
+    max_nested_progress_bar_count: u8,
     progress_entries: Vec<ProgressEntry>,
     last_shown_entry_count: Option<usize>,
     last_shown_time: Option<std::time::Instant>,
 }
 impl ProgressShower {
+    fn set_style(&mut self, style: DumbProgressStyle) {
+        self.prefer_emojis = match style {
+            DumbProgressStyle::Simple => false,
+            DumbProgressStyle::Default => true,
+        };
+    }
+    fn set_max_nested_progress_bar_count(&mut self, count: u8) {
+        self.max_nested_progress_bar_count = count;
+    }
     fn register_progress(&mut self, progress: Progress, setting: DumbProgressSetting) -> usize {
         let entry_id = self.next_entry_id;
         let progress_entry = ProgressEntry {
@@ -299,8 +346,6 @@ impl ProgressShower {
             .position(|entry| entry.entry_id == entry_id);
         if let Some(idx) = idx {
             self.progress_entries = self.progress_entries[0..idx].to_vec();
-            //self.showing_progress_entry_count = 0;
-            //self.show_progress();
         }
     }
     fn advance_progress(&mut self, entry_id: usize) {
@@ -350,10 +395,11 @@ impl ProgressShower {
             }
             //show_it = true;  // just for testing
             if show_it {
+                let prefer_emojis = self.prefer_emojis;
                 print!("\r");
                 if progress_entry_count > 0 {
-                    let divider = if PREFER_EMOJIS {
-                        "💠" //"🔹" //"➕"//"🚪"
+                    let divider = if prefer_emojis {
+                        "💠" //💠 "🔹" //"➕"//"🚪"
                     } else {
                         "|"
                     };
@@ -383,16 +429,16 @@ impl ProgressShower {
                                             let graphical_progress = i as i32
                                                 > progress_entry_count as i32
                                                     - 1
-                                                    - MAX_PROGRESS_BAR_COUNT;
+                                                    - self.max_nested_progress_bar_count as i32;
                                             print!("/{}", total);
                                             let percent = counter as f32 / total as f32 * 100.0;
                                             if graphical_progress {
                                                 print!(" ");
                                                 let (filled_dot, half_filled_dot, empty_dot) =
-                                                    if PREFER_EMOJIS {
-                                                        if true {
-                                                            ("🟦", "⏹️", "⬜") // ⏺️
-                                                        } else if false {
+                                                    if prefer_emojis {
+                                                        if false {
+                                                            ("🟦", "🟦", "⬜") // ⏹️⏺️⏺️
+                                                        } else if true {
                                                             ("🌑", "🌓", "🌕")
                                                         } else {
                                                             ("🟢", "🟢", "⚪")
@@ -400,12 +446,28 @@ impl ProgressShower {
                                                     } else {
                                                         ("■", "■", "□") // ◧▣
                                                     };
-                                                let dot_count = (percent / 10.0).round() as usize;
-                                                print!(
-                                                    "{}{}",
-                                                    filled_dot.repeat(dot_count),
-                                                    empty_dot.repeat(10 - dot_count)
-                                                );
+                                                if true {
+                                                    let filled_count = percent as usize / 10;
+                                                    let half_filled_count = if (percent - (10.0 * filled_count as f32) > 5.0) {
+                                                        1
+                                                    } else {
+                                                        0
+                                                    };
+                                                    let empty_count = 10 - filled_count - half_filled_count;
+                                                    print!(
+                                                        "{}{}{}",
+                                                        filled_dot.repeat(filled_count),
+                                                        half_filled_dot.repeat(half_filled_count),
+                                                        empty_dot.repeat(empty_count)
+                                                    );
+                                                } else { 
+                                                    let dot_count = (percent / 10.0).round() as usize;
+                                                    print!(
+                                                        "{}{}",
+                                                        filled_dot.repeat(dot_count),
+                                                        empty_dot.repeat(10 - dot_count)
+                                                    );
+                                                }
                                             } else {
                                                 print!(" ({}%)", percent as i32);
                                             }
@@ -486,6 +548,8 @@ fn get_the_progress_shower_ref() -> &'static RefCell<ProgressShower> {
                 next_entry_id: 0,
                 progress_entries: Vec::new(),
                 show_gap_millis: DEF_SHOW_GAP_MILLIS,
+                prefer_emojis: DEF_PREFER_EMOJIS,
+                max_nested_progress_bar_count: MAX_NESTED_PROGRESS_BAR_COUNT,
                 last_shown_entry_count: None,
                 last_shown_time: None,
             };

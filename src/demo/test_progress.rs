@@ -5,6 +5,7 @@ use crate::prelude::*;
 
 #[test]
 fn test_progress_iter() {
+    DumbProgressSetting::set_style(DumbProgressStyle::Simple);
     _test_progress_iter(false, false);
     _test_progress_iter(true, false);
     _test_progress_iter(false, true);
@@ -16,7 +17,7 @@ fn _test_progress_iter(try_with_total: bool, nested: bool) {
     let iter = if try_with_total {
         dpiter!(v, name = "VEC", desc = "vector")
     } else {
-        dpiter_nt!(v, name = "VEC", desc = "vector")
+        dpiw!(v.iter(), name = "VEC", desc = "vector")
     };
     let mut result: Vec<i32> = Vec::new();
     for i in iter {
@@ -39,6 +40,7 @@ fn _test_progress_iter(try_with_total: bool, nested: bool) {
 
 #[test]
 fn test_progress_into() {
+    DumbProgressSetting::set_style(DumbProgressStyle::Simple);
     _test_progress_into(false, false);
     _test_progress_into(false, true);
     _test_progress_into(true, true);
@@ -52,7 +54,7 @@ fn _test_progress_into(range: bool, try_with_total: bool) {
         if try_with_total {
             dpintoiter!(v, name = "VEC", desc = "vector")
         } else {
-            dpintoiter_nt!(v, name = "VEC", desc = "vector")
+            dpiw!(v.into_iter(), name = "VEC", desc = "vector")
         }
     };
     let mut result: Vec<i32> = Vec::new();
