@@ -11,9 +11,9 @@ pub fn try_progress(sleep_millis: u64, level: usize, try_with_total: bool) {
     let desc = format!("level {}", level);
     let name = format!("L{}", level);
     let mut iter = if try_with_total {
-        dpintoiter_t!(items, name = name, desc = desc)
-    } else {
         dpintoiter!(items, name = name, desc = desc)
+    } else {
+        dpintoiter_nt!(items, name = name, desc = desc)
     };
     while let Some(_item) = iter.next() {
         // if show_items {
@@ -41,9 +41,9 @@ pub fn try_progress_single(show_items: bool, sleep_millis: u64, try_with_total: 
         ];
         {
             let mut iter = if try_with_total {
-                dpiter_t!(items, name = "ITER")
-            } else {
                 dpiter!(items, name = "ITER")
+            } else {
+                dpiter_nt!(items, name = "ITER")
             };
             while let Some(item) = iter.next() {
                 if show_items {

@@ -19,14 +19,14 @@ macro_rules! dpiter {
         let mut setting = DumbProgressSetting {
             ..DumbProgressSetting::default()
         };
-        setting.total = None;
+        setting.total = Some($x.len());
         $(setting.name = Some($name.to_string());)?
         $(setting.desc = Some($desc.to_string());)?
         DumbProgressIterator::new(Box::new($x.iter()), setting)
     }};
 }
 #[macro_export]
-macro_rules! dpiter_t {
+macro_rules! dpiter_nt {
     ($x:expr
         $(, name=$name:expr)?
         $(, desc=$desc:expr)?
@@ -34,7 +34,7 @@ macro_rules! dpiter_t {
         let mut setting = DumbProgressSetting {
             ..DumbProgressSetting::default()
         };
-        setting.total = Some($x.len());
+        setting.total = None;
         $(setting.name = Some($name.to_string());)?
         $(setting.desc = Some($desc.to_string());)?
         DumbProgressIterator::new(Box::new($x.iter()), setting)
@@ -50,14 +50,14 @@ macro_rules! dpintoiter {
         let mut setting = DumbProgressSetting {
             ..DumbProgressSetting::default()
         };
-        setting.total = None;
+        setting.total = Some($x.len());
         $(setting.name = Some($name.to_string());)?
         $(setting.desc = Some($desc.to_string());)?
         DumbProgressIterator::new(Box::new($x.into_iter()), setting)
     }};
 }
 #[macro_export]
-macro_rules! dpintoiter_t {
+macro_rules! dpintoiter_nt {
     ($x:expr
         $(, name=$name:expr)?
         $(, desc=$desc:expr)?
@@ -65,12 +65,13 @@ macro_rules! dpintoiter_t {
         let mut setting = DumbProgressSetting {
             ..DumbProgressSetting::default()
         };
-        setting.total = Some($x.len());
+        setting.total = None;
         $(setting.name = Some($name.to_string());)?
         $(setting.desc = Some($desc.to_string());)?
         DumbProgressIterator::new(Box::new($x.into_iter()), setting)
     }};
 }
+
 #[macro_export]
 macro_rules! dprange {
     ($x:expr
@@ -101,7 +102,7 @@ pub fn debug_progress(show_items: bool, sleep_millis: u64, level: usize) {
     //     iter
     // };
     let name = format!("L{}", level);
-    let mut iter = dpintoiter_t!(items, name = name, desc = desc);
+    let mut iter = dpintoiter!(items, name = name, desc = desc);
     //let source = DumbProgressSource::new(Box::new(items.into_iter()));
     //let mut iter = { DumbProgressIterator::new_with_desc(source, desc) };
     while let Some(item) = iter.next() {
@@ -129,7 +130,7 @@ pub fn debug_progress_single(show_items: bool, sleep_millis: u64) {
             String::from("cherry"),
         ];
         {
-            let mut iter = dpiter_t!(items);
+            let mut iter = dpiter!(items);
             //let progress_source = items.to_progress_source();
             //let mut iter = { DumbProgressIterator::new(progress_source, DumbProgressSetting::default()) };
             while let Some(item) = iter.next() {
