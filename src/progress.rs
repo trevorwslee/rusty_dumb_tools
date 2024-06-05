@@ -260,14 +260,12 @@ pub enum DumbProgressStyle {
 pub struct DumbProgressSetting {
     pub total: Option<usize>,
     pub name: Option<String>,
-    pub desc: Option<String>
+    pub desc: Option<String>,
 }
 
 impl DumbProgressSetting {
     pub fn set_style(style: DumbProgressStyle) {
-        get_the_progress_shower_ref()
-            .borrow_mut()
-            .set_style(style);
+        get_the_progress_shower_ref().borrow_mut().set_style(style);
     }
     pub fn set_max_nested_progress_bar_count(count: u8) {
         get_the_progress_shower_ref()
@@ -448,20 +446,25 @@ impl ProgressShower {
                                                     };
                                                 if true {
                                                     let filled_count = percent as usize / 10;
-                                                    let half_filled_count = if (percent - (10.0 * filled_count as f32) > 5.0) {
+                                                    let half_filled_count = if (percent
+                                                        - (10.0 * filled_count as f32)
+                                                        > 5.0)
+                                                    {
                                                         1
                                                     } else {
                                                         0
                                                     };
-                                                    let empty_count = 10 - filled_count - half_filled_count;
+                                                    let empty_count =
+                                                        10 - filled_count - half_filled_count;
                                                     print!(
                                                         "{}{}{}",
                                                         filled_dot.repeat(filled_count),
                                                         half_filled_dot.repeat(half_filled_count),
                                                         empty_dot.repeat(empty_count)
                                                     );
-                                                } else { 
-                                                    let dot_count = (percent / 10.0).round() as usize;
+                                                } else {
+                                                    let dot_count =
+                                                        (percent / 10.0).round() as usize;
                                                     print!(
                                                         "{}{}",
                                                         filled_dot.repeat(dot_count),
