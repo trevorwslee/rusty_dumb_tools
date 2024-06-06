@@ -63,3 +63,4 @@ fn _test_progress_into(range: bool, try_with_total: bool) {
     }
     assert_eq!(result, vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
 }
+

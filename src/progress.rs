@@ -1,3 +1,6 @@
+//! A simple [`Iterator`] wrapper that helps to show progress of the iteration -- [`crate::progress::DumbProgressIterator`]
+
+
 #![deny(warnings)]
 #![allow(unused)]
 

@@ -80,3 +80,26 @@ pub fn try_progress_range(
         }
     }
 }
+
+// use crate::prelude::*;
+pub fn try_simple_progress_range() {
+    for i in dprange!(0..6, name = "RANGE", desc = "demo iteration of range") {
+        println!(" i is {}", i);
+        thread::sleep(Duration::from_millis(1000));
+    }
+}
+pub fn try_nested_progress() {
+    for i in dprange!(0..3, name = "RANGE") {
+        let items = vec![
+            String::from("apple"),
+            String::from("banana"),
+            String::from("orange"),
+        ];
+        for item in dpiter!(items, name = "VECTOR") {
+            println!(" i is {}; item is {}", i, item);
+            thread::sleep(Duration::from_millis(1000));
+        }
+    }
+}
+
+

@@ -1,9 +1,15 @@
 # [RustyDumbTools](https://github.com/trevorwslee/rusty_dumb_tools) (v0.1.14)
 
 A collection of [simple tools in ***Rust***](https://crates.io/crates/rusty_dumb_tools) as ***Rust*** modules:
+* [`crate::progress::DumbProgressIterator`]:
+  A simple `Iterator` wrapper that helps to show progress of the iteration.
 * [`crate::arg::DumbArgParser`](https://docs.rs/rusty_dumb_tools/latest/rusty_dumb_tools/arg/struct.DumbArgParser.html):
   A simple argument parser.
   It can be useful for handling command line argument parsing for a ***Rust*** program.
+* [`crate::json::DumbJsonProcessor`](https://docs.rs/rusty_dumb_tools/latest/rusty_dumb_tools/json/struct.DumbJsonProcessor.html):
+  A simple JSON processor / stream parser, that processes input JSON (possibly streamed piece by piece).
+  Instead of returning the parsed JSON as some object; as soon as JSON entries are recognized,
+  the configured callback is called for those recognized JSON entries. 
 * [`crate::calc::DumbCalcProcessor`](https://docs.rs/rusty_dumb_tools/latest/rusty_dumb_tools/calc/index.html):
   A simple infix calculation processor 
   It can be used to implement a simple calculator in ***Rust***.
@@ -16,16 +22,68 @@ A collection of [simple tools in ***Rust***](https://crates.io/crates/rusty_dumb
 * [`crate::lblscreen::DumbLineByLineScreen`](https://docs.rs/rusty_dumb_tools/latest/rusty_dumb_tools/lblscreen/struct.DumbLineByLineScreen.html):
   A terminal / text-based "screen" update helper.
   It is extended from `crate::ltemp::DumbLineTemplate`, and should be helpful in managing the updates of the formatted lines that acts as a "screen".
-* [`crate::json::DumbJsonProcessor`](https://docs.rs/rusty_dumb_tools/latest/rusty_dumb_tools/json/struct.DumbJsonProcessor.html):
-  A simple JSON processor / stream parser, that processes input JSON (possibly streamed piece by piece).
-  Instead of returning the parsed JSON as some object; as soon as JSON entries are recognized,
-  the configured callback is called for those recognized JSON entries.
-  
  
+## Sample Code for `DumbProgressIterator`
+
+### Simple:
+```
+use crate::prelude::*;
+pub fn try_simple_progress_range() {
+    for i in dprange!(0..6, name = "RANGE", desc = "demo iteration of range") {
+        println!(" i is {}", i);
+        thread::sleep(Duration::from_millis(1000));
+    }
+}
+```
+Note that `dprange` is a macro for wrapping the `Range` into a `DumbProgressIterator` object, which implements `Iterator` trait so that it can be used in *for* construct.
+
+The output will be like
+```
+💠 RANGE: 1/6 🌑🌓🌕🌕🌕🌕🌕🌕🌕🌕 – demo iteration of range 💠 …  i is 0
+💠 RANGE: 2/6 🌑🌑🌑🌕🌕🌕🌕🌕🌕🌕 – demo iteration of range 💠 …  i is 1
+💠 RANGE: 3/6 🌑🌑🌑🌑🌑🌕🌕🌕🌕🌕 – demo iteration of range 💠 …  i is 2
+💠 RANGE: 4/6 🌑🌑🌑🌑🌑🌑🌓🌕🌕🌕 – demo iteration of range 💠 …  i is 3
+💠 RANGE: 5/6 🌑🌑🌑🌑🌑🌑🌑🌑🌕🌕 – demo iteration of range 💠 …  i is 4
+💠 RANGE: 6/6 🌑🌑🌑🌑🌑🌑🌑🌑🌑🌑 – demo iteration of range 💠 …  i is 5
+```
+
+### Nested:
+```
+use crate::prelude::*;
+pub fn try_nested_progress() {
+    for i in dprange!(0..3, name = "RANGE") {
+        let items = vec![
+            String::from("apple"),
+            String::from("banana"),
+            String::from("orange"),
+        ];
+        for item in dpiter!(items, name = "VECTOR") {
+            println!(" i is {}; item is {}", i, item);
+            thread::sleep(Duration::from_millis(1000));
+        }
+    }
+}
+```
+Note that `dpiter` is a macro for wrapping `Vec` (`items.iter()`) into a `DumbProgressIterator` object, which implements `Iterator` trait so that it can be used in *for* construct.
+
+The output will be like
+```
+💠 RANGE: 1/3 🌑🌑🌑🌕🌕🌕🌕🌕🌕🌕 💠 VECTOR: 1/3 🌑🌑🌑🌕🌕🌕🌕🌕🌕🌕 💠 …  i is 0; item is apple
+💠 RANGE: 1/3 🌑🌑🌑🌕🌕🌕🌕🌕🌕🌕 💠 VECTOR: 2/3 🌑🌑🌑🌑🌑🌑🌓🌕🌕🌕 💠 …  i is 0; item is banana
+💠 RANGE: 1/3 🌑🌑🌑🌕🌕🌕🌕🌕🌕🌕 💠 VECTOR: 3/3 🌑🌑🌑🌑🌑🌑🌑🌑🌑🌑 💠 …  i is 0; item is orange
+💠 RANGE: 2/3 🌑🌑🌑🌑🌑🌑🌓🌕🌕🌕 💠 VECTOR: 1/3 🌑🌑🌑🌕🌕🌕🌕🌕🌕🌕 💠 …  i is 1; item is apple
+💠 RANGE: 2/3 🌑🌑🌑🌑🌑🌑🌓🌕🌕🌕 💠 VECTOR: 2/3 🌑🌑🌑🌑🌑🌑🌓🌕🌕🌕 💠 …  i is 1; item is banana
+💠 RANGE: 2/3 🌑🌑🌑🌑🌑🌑🌓🌕🌕🌕 💠 VECTOR: 3/3 🌑🌑🌑🌑🌑🌑🌑🌑🌑🌑 💠 …  i is 1; item is orange
+💠 RANGE: 3/3 🌑🌑🌑🌑🌑🌑🌑🌑🌑🌑 💠 VECTOR: 1/3 🌑🌑🌑🌕🌕🌕🌕🌕🌕🌕 💠 …  i is 2; item is apple
+💠 RANGE: 3/3 🌑🌑🌑🌑🌑🌑🌑🌑🌑🌑 💠 VECTOR: 2/3 🌑🌑🌑🌑🌑🌑🌓🌕🌕🌕 💠 …  i is 2; item is banana
+💠 RANGE: 3/3 🌑🌑🌑🌑🌑🌑🌑🌑🌑🌑 💠 VECTOR: 3/3 🌑🌑🌑🌑🌑🌑🌑🌑🌑🌑 💠 …  i is 2; item is orange
+```
+
  
 ## Sample Code for `DumbArgParser`
 
 ```
+use crate::prelude::*;
 pub fn arg_parser_sample(provide_sample_args: bool) {
     let mut parser = DumbArgParser::new();
     parser.set_description("This is a simple argument parser.");
@@ -73,8 +131,12 @@ If run with `provide_sample_args` set to `false`, output will be like
 . multi-arg: Some(["m1", "m2", "m3"])
 ```
 
-Next section will present a demo of using the tools. The sub-demo "selection" is actually implemented using `DumbArgParser` with "sub-selection" for the selected sub-demo like
-```
+<p>
+<details>
+<summary>Next section will present a demo program of using the tools. The sub-demo "selection" is actually implemented using `DumbArgParser` with "sub-selection" for the selected sub-demo like
+</summary>
+<pre>
+use crate::prelude::*;
 pub fn run_demo() {
     let mut parser = create_demo_parser();
     parser.parse_args();
@@ -125,11 +187,14 @@ pub fn handle_demo_calc(parser: DumbArgParser) {
     let input = parser.get_multi::<String>("input").unwrap();
     ...
 }
-```
+</pre>
+</details>
+</p>
 
-# Demo
 
-For a demo program of using the tools, which is itself an application using `DumbArgParser`, you may want to run the included demo function [`rusty_dumb_tools::demo::run_demo`](https://docs.rs/rusty_dumb_tools/latest/rusty_dumb_tools/demo/fn.run_demo.html) like
+# Demo Program
+
+For a demo program that demonstrates more of the tools, you may want to run the included demo function [`rusty_dumb_tools::demo::run_demo`](https://docs.rs/rusty_dumb_tools/latest/rusty_dumb_tools/demo/fn.run_demo.html) like
 ```
 use rusty_dumb_tools::demo;
 demo::run_demo(None);  // get arguments from command-line         
@@ -169,6 +234,7 @@ the demo can be ***cargo*** run like
   <br>the above demonstrates how to use `DumbLineByLineScreen` to implement a "progress info panel"
 * `cargo run -- arg -f 0.2 5 --string2 VAL1 false 1 2 3`
 
+
 The output of running `cargo run -- -h`:
 ```
 | USAGE: rusty_dumb_tools [-h] <demo>
@@ -176,124 +242,15 @@ The output of running `cargo run -- -h`:
 | . -h, --help : HELP
 | . <demo> ... : REQUIRED; e.g. calc ...
 |   : a demo
+|   : . [json] : DumbJsonProcessor demo
 |   : . [calc] : DumbCalcProcessor command-line input demo
 |   : . [calc-repl] : DumbCalcProcessor REPL demo
-|   : . [json] : DumbJsonProcessor demo
 |   : . [ltemp] : DumbLineTemplate demo
 |   : . [lblscreen] : DumbLineByLineScreen demo
 |   : . [arg] : DumbArgParser demo (more like debugging)
 ```
 
-The output of running `cargo run -- calc -h`:
-```
-| USAGE: rusty_dumb_tools calc [-h] <input>
-| : DumbCalcProcessor command-line input demo.
-| . -h, --help : HELP
-| . <input> ... : REQUIRED; e.g. 123 ...
-|   : infix expression
-```
-
-The output of running `cargo run -- calc 1.1 + 2.2 * (4.3 - 2.4) + 5`:
-```
-|
-| = 10.28.
-|
-```
-
-After running `cargo run -- calc-repl`, the demo will get in a loop to get input from the prompt:
-```
-* enter an infix expression
-* can split the infix expression into multiple lines; e.g. a "unit" a line
-* finally, enter "=" (or an empty line) to evaluate it
-* can then continue to enter another infix expression ...
-
->
-```
-
-After running `cargo run -- ltemp Trevor`, the demo will show something like
-```
-===============================
-| NAME :               Trevor |
-| AGE  :        <undisclosed> |
-|      :     and counting ... |
-| +  1 | #                    |
-===============================
-```
-`+  1 | #` acts like a "progress indicator"; after 20 seconds:
-```
-===============================
-| NAME :               Trevor |
-| AGE  :        <undisclosed> |
-|      :     and counting ... |
-| + 20 | #################### |
-===============================
-```
-
-After running `cargo run -- lblscreen`, the screen will show something like
-```
-----------------------------------------
-|      ... wait ... loading 0% ...     |
-| ........ |                    :   0% |
-----------------------------------------
-```
-after 20 seconds, when 100% done, the screen will be like
-```
-|     ... wait ... loading 100% ...    |
-| ........ |>>>>>>>>>>>>>>>>>>>>: 100% |
-----------------------------------------
-```
-
-<br>
-<details>
-<summary><b>The above <i>DumbLineTemplate</i> demo is like</b></b></summary>
-<pre>
-pub fn demo_lblscreen() {
-    let mut lbl_demo_screen = {
-        let mut comps = dlt_comps![
-            "| ",
-            dltc!("description", align = 'C').set_truncate_indicator("..."),
-            " |"
-        ];
-        let temp1 = DumbLineTemplate::new_fixed_width(40, &comps);
-        let mut comps = dlt_comps![
-            "| ",
-            ".".repeat(8),
-            " |",
-            dltc!("progress-bar"),
-            ": ",
-            dltc!("progress%", fixed_width = 4, align = 'R'),
-            " |"
-        ];
-        let temp2 = DumbLineTemplate::new_fixed_width(40, &comps);
-        let settings = LBLScreenSettings {
-            top_line: Some("-".repeat(40)),
-            bottom_line: Some("-".repeat(40)),
-            //screen_height_adjustment: 0,
-            ..LBLScreenSettings::default()
-        };
-        DumbLineByLineScreen::new(vec![temp1, temp2], settings)
-    };
-    lbl_demo_screen.init();
-    let mut state = HashMap::<&str, String>::new();
-    let mut progress_done_percent = 0;
-    loop {
-        let progress_percent = format!("{}%", progress_done_percent);
-        let description = format!("... wait ... loading {} ...", progress_percent);
-        let progress_bar = ">".repeat(progress_done_percent / 5_usize);
-        state.insert("description", description);
-        state.insert("progress-bar", progress_bar);
-        state.insert("progress%", progress_percent);
-        lbl_demo_screen.refresh(&state);
-        thread::sleep(Duration::from_millis(200));
-        progress_done_percent += 1;
-        if progress_done_percent > 100 {
-            break;
-        }
-    }
-}
-</pre>
-</details>
-<br>
+## Demo for `DumbJsonProcessor` -- `json`
 
 After running `cargo run -- json 'hong kong'`,
 which will query the info about universities of some country with API provided by [universities.hipolabs.com](http://universities.hipolabs.com/),
@@ -315,10 +272,11 @@ the screen will show something like
 * `name` => `The Hang Seng University of Hong Kong`
 * `name` => `Canadian International School of Hong Kong`
 ```
-<br>
+<p>
 <details>
 <summary><b>The core for the above <i>DumbJsonProcessor</i> demo is like</b></summary>
 <pre>
+use crate::prelude::*;
 pub fn demo_query_universities(country: &str, show_all: bool) {
     let stream = make_connection(&country);
     let result = match stream {
@@ -381,9 +339,130 @@ fn process_connection(stream: &mut TcpStream, show_all: bool) -> Result<(), Stri
 }
 </pre>
 </details>
-<br>
+</p>
 
-# Additional Demos
+
+## Demo for `DumbCalcProcessor` -- `calc`
+
+The output of running `cargo run -- calc -h`:
+```
+| USAGE: rusty_dumb_tools calc [-h] <input>
+| : DumbCalcProcessor command-line input demo.
+| . -h, --help : HELP
+| . <input> ... : REQUIRED; e.g. 123 ...
+|   : infix expression
+```
+
+The output of running `cargo run -- calc 1.1 + 2.2 * (4.3 - 2.4) + 5`:
+```
+|
+| = 10.28.
+|
+```
+
+## Demo for `DumbCalculator` `calc-repl`
+
+After running `cargo run -- calc-repl`, the demo will get in a loop to get input from the prompt:
+```
+* enter an infix expression
+* can split the infix expression into multiple lines; e.g. a "unit" a line
+* finally, enter "=" (or an empty line) to evaluate it
+* can then continue to enter another infix expression ...
+
+>
+```
+
+## Demo for `DumbLineTemplate` -- `ltemp`
+
+After running `cargo run -- ltemp Trevor`, the demo will show something like
+```
+===============================
+| NAME :               Trevor |
+| AGE  :        <undisclosed> |
+|      :     and counting ... |
+| +  1 | #                    |
+===============================
+```
+`+  1 | #` acts like a "progress indicator"; after 20 seconds:
+```
+===============================
+| NAME :               Trevor |
+| AGE  :        <undisclosed> |
+|      :     and counting ... |
+| + 20 | #################### |
+===============================
+```
+
+## Demo for `DumbLineByLineScreen` -- `lblscreen`
+
+After running `cargo run -- lblscreen`, the screen will show something like
+```
+----------------------------------------
+|      ... wait ... loading 0% ...     |
+| ........ |                    :   0% |
+----------------------------------------
+```
+after 20 seconds, when 100% done, the screen will be like
+```
+|     ... wait ... loading 100% ...    |
+| ........ |>>>>>>>>>>>>>>>>>>>>: 100% |
+----------------------------------------
+```
+
+<p>
+<details>
+<summary><b>The above <i>DumbLineByLineScreen</i> demo is like</b></b></summary>
+<pre>
+use crate::prelude::*;
+pub fn demo_lblscreen() {
+    let mut lbl_demo_screen = {
+        let mut comps = dlt_comps![
+            "| ",
+            dltc!("description", align = 'C').set_truncate_indicator("..."),
+            " |"
+        ];
+        let temp1 = DumbLineTemplate::new_fixed_width(40, &comps);
+        let mut comps = dlt_comps![
+            "| ",
+            ".".repeat(8),
+            " |",
+            dltc!("progress-bar"),
+            ": ",
+            dltc!("progress%", fixed_width = 4, align = 'R'),
+            " |"
+        ];
+        let temp2 = DumbLineTemplate::new_fixed_width(40, &comps);
+        let settings = LBLScreenSettings {
+            top_line: Some("-".repeat(40)),
+            bottom_line: Some("-".repeat(40)),
+            //screen_height_adjustment: 0,
+            ..LBLScreenSettings::default()
+        };
+        DumbLineByLineScreen::new(vec![temp1, temp2], settings)
+    };
+    lbl_demo_screen.init();
+    let mut state = HashMap::<&str, String>::new();
+    let mut progress_done_percent = 0;
+    loop {
+        let progress_percent = format!("{}%", progress_done_percent);
+        let description = format!("... wait ... loading {} ...", progress_percent);
+        let progress_bar = ">".repeat(progress_done_percent / 5_usize);
+        state.insert("description", description);
+        state.insert("progress-bar", progress_bar);
+        state.insert("progress%", progress_percent);
+        lbl_demo_screen.refresh(&state);
+        thread::sleep(Duration::from_millis(200));
+        progress_done_percent += 1;
+        if progress_done_percent > 100 {
+            break;
+        }
+    }
+}
+</pre>
+</details>
+</p>
+
+# Additional Demo Apps
 
 * [DumbCalculator Text-based Demo](demos/text_based_calculator/README.md)
 * [DumbCalculator Web-based Demo](demos/web_based_calculator/README.md)

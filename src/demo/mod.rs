@@ -64,9 +64,9 @@ pub fn create_demo_parser() -> DumbArgParser {
     dap_arg!("demo", value = "calc")
         .set_description("a demo")
         .set_with_desc_enums(vec![
+            "json:DumbJsonProcessor demo",
             "calc:DumbCalcProcessor command-line input demo",
             "calc-repl:DumbCalcProcessor REPL demo",
-            "json:DumbJsonProcessor demo",
             "ltemp:DumbLineTemplate demo",
             "lblscreen:DumbLineByLineScreen demo",
             "arg:DumbArgParser demo (more like debugging)",
