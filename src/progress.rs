@@ -4,9 +4,28 @@
 #![allow(unused)]
 
 use std::{
-    borrow::Borrow, cell::RefCell, io::{self, Write}, mem::MaybeUninit, ops::Range, sync::Once, thread, time::Duration
+    borrow::Borrow,
+    cell::RefCell,
+    cmp::min,
+    io::{self, Write},
+    mem::MaybeUninit,
+    ops::Range,
+    sync::Once,
+    thread,
+    time::Duration,
 };
 
+/// use this macro to wrap an [Iterator] with [DumbProgressIndicator] to show progress of the iteration
+///
+/// e.g.
+/// ```
+/// use rusty_dumb_tools::prelude::*;
+/// let v = vec![1, 2, 3, 4, 5];
+/// for i in dpiw!(v.iter(), name="name", desc="long desc") {
+/// }
+/// ```
+/// Note that `name` and `desc` are optional parameters to [crate::dpiw!]
+/// Also see: [crate::dpir!], [crate::dpi_iter!] and [crate::dpi_into_iter!],
 #[macro_export]
 macro_rules! dpiw {
     ($x:expr
@@ -24,6 +43,16 @@ macro_rules! dpiw {
     }};
 }
 
+/// use this macro to wrap a [Range] with [DumbProgressIndicator] to show progress of the iteration
+///
+/// e.g.
+/// ```
+/// use rusty_dumb_tools::prelude::*;
+/// for i in dpir!(0..6, name="name", desc="long desc") {
+/// }
+/// ```
+/// Note that `name` and `desc` are optional parameters to [crate::dpir!]
+/// Also see: [crate::dpiw!], [crate::dpi_iter!] and [crate::dpi_into_iter!],
 #[macro_export]
 macro_rules! dpir {
     ($x:expr
@@ -40,8 +69,18 @@ macro_rules! dpir {
     }};
 }
 
-
-#[macro_export]  // the same as dpiw, but provide total automatically
+/// use this macro to wrap a [Vec] (`iter()`) with [DumbProgressIndicator] to show progress of the iteration
+///
+/// e.g.
+/// ```
+/// use rusty_dumb_tools::prelude::*;
+/// let v = vec![1, 2, 3, 4, 5];
+/// for i in dpi_iter!(v, name="name", desc="long desc") {
+/// }
+/// ```
+/// Note that `name` and `desc` are optional parameters to [crate::dpi_iter!]
+/// Also see: [crate::dpiw!], [crate::dpir!] and [crate::dpi_into_iter!],
+#[macro_export] // the same as dpiw, but provide total automatically
 macro_rules! dpi_iter {
     ($x:expr
         $(, name=$name:expr)?
@@ -57,7 +96,18 @@ macro_rules! dpi_iter {
     }};
 }
 
-#[macro_export] // the same as dpir 
+/// use this macro to wrap a [Vec] (`into_iter()`) with [DumbProgressIndicator] to show progress of the iteration
+///
+/// e.g.
+/// ```
+/// use rusty_dumb_tools::prelude::*;
+/// let v = vec![1, 2, 3, 4, 5];
+/// for i in dpi_into_iter!(v, name="name", desc="long desc") {
+/// }
+/// ```
+/// Note that `name` and `desc` are optional parameters to [crate::dpi_into_iter!]
+/// Also see: [crate::dpiw!], [crate::dpir!] and [crate::dpi_iter!],
+#[macro_export] // the same as dpir
 macro_rules! dpi_into_iter {
     ($x:expr
         $(, name=$name:expr)?
@@ -139,6 +189,23 @@ const DEF_SHOW_GAP_MILLIS: u16 = 100;
 const DEF_PREFER_EMOJIS: bool = true;
 const MAX_NESTED_PROGRESS_BAR_COUNT: u8 = 2;
 
+/// Although [DumbProgressIndicator] can be created directly, it is recommended to use macro [dpiw!], [dpir!], [dpi_iter!] or [dpi_into_iter!].
+/// In case direct creation is desired, it can be created like:
+/// ```
+/// use rusty_dumb_tools::prelude::*;
+/// let items = vec![1, 2, 3, 4, 5];
+/// let mut setting = DumbProgressSetting {
+///   total: Some(items.len()),
+///   name: Some(String::from("name")),
+///   ..DumbProgressSetting::default()
+/// };
+/// let iter = DumbProgressIndicator::new(Box::new(items.iter()), setting);
+/// for i in iter {
+/// }
+/// ```
+/// There are additional *global* options that you can set like with
+/// * [DumbProgressSetting::set_style] -- set the style for show the progress -- `DumbProgressStyle::Simple` or `DumbProgressStyle::Default`
+/// * [DumbProgressSetting::set_max_nested_progress_bar_count] -- in case of nested iteration, set the maximum number of progress bars (percentage bars) to show
 pub struct DumbProgressIndicator<'a, T> {
     boxed_iterator: Box<dyn Iterator<Item = T> + 'a>,
     //description: Option<String>,
@@ -174,7 +241,7 @@ impl<'a, T> DumbProgressIndicator<'a, T> {
         if false {
             let (start, end) = boxed_iterator.as_ref().size_hint();
             if let Some(e) = end {
-                let t = e - start;  // TODO: make use of it instead of need to input total
+                let t = e - start; // TODO: make use of it instead of need to input total
                 if let Some(total) = setting.total {
                     assert_eq!(total, t);
                 }
@@ -243,9 +310,12 @@ pub struct DumbProgressSetting {
 }
 
 impl DumbProgressSetting {
+    /// set the style for show the progress -- `DumbProgressStyle::Simple` or `DumbProgressStyle::Default`
     pub fn set_style(style: DumbProgressStyle) {
         get_the_progress_shower_ref().borrow_mut().set_style(style);
     }
+    /// in case of nested iteration, set the maximum number of progress bars (percentage bars) to show;
+    /// you can set it to 0 to disable showing percentage bar; the default is 2  
     pub fn set_max_nested_progress_bar_count(count: u8) {
         get_the_progress_shower_ref()
             .borrow_mut()
@@ -408,7 +478,10 @@ impl ProgressShower {
                                                     - 1
                                                     - self.max_nested_progress_bar_count as i32;
                                             print!("/{}", total);
-                                            let percent = counter as f32 / total as f32 * 100.0;
+                                            let mut percent = counter as f32 / total as f32 * 100.0;
+                                            if percent > 100.0 {
+                                                percent = 100.0;
+                                            }
                                             if graphical_progress {
                                                 print!(" ");
                                                 let (filled_dot, half_filled_dot, empty_dot) =

@@ -27,7 +27,7 @@ A collection of [simple tools in ***Rust***](https://crates.io/crates/rusty_dumb
 
 ### Simple:
 ```
-use crate::prelude::*;
+use rusty_dumb_tools::prelude::*;
 pub fn try_simple_progress_range() {
     for i in dpir!(0..6, name = "RANGE", desc = "demo iteration of range") {
         println!(" i is {}", i);
@@ -49,7 +49,7 @@ The output will be like
 
 ### Nested:
 ```
-use crate::prelude::*;
+use rusty_dumb_tools::prelude::*;
 pub fn try_nested_progress() {
     for i in dpir!(0..3, name = "RANGE") {
         let items = vec![
@@ -83,7 +83,7 @@ The output will be like
 ## Sample Code for `DumbArgParser`
 
 ```
-use crate::prelude::*;
+use rusty_dumb_tools::prelude::*;
 pub fn arg_parser_sample(provide_sample_args: bool) {
     let mut parser = DumbArgParser::new();
     parser.set_description("This is a simple argument parser.");
@@ -107,7 +107,7 @@ pub fn arg_parser_sample(provide_sample_args: bool) {
 }
 ```
 
-If run with `provide_sample_args` set to `true`, i.e. no arguments provided, output will be like
+If run with `provide_sample_args` set to `false`, i.e. no arguments provided, output will be like
 ```
 | !!!
 | !!! INVALID INPUT ARGUMENT: argument [str-arg] not provided
@@ -121,7 +121,7 @@ If run with `provide_sample_args` set to `true`, i.e. no arguments provided, out
 | . <i32-arg> : REQUIRED; e.g. 123
 | . <multi-arg> ... : REQUIRED; e.g.  ...
 ```
-If run with `provide_sample_args` set to `false`, output will be like
+If run with `provide_sample_args` set to `true`, output will be like
 ```
 . -v: Some(true)
 . --verbose: Some(true)
@@ -136,7 +136,7 @@ If run with `provide_sample_args` set to `false`, output will be like
 <summary>Next section will present a demo program of using the tools. The sub-demo "selection" is actually implemented using `DumbArgParser` with "sub-selection" for the selected sub-demo like
 </summary>
 <pre>
-use crate::prelude::*;
+use rusty_dumb_tools::prelude::*;
 pub fn run_demo() {
     let mut parser = create_demo_parser();
     parser.parse_args();
@@ -276,7 +276,7 @@ the screen will show something like
 <details>
 <summary><b>The core for the above <i>DumbJsonProcessor</i> demo is like</b></summary>
 <pre>
-use crate::prelude::*;
+use rusty_dumb_tools::prelude::*;
 pub fn demo_query_universities(country: &str, show_all: bool) {
     let stream = make_connection(&country);
     let result = match stream {
@@ -413,7 +413,7 @@ after 20 seconds, when 100% done, the screen will be like
 <details>
 <summary><b>The above <i>DumbLineByLineScreen</i> demo is like</b></b></summary>
 <pre>
-use crate::prelude::*;
+use rusty_dumb_tools::prelude::*;
 pub fn demo_lblscreen() {
     let mut lbl_demo_screen = {
         let mut comps = dlt_comps![

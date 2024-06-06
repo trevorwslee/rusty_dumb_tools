@@ -61,7 +61,7 @@ macro_rules! dlt_comps {
   }};
 }
 
-/// use this macro to construct a value-mapped [`DumbLineTemplate`] component (a [`MappedLineTempCompBuilder`] to be precise), and it is expected to be use together with [`crate::dlt_comps!`]
+/// use this macro to construct a value-mapped [`DumbLineTemplate`] component (a [`MappedLineTempCompBuilder`] to be precise), and it is expected to be use together with [`dlt_comps!`]
 ///
 /// the compulsory argument is the key for the line template component;
 /// the other optional "ordered but named" arguments are

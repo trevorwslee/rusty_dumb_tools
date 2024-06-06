@@ -1,5 +1,7 @@
 //! A collection of simple tools in ***Rust*** as ***Rust*** modules:
 //! * [`crate::arg::DumbArgParser`]: A simple argument parser.
+//! * [`crate::progress::DumbProgressIndicator`]: A simple [`Iterator`] wrapper that helps to show progress of the iteration.
+//! * [`crate::json::DumbJsonProcessor`]: A simple JSON processor / stream parser.
 //! It can be useful for handling command line argument parsing.
 //! * [`crate::calc::DumbCalcProcessor`]: A simple infix calculation processor.
 //! * [`crate::calculator::DumbCalculator`]: A simple calculator that accepts input keys acting like a real calculator.
@@ -7,7 +9,6 @@
 //! * [`crate::ltemp::DumbLineTemplate`]: A simple line template for formatting a line, which can be use to print values as a line with some template.
 //! * [`crate::lblscreen::DumbLineByLineScreen`]: A terminal / text-based "screen" update helper, which is extended from [`crate::ltemp::DumbLineTemplate`],
 //!   and should be helpful in managing the updates of the formatted lines that acts as a "screen".
-//! * [`crate::json::DumbJsonProcessor`]: A simple JSON processor / stream parser.
 //!
 //! For a demo program of using the tools, you may want to run the included demo function [`demo::run_demo`] like
 //! ```

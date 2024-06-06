@@ -89,6 +89,7 @@ pub fn try_simple_progress_range() {
     }
 }
 pub fn try_nested_progress() {
+    DumbProgressSetting::set_max_nested_progress_bar_count(1);
     for i in dpir!(0..3, name = "RANGE") {
         let items = vec![
             String::from("apple"),
