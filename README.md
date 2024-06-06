@@ -1,7 +1,7 @@
 # [RustyDumbTools](https://github.com/trevorwslee/rusty_dumb_tools) (v0.1.14)
 
 A collection of [simple tools in ***Rust***](https://crates.io/crates/rusty_dumb_tools) as ***Rust*** modules:
-* [`crate::progress::DumbProgressIndicator`]:
+* [`crate::progress::DumbProgressIndicator`](https://docs.rs/rusty_dumb_tools/latest/rusty_dumb_tools/progress/struct.DumbProgressIndicator.html):
   A simple `Iterator` wrapper that helps to show progress of the iteration.
 * [`crate::arg::DumbArgParser`](https://docs.rs/rusty_dumb_tools/latest/rusty_dumb_tools/arg/struct.DumbArgParser.html):
   A simple argument parser.
