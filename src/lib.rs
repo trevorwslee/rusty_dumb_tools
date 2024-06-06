@@ -59,12 +59,12 @@ pub mod prelude {
     pub use crate::dap_arg;
     pub use crate::dlt_comps;
     pub use crate::dltc;
-    pub use crate::dpintoiter;
-    //pub use crate::dpintoiter_nt;
-    pub use crate::dpiter;
+    pub use crate::dpi_into_iter;
+    //pub use crate::dpi_into_iter_nt;
+    pub use crate::dpi_iter;
     pub use crate::dpiw;
-    //pub use crate::dpiter_nt;
-    pub use crate::dprange;
+    //pub use crate::dpi_iter_nt;
+    pub use crate::dpir;
     pub use crate::json::*;
     pub use crate::lblscreen::*;
     pub use crate::ltemp::*;

@@ -12,7 +12,7 @@ pub fn try_progress(sleep_millis: u64, level: usize, try_with_total: bool) {
     let desc = format!("level {}", level);
     let name = format!("L{}", level);
     let mut iter = if try_with_total {
-        dpintoiter!(items, name = name, desc = desc)
+        dpi_into_iter!(items, name = name, desc = desc)
     } else {
         dpiw!(items.into_iter(), name = name, desc = desc)
     };
@@ -43,7 +43,7 @@ pub fn try_progress_single(show_items: bool, sleep_millis: u64, try_with_total: 
         ];
         {
             let mut iter = if try_with_total {
-                dpiter!(items, name = "ITER")
+                dpi_iter!(items, name = "ITER")
             } else {
                 dpiw!(items.iter(), name = "ITER")
             };
@@ -70,7 +70,7 @@ pub fn try_progress_range(
     _try_with_total: bool,
 ) {
     DumbProgressSetting::set_style(DumbProgressStyle::Simple);
-    let iter = dprange!(0..3, name = "Range");
+    let iter = dpir!(0..3, name = "Range");
     for i in iter {
         if show_items {
             println!("          * i: {}", i);
@@ -83,23 +83,21 @@ pub fn try_progress_range(
 
 // use crate::prelude::*;
 pub fn try_simple_progress_range() {
-    for i in dprange!(0..6, name = "RANGE", desc = "demo iteration of range") {
+    for i in dpir!(0..6, name = "RANGE", desc = "demo iteration of range") {
         println!(" i is {}", i);
         thread::sleep(Duration::from_millis(1000));
     }
 }
 pub fn try_nested_progress() {
-    for i in dprange!(0..3, name = "RANGE") {
+    for i in dpir!(0..3, name = "RANGE") {
         let items = vec![
             String::from("apple"),
             String::from("banana"),
             String::from("orange"),
         ];
-        for item in dpiter!(items, name = "VECTOR") {
+        for item in dpi_iter!(items, name = "VECTOR") {
             println!(" i is {}; item is {}", i, item);
             thread::sleep(Duration::from_millis(1000));
         }
     }
 }
-
-

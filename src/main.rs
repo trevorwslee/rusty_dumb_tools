@@ -13,7 +13,10 @@ use rusty_dumb_tools::{
     demo::{
         self,
         demo_arg::arg_parser_sample,
-        demo_progress::{try_nested_progress, try_progress, try_progress_range, try_progress_single, try_simple_progress_range},
+        demo_progress::{
+            try_nested_progress, try_progress, try_progress_range, try_progress_single,
+            try_simple_progress_range,
+        },
     },
     json,
     prelude::*,

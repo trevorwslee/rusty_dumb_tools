@@ -15,7 +15,7 @@ fn test_progress_iter() {
 fn _test_progress_iter(try_with_total: bool, nested: bool) {
     let v = vec![0, 1, 2, 3, 4];
     let iter = if try_with_total {
-        dpiter!(v, name = "VEC", desc = "vector")
+        dpi_iter!(v, name = "VEC", desc = "vector")
     } else {
         dpiw!(v.iter(), name = "VEC", desc = "vector")
     };
@@ -23,7 +23,7 @@ fn _test_progress_iter(try_with_total: bool, nested: bool) {
     for i in iter {
         result.push(*i);
         if nested {
-            for j in dprange!(100..102) {
+            for j in dpir!(100..102) {
                 result.push(j + *i);
             }
         }
@@ -48,11 +48,11 @@ fn test_progress_into() {
 
 fn _test_progress_into(range: bool, try_with_total: bool) {
     let iter = if range {
-        dprange!(0..10, name = "RANGE", desc = "range")
+        dpir!(0..10, name = "RANGE", desc = "range")
     } else {
         let v = vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
         if try_with_total {
-            dpintoiter!(v, name = "VEC", desc = "vector")
+            dpi_into_iter!(v, name = "VEC", desc = "vector")
         } else {
             dpiw!(v.into_iter(), name = "VEC", desc = "vector")
         }
@@ -63,4 +63,3 @@ fn _test_progress_into(range: bool, try_with_total: bool) {
     }
     assert_eq!(result, vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
 }
-

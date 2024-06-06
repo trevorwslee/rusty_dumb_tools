@@ -1,7 +1,7 @@
 # [RustyDumbTools](https://github.com/trevorwslee/rusty_dumb_tools) (v0.1.14)
 
 A collection of [simple tools in ***Rust***](https://crates.io/crates/rusty_dumb_tools) as ***Rust*** modules:
-* [`crate::progress::DumbProgressIterator`]:
+* [`crate::progress::DumbProgressIndicator`]:
   A simple `Iterator` wrapper that helps to show progress of the iteration.
 * [`crate::arg::DumbArgParser`](https://docs.rs/rusty_dumb_tools/latest/rusty_dumb_tools/arg/struct.DumbArgParser.html):
   A simple argument parser.
@@ -23,19 +23,19 @@ A collection of [simple tools in ***Rust***](https://crates.io/crates/rusty_dumb
   A terminal / text-based "screen" update helper.
   It is extended from `crate::ltemp::DumbLineTemplate`, and should be helpful in managing the updates of the formatted lines that acts as a "screen".
  
-## Sample Code for `DumbProgressIterator`
+## Sample Code for `DumbProgressIndicator`
 
 ### Simple:
 ```
 use crate::prelude::*;
 pub fn try_simple_progress_range() {
-    for i in dprange!(0..6, name = "RANGE", desc = "demo iteration of range") {
+    for i in dpir!(0..6, name = "RANGE", desc = "demo iteration of range") {
         println!(" i is {}", i);
         thread::sleep(Duration::from_millis(1000));
     }
 }
 ```
-Note that `dprange` is a macro for wrapping the `Range` into a `DumbProgressIterator` object, which implements `Iterator` trait so that it can be used in *for* construct.
+Note that `dpir` is a macro for wrapping the `Range` (`0..6`) into a `DumbProgressIndicator` object, which implements `Iterator` trait so that it can be used in *for* construct.
 
 The output will be like
 ```
@@ -51,20 +51,20 @@ The output will be like
 ```
 use crate::prelude::*;
 pub fn try_nested_progress() {
-    for i in dprange!(0..3, name = "RANGE") {
+    for i in dpir!(0..3, name = "RANGE") {
         let items = vec![
             String::from("apple"),
             String::from("banana"),
             String::from("orange"),
         ];
-        for item in dpiter!(items, name = "VECTOR") {
+        for item in dpi_iter!(items, name = "VECTOR") {
             println!(" i is {}; item is {}", i, item);
             thread::sleep(Duration::from_millis(1000));
         }
     }
 }
 ```
-Note that `dpiter` is a macro for wrapping `Vec` (`items.iter()`) into a `DumbProgressIterator` object, which implements `Iterator` trait so that it can be used in *for* construct.
+Note that `dpi_iter` is a macro for wrapping `Vec` (`items.iter()`) into a `DumbProgressIndicator` object, which implements `Iterator` trait so that it can be used in *for* construct.
 
 The output will be like
 ```
@@ -490,7 +490,7 @@ MIT
 # Change History:
 
 * v0.1.14
-  - added DumbProgressIterator
+  - added DumbProgressIndicator
   - bug fix
 
 * v0.1.13

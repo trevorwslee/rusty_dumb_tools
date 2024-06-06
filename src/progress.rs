@@ -1,16 +1,10 @@
-//! A simple [`Iterator`] wrapper that helps to show progress of the iteration -- [`crate::progress::DumbProgressIterator`]
-
+//! A simple [`Iterator`] wrapper that helps to show progress of the iteration -- [`crate::progress::DumbProgressIndicator`]
 
 #![deny(warnings)]
 #![allow(unused)]
 
 use std::{
-    cell::RefCell,
-    io::{self, Write},
-    mem::MaybeUninit,
-    sync::Once,
-    thread,
-    time::Duration,
+    borrow::Borrow, cell::RefCell, io::{self, Write}, mem::MaybeUninit, ops::Range, sync::Once, thread, time::Duration
 };
 
 #[macro_export]
@@ -26,12 +20,12 @@ macro_rules! dpiw {
         $(setting.total = Some($total);)?
         $(setting.name = Some($name.to_string());)?
         $(setting.desc = Some($desc.to_string());)?
-        DumbProgressIterator::new(Box::new($x), setting)
+        DumbProgressIndicator::new(Box::new($x), setting)
     }};
 }
 
 #[macro_export]
-macro_rules! dpiter {
+macro_rules! dpir {
     ($x:expr
         $(, name=$name:expr)?
         $(, desc=$desc:expr)?
@@ -42,27 +36,13 @@ macro_rules! dpiter {
         setting.total = Some($x.len());
         $(setting.name = Some($name.to_string());)?
         $(setting.desc = Some($desc.to_string());)?
-        DumbProgressIterator::new(Box::new($x.iter()), setting)
+        DumbProgressIndicator::new(Box::new($x.into_iter()), setting)
     }};
 }
-// #[macro_export]
-// macro_rules! dpiter_nt {
-//     ($x:expr
-//         $(, name=$name:expr)?
-//         $(, desc=$desc:expr)?
-//     ) => {{
-//         let mut setting = DumbProgressSetting {
-//             ..DumbProgressSetting::default()
-//         };
-//         setting.total = None;
-//         $(setting.name = Some($name.to_string());)?
-//         $(setting.desc = Some($desc.to_string());)?
-//         DumbProgressIterator::new(Box::new($x.iter()), setting)
-//     }};
-// }
 
-#[macro_export]
-macro_rules! dpintoiter {
+
+#[macro_export]  // the same as dpiw, but provide total automatically
+macro_rules! dpi_iter {
     ($x:expr
         $(, name=$name:expr)?
         $(, desc=$desc:expr)?
@@ -73,27 +53,12 @@ macro_rules! dpintoiter {
         setting.total = Some($x.len());
         $(setting.name = Some($name.to_string());)?
         $(setting.desc = Some($desc.to_string());)?
-        DumbProgressIterator::new(Box::new($x.into_iter()), setting)
+        DumbProgressIndicator::new(Box::new($x.iter()), setting)
     }};
 }
-// #[macro_export]
-// macro_rules! dpintoiter_nt {
-//     ($x:expr
-//         $(, name=$name:expr)?
-//         $(, desc=$desc:expr)?
-//     ) => {{
-//         let mut setting = DumbProgressSetting {
-//             ..DumbProgressSetting::default()
-//         };
-//         setting.total = None;
-//         $(setting.name = Some($name.to_string());)?
-//         $(setting.desc = Some($desc.to_string());)?
-//         DumbProgressIterator::new(Box::new($x.into_iter()), setting)
-//     }};
-// }
 
-#[macro_export]
-macro_rules! dprange {
+#[macro_export] // the same as dpir 
+macro_rules! dpi_into_iter {
     ($x:expr
         $(, name=$name:expr)?
         $(, desc=$desc:expr)?
@@ -104,7 +69,7 @@ macro_rules! dprange {
         setting.total = Some($x.len());
         $(setting.name = Some($name.to_string());)?
         $(setting.desc = Some($desc.to_string());)?
-        DumbProgressIterator::new(Box::new($x.into_iter()), setting)
+        DumbProgressIndicator::new(Box::new($x.into_iter()), setting)
     }};
 }
 
@@ -116,15 +81,15 @@ macro_rules! dprange {
 //     ];
 //     let desc = format!("level {}", level);
 //     // let mut iter = {
-//     //     let mut builder = DumbProgressIteratorBuilder::new(Box::new(items.iter()));
+//     //     let mut builder = DumbProgressIndicatorBuilder::new(Box::new(items.iter()));
 //     //     builder.set_description(desc.as_str());
 //     //     let mut iter = builder.build();
 //     //     iter
 //     // };
 //     let name = format!("L{}", level);
-//     let mut iter = dpintoiter!(items, name = name, desc = desc);
+//     let mut iter = dpi_into_iter!(items, name = name, desc = desc);
 //     //let source = DumbProgressSource::new(Box::new(items.into_iter()));
-//     //let mut iter = { DumbProgressIterator::new_with_desc(source, desc) };
+//     //let mut iter = { DumbProgressIndicator::new_with_desc(source, desc) };
 //     while let Some(item) = iter.next() {
 //         if show_items {
 //             println!("          * iter(): {}", item);
@@ -152,7 +117,7 @@ macro_rules! dprange {
 //         {
 //             let mut iter = dpiw!(items.iter());
 //             //let progress_source = items.to_progress_source();
-//             //let mut iter = { DumbProgressIterator::new(progress_source, DumbProgressSetting::default()) };
+//             //let mut iter = { DumbProgressIndicator::new(progress_source, DumbProgressSetting::default()) };
 //             while let Some(item) = iter.next() {
 //                 if show_items {
 //                     println!("          * iter(): {}", item);
@@ -174,40 +139,51 @@ const DEF_SHOW_GAP_MILLIS: u16 = 100;
 const DEF_PREFER_EMOJIS: bool = true;
 const MAX_NESTED_PROGRESS_BAR_COUNT: u8 = 2;
 
-pub struct DumbProgressIterator<'a, T> {
+pub struct DumbProgressIndicator<'a, T> {
     boxed_iterator: Box<dyn Iterator<Item = T> + 'a>,
     //description: Option<String>,
     progress_entry_id: usize,
 }
 
-impl<'a, T> DumbProgressIterator<'a, T> {
-    pub fn new_simple(boxed_iterator: Box<dyn Iterator<Item = T> + 'a>) -> DumbProgressIterator<T> {
-        DumbProgressIterator::new_ex(boxed_iterator, DumbProgressSetting::default())
+impl<'a, T> DumbProgressIndicator<'a, T> {
+    pub fn new_simple(
+        boxed_iterator: Box<dyn Iterator<Item = T> + 'a>,
+    ) -> DumbProgressIndicator<T> {
+        DumbProgressIndicator::new_ex(boxed_iterator, DumbProgressSetting::default())
     }
     pub fn new(
         boxed_iterator: Box<dyn Iterator<Item = T> + 'a>,
         setting: DumbProgressSetting,
-    ) -> DumbProgressIterator<T> {
-        DumbProgressIterator::new_ex(boxed_iterator, setting)
+    ) -> DumbProgressIndicator<T> {
+        DumbProgressIndicator::new_ex(boxed_iterator, setting)
     }
     fn new_with_desc(
         boxed_iterator: Box<dyn Iterator<Item = T> + 'a>,
         desc: String,
-    ) -> DumbProgressIterator<T> {
+    ) -> DumbProgressIndicator<T> {
         let setting = DumbProgressSetting {
             desc: Some(desc),
             ..DumbProgressSetting::default()
         };
-        DumbProgressIterator::new_ex(boxed_iterator, setting)
+        DumbProgressIndicator::new_ex(boxed_iterator, setting)
     }
     fn new_ex(
         boxed_iterator: Box<dyn Iterator<Item = T> + 'a>,
         setting: DumbProgressSetting,
-    ) -> DumbProgressIterator<T> {
+    ) -> DumbProgressIndicator<T> {
+        if false {
+            let (start, end) = boxed_iterator.as_ref().size_hint();
+            if let Some(e) = end {
+                let t = e - start;  // TODO: make use of it instead of need to input total
+                if let Some(total) = setting.total {
+                    assert_eq!(total, t);
+                }
+            }
+        }
         let progress_entry_id = get_the_progress_shower_ref()
             .borrow_mut()
             .register_progress(Progress::Counter(0), setting);
-        DumbProgressIterator {
+        DumbProgressIndicator {
             boxed_iterator,
             //description,
             progress_entry_id,
@@ -215,7 +191,7 @@ impl<'a, T> DumbProgressIterator<'a, T> {
     }
 }
 
-impl<'a, T> Iterator for DumbProgressIterator<'a, T> {
+impl<'a, T> Iterator for DumbProgressIndicator<'a, T> {
     type Item = T;
     fn next(&mut self) -> Option<Self::Item> {
         let result = self.boxed_iterator.as_mut().next();
@@ -232,9 +208,9 @@ impl<'a, T> Iterator for DumbProgressIterator<'a, T> {
     }
 }
 
-impl<'a, T> Drop for DumbProgressIterator<'a, T> {
+impl<'a, T> Drop for DumbProgressIndicator<'a, T> {
     fn drop(&mut self) {
-        //println!("DumbProgressIterator dropped");
+        //println!("DumbProgressIndicator dropped");
         get_the_progress_shower_ref()
             .borrow_mut()
             .unregister_progress(self.progress_entry_id);
@@ -647,5 +623,21 @@ fn get_the_progress_shower_ref() -> &'static RefCell<ProgressShower> {
 //     fn into_progress_source(&'a self) -> DumbProgressSource<'a, &T> {
 //         let boxed_iterator = Box::new(self.into_iter());
 //         DumbProgressSource::new(boxed_iterator)
+//     }
+// }
+
+//     fn to_iterator(&'a self) -> (Box<dyn Iterator<Item = T> + 'a>, usize);
+// }
+// impl<'a, T> DumbProgressIteratorProviderTrait<'a, T> for Range<T> {
+//     fn to_iterator(&'a self) -> (Box<dyn Iterator<Item = T> + 'a>, usize) {
+//         let r: Range<i32> = 0..10;
+//         r.len();
+//         let ri = r.into_iter();
+//         ri.len();
+//         let s = *self;
+//         let t = s.len();
+//         let i = s.into_iter();
+//         let b = Box::new(i);
+//         (b, t)
 //     }
 // }
