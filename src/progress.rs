@@ -190,6 +190,42 @@ const DEF_PREFER_EMOJIS: bool = true;
 const MAX_NESTED_PROGRESS_BAR_COUNT: u8 = 2;
 
 /// Although [DumbProgressIndicator] can be created directly, it is recommended to use macro [dpiw!], [dpir!], [dpi_iter!] or [dpi_into_iter!].
+/// - For Range, use [dpir!] like
+/// ```
+/// use rusty_dumb_tools::prelude::*;
+/// for i in dpir!(0..6) {
+///     println!("i: {}", i);
+/// }
+/// ```
+/// - For Vec (`iter()`), use [dpi_iter!] like
+/// ```
+/// use rusty_dumb_tools::prelude::*;
+/// let items = vec![1, 2, 3, 4, 5];
+/// for i in dpi_iter!(items) {
+///    println!("i: {}", i);
+/// }
+/// ```
+/// - For Vec (`into_iter()`), use [dpi_into_iter!] like
+/// ```
+/// use rusty_dumb_tools::prelude::*;
+/// let items = vec![1, 2, 3, 4, 5];
+/// for i in dpi_into_iter!(items) {
+///    println!("i: {}", i);
+/// }
+/// ```
+/// - For Open-ended Range or explicit [Iterator], use [dpiw!] like
+/// ```
+/// use rusty_dumb_tools::prelude::*;
+/// for i in dpiw!(0..) {
+///     let items = vec![1, 2, 3, 4, 5];
+///     for item in dpiw!(items.iter()) {
+///         println!("i: {}; item: {}", i, item);
+///     }
+///     if i > 3 {
+///         break;
+///     }
+/// }
+/// ```
 /// In case direct creation is desired, it can be created like:
 /// ```
 /// use rusty_dumb_tools::prelude::*;

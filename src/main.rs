@@ -28,7 +28,7 @@ fn main() {
     println!("The version of this crate is: {}", version);
 
     if false {
-        try_nested_progress(false);
+        try_nested_progress();
         return;
     }
 

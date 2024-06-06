@@ -2,20 +2,32 @@ use std::{thread, time::Duration};
 
 use crate::prelude::*;
 
-
 pub fn create_demo_progress_parser() -> DumbArgParser {
     let mut parser = DumbArgParser::new();
     parser.set_description("This is a simple iteration progress demo.");
-    dap_arg!("-break", fixed=true)
+    dap_arg!("-break", fixed = true)
         .set_description("break out in the middle")
+        .add_to(&mut parser)
+        .unwrap();
+    dap_arg!("-nested", fixed = true)
+        .set_description("nesterd iteration")
         .add_to(&mut parser)
         .unwrap();
     parser
 }
 
 pub fn handle_demo_progress(parser: DumbArgParser) {
-    let break_out = parser.get_or_default("-break", false);
-    try_nested_progress(break_out);
+    let break_out: bool = parser.get_or_default("-break", false);
+    let nested: bool = parser.get_or_default("-nested", false);
+    if break_out {
+        try_simple_progress_range_open_ended();
+    } else {
+        if nested {
+            try_nested_progress();
+        } else {
+            try_simple_progress_range();
+        }
+    }
 }
 
 pub fn try_progress(sleep_millis: u64, level: usize, try_with_total: bool) {
@@ -97,14 +109,22 @@ pub fn try_progress_range(
     }
 }
 
-// use crate::prelude::*;
+pub fn try_simple_progress_range_open_ended() {
+    for i in dpiw!(0.., name = "RANGE", desc = "demo iteration of range") {
+        println!(" i is {}", i);
+        thread::sleep(Duration::from_millis(1000));
+        if i > 6 {
+            break;
+        }
+    }
+}
 pub fn try_simple_progress_range() {
     for i in dpir!(0..6, name = "RANGE", desc = "demo iteration of range") {
         println!(" i is {}", i);
         thread::sleep(Duration::from_millis(1000));
     }
 }
-pub fn try_nested_progress(break_in_the_middle: bool) {
+pub fn try_nested_progress() {
     //DumbProgressSetting::set_max_nested_progress_bar_count(1);
     for i in dpir!(0..3, name = "RANGE") {
         let items = vec![
@@ -115,9 +135,6 @@ pub fn try_nested_progress(break_in_the_middle: bool) {
         for item in dpi_iter!(items, name = "VECTOR") {
             println!(" i is {}; item is {}", i, item);
             thread::sleep(Duration::from_millis(1000));
-            if break_in_the_middle {
-                break;
-            }
         }
     }
 }

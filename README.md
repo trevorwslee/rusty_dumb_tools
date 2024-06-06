@@ -489,6 +489,9 @@ MIT
 
 # Change History:
 
+* v0.1.15
+  - bug fix
+
 * v0.1.14
   - added DumbProgressIndicator
   - bug fix
