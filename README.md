@@ -1,4 +1,4 @@
-# [RustyDumbTools](https://github.com/trevorwslee/rusty_dumb_tools) (v0.1.14)
+# [RustyDumbTools](https://github.com/trevorwslee/rusty_dumb_tools) (v0.1.15)
 
 A collection of [simple tools in ***Rust***](https://crates.io/crates/rusty_dumb_tools) as ***Rust*** modules:
 * [`crate::progress::DumbProgressIndicator`](https://docs.rs/rusty_dumb_tools/latest/rusty_dumb_tools/progress/struct.DumbProgressIndicator.html):

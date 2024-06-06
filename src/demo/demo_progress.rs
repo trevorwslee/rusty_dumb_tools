@@ -2,6 +2,22 @@ use std::{thread, time::Duration};
 
 use crate::prelude::*;
 
+
+pub fn create_demo_progress_parser() -> DumbArgParser {
+    let mut parser = DumbArgParser::new();
+    parser.set_description("This is a simple iteration progress demo.");
+    dap_arg!("-break", fixed=true)
+        .set_description("break out in the middle")
+        .add_to(&mut parser)
+        .unwrap();
+    parser
+}
+
+pub fn handle_demo_progress(parser: DumbArgParser) {
+    let break_out = parser.get_or_default("-break", false);
+    try_nested_progress(break_out);
+}
+
 pub fn try_progress(sleep_millis: u64, level: usize, try_with_total: bool) {
     DumbProgressSetting::set_style(DumbProgressStyle::Default);
     let items = vec![
@@ -88,8 +104,8 @@ pub fn try_simple_progress_range() {
         thread::sleep(Duration::from_millis(1000));
     }
 }
-pub fn try_nested_progress() {
-    DumbProgressSetting::set_max_nested_progress_bar_count(1);
+pub fn try_nested_progress(break_in_the_middle: bool) {
+    //DumbProgressSetting::set_max_nested_progress_bar_count(1);
     for i in dpir!(0..3, name = "RANGE") {
         let items = vec![
             String::from("apple"),
@@ -99,6 +115,9 @@ pub fn try_nested_progress() {
         for item in dpi_iter!(items, name = "VECTOR") {
             println!(" i is {}; item is {}", i, item);
             thread::sleep(Duration::from_millis(1000));
+            if break_in_the_middle {
+                break;
+            }
         }
     }
 }

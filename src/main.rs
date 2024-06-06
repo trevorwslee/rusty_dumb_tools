@@ -27,8 +27,8 @@ fn main() {
     let version = env!("CARGO_PKG_VERSION");
     println!("The version of this crate is: {}", version);
 
-    if true {
-        try_nested_progress();
+    if false {
+        try_nested_progress(false);
         return;
     }
 

@@ -27,6 +27,10 @@ pub mod test_ltemp;
 #[cfg(test)]
 pub mod test_progress;
 
+use demo_arg::create_debug_arg_parser;
+use demo_ltemp::create_demo_ltemp_parser;
+use demo_progress::{create_demo_progress_parser, handle_demo_progress};
+
 use crate::prelude::*;
 
 use self::{
@@ -64,6 +68,7 @@ pub fn create_demo_parser() -> DumbArgParser {
     dap_arg!("demo", value = "calc")
         .set_description("a demo")
         .set_with_desc_enums(vec![
+            "progress:DumbProgessIndicator demo",
             "json:DumbJsonProcessor demo",
             "calc:DumbCalcProcessor command-line input demo",
             "calc-repl:DumbCalcProcessor REPL demo",
@@ -100,7 +105,7 @@ pub fn handle_sub_demo(parser: DumbArgParser) {
             handle_demo_json(demo_parser);
         }
         "ltemp" => {
-            let mut sub_demo_parser = demo_ltemp::create_demo_ltemp_parser();
+            let mut sub_demo_parser = create_demo_ltemp_parser();
             parser.process_rest_args("demo", &mut sub_demo_parser);
             handle_demo_ltemp(sub_demo_parser);
         }
@@ -108,9 +113,14 @@ pub fn handle_sub_demo(parser: DumbArgParser) {
             handle_demo_lblscreen();
         }
         "arg" => {
-            let mut sub_demo_parser = demo_arg::create_debug_arg_parser();
+            let mut sub_demo_parser = create_debug_arg_parser();
             parser.process_rest_args("demo", &mut sub_demo_parser);
             handle_demo_arg(sub_demo_parser);
+        }
+        "progress" => {
+            let mut sub_demo_parser = create_demo_progress_parser();
+            parser.process_rest_args("demo", &mut sub_demo_parser);
+            handle_demo_progress(sub_demo_parser);
         }
         _ => panic!("Unknown sub-demo: {}", demo),
     };
