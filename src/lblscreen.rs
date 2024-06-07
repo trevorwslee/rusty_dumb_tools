@@ -46,9 +46,9 @@ impl Default for LBLScreenSettings {
     }
 }
 
-/// a simple terminal / text-based "screen" update helper, which relies on [`DumbLineTemplate`] to format each "screen" lines
+/// A simple terminal / text-based "screen" update helper, which relies on [`DumbLineTemplate`] to format each "screen" lines
 ///
-/// for example:
+/// For example:
 /// ```
 /// use std::collections::HashMap;
 /// use rusty_dumb_tools::prelude::*;
@@ -104,7 +104,7 @@ impl Default for LBLScreenSettings {
 /// ----------------------------------------
 /// ```
 ///
-/// please refer to [`DumbLineTemplate`] for more details on the line formatting of the different lines of the "screen";
+/// Please refer to [`DumbLineTemplate`] for more details on the line formatting of the different lines of the "screen";
 /// for a fuller sample code, please refer to the "calculator" sub-demo of [`crate::demo::run_demo`]
 pub struct DumbLineByLineScreen {
     line_temps: Vec<DumbLineTemplate>,

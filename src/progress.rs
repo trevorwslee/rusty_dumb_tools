@@ -1,4 +1,4 @@
-//! A simple [`Iterator`] wrapper that helps to show progress of the iteration -- [`crate::progress::DumbProgressIndicator`]
+//! A simple [`Iterator`] wrapper that helps to show progress of iteration -- [`crate::progress::DumbProgressIndicator`]
 
 #![deny(warnings)]
 #![allow(unused)]
@@ -15,7 +15,7 @@ use std::{
     time::Duration,
 };
 
-/// use this macro to wrap an [Iterator] with [DumbProgressIndicator] to show progress of the iteration
+/// use this macro to wrap an [Iterator] with [DumbProgressIndicator] to show progress of iteration
 ///
 /// e.g.
 /// ```
@@ -43,7 +43,7 @@ macro_rules! dpiw {
     }};
 }
 
-/// use this macro to wrap a [Range] with [DumbProgressIndicator] to show progress of the iteration
+/// use this macro to wrap a [Range] with [DumbProgressIndicator] to show progress of iteration
 ///
 /// e.g.
 /// ```
@@ -65,11 +65,11 @@ macro_rules! dpir {
         setting.total = Some($x.len());
         $(setting.name = Some($name.to_string());)?
         $(setting.desc = Some($desc.to_string());)?
-        DumbProgressIndicator::new(Box::new($x.into_iter()), setting)
+        DumbProgressIndicator::new(Box::new($x), setting)
     }};
 }
 
-/// use this macro to wrap a [Vec] (`iter()`) with [DumbProgressIndicator] to show progress of the iteration
+/// use this macro to wrap a [Vec] `iter()` with [DumbProgressIndicator] to show progress of iteration
 ///
 /// e.g.
 /// ```
@@ -96,7 +96,7 @@ macro_rules! dpi_iter {
     }};
 }
 
-/// use this macro to wrap a [Vec] (`into_iter()`) with [DumbProgressIndicator] to show progress of the iteration
+/// use this macro to wrap a [Vec] `into_iter()` with [DumbProgressIndicator] to show progress of iteration
 ///
 /// e.g.
 /// ```
@@ -189,15 +189,28 @@ const DEF_SHOW_GAP_MILLIS: u16 = 100;
 const DEF_PREFER_EMOJIS: bool = true;
 const MAX_NESTED_PROGRESS_BAR_COUNT: u8 = 2;
 
+/// [DumbProgressIndicator] is a simple [`Iterator`] wrapper that helps to show progress of iteration.
+/// It can show the progress of iteration like:
+/// <pre>
+/// 💠 STAGE: 1/3 🌑🌓🌕🌕🌕🌕🌕🌕🌕🌕 – iteration of stages 💠 …  done stage 1
+/// 💠 STAGE: 2/3 🌑🌑🌑🌕🌕🌕🌕🌕🌕🌕 – iteration of stages 💠 …  done stage 2
+/// 💠 STAGE: 3/3 🌑🌑🌑🌑🌑🌕🌕🌕🌕🌕 – iteration of stages 💠 …  done stage 3
+/// </pre>
+/// - `STAGE` -- the name of the progress indicator provided
+/// - `1/3` -- `1` means the 1st iteration, and `3` is the total number of iterations
+/// - `🌑🌓🌕🌕🌕🌕🌕🌕🌕🌕` -- the progress bar / percentage bar
+/// - `iteration of stages` -- the description of the progress indicator provided
+/// - `done stage 1` -- the [println!] output of the program
+/// 
 /// Although [DumbProgressIndicator] can be created directly, it is recommended to use macro [dpiw!], [dpir!], [dpi_iter!] or [dpi_into_iter!].
-/// - For Range, use [dpir!] like
+/// - For [Range], use [dpir!] like
 /// ```
 /// use rusty_dumb_tools::prelude::*;
 /// for i in dpir!(0..6) {
 ///     println!("i: {}", i);
 /// }
 /// ```
-/// - For Vec (`iter()`), use [dpi_iter!] like
+/// - For [Vec] `iter()`, use [dpi_iter!] like
 /// ```
 /// use rusty_dumb_tools::prelude::*;
 /// let items = vec![1, 2, 3, 4, 5];
@@ -205,7 +218,7 @@ const MAX_NESTED_PROGRESS_BAR_COUNT: u8 = 2;
 ///    println!("i: {}", i);
 /// }
 /// ```
-/// - For Vec (`into_iter()`), use [dpi_into_iter!] like
+/// - For [Vec] `into_iter()`, use [dpi_into_iter!] like
 /// ```
 /// use rusty_dumb_tools::prelude::*;
 /// let items = vec![1, 2, 3, 4, 5];
@@ -213,7 +226,7 @@ const MAX_NESTED_PROGRESS_BAR_COUNT: u8 = 2;
 ///    println!("i: {}", i);
 /// }
 /// ```
-/// - For Open-ended Range or explicit [Iterator], use [dpiw!] like
+/// - For open-ended [Range] or explicit [Iterator], use [dpiw!] like
 /// ```
 /// use rusty_dumb_tools::prelude::*;
 /// for i in dpiw!(0..) {
@@ -226,7 +239,8 @@ const MAX_NESTED_PROGRESS_BAR_COUNT: u8 = 2;
 ///     }
 /// }
 /// ```
-/// In case direct creation is desired, it can be created like:
+///
+///  In case direct creation is desired, an instance of [DumbProgressIndicator] can be created like:
 /// ```
 /// use rusty_dumb_tools::prelude::*;
 /// let items = vec![1, 2, 3, 4, 5];
@@ -239,6 +253,7 @@ const MAX_NESTED_PROGRESS_BAR_COUNT: u8 = 2;
 /// for i in iter {
 /// }
 /// ```
+///
 /// There are additional *global* options that you can set like with
 /// * [DumbProgressSetting::set_style] -- set the style for show the progress -- `DumbProgressStyle::Simple` or `DumbProgressStyle::Default`
 /// * [DumbProgressSetting::set_max_nested_progress_bar_count] -- in case of nested iteration, set the maximum number of progress bars (percentage bars) to show

@@ -5,11 +5,11 @@ use crate::prelude::*;
 pub fn create_demo_progress_parser() -> DumbArgParser {
     let mut parser = DumbArgParser::new();
     parser.set_description("This is a simple iteration progress demo.");
-    dap_arg!("-break", fixed = true)
+    dap_arg!("-b", flag2 = "--break", fixed = true)
         .set_description("break out in the middle")
         .add_to(&mut parser)
         .unwrap();
-    dap_arg!("-nested", fixed = true)
+    dap_arg!("-n", flag2 = "--nested", fixed = true)
         .set_description("nesterd iteration")
         .add_to(&mut parser)
         .unwrap();
@@ -17,8 +17,8 @@ pub fn create_demo_progress_parser() -> DumbArgParser {
 }
 
 pub fn handle_demo_progress(parser: DumbArgParser) {
-    let break_out: bool = parser.get_or_default("-break", false);
-    let nested: bool = parser.get_or_default("-nested", false);
+    let break_out: bool = parser.get_or_default("-b", false);
+    let nested: bool = parser.get_or_default("-n", false);
     if break_out {
         try_simple_progress_range_open_ended();
     } else {

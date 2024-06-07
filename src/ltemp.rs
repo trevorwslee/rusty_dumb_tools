@@ -142,9 +142,9 @@ fn debug_ltemp() {
     println!("formatted: [{}]", formatted);
 }
 
-/// a simple line template for formatting a line; it can be use for printing values as a line with some template.
+/// A simple line template for formatting a line; it can be use for printing values as a line with some template.
 ///
-/// example:
+/// Example:
 /// ```
 /// use rusty_dumb_tools::prelude::*;
 /// use std::collections::HashMap;
@@ -179,14 +179,14 @@ fn debug_ltemp() {
 /// assert_eq!(line1, "| NAME   :        Trevor Lee |");
 /// assert_eq!(line2, "| AGE    :     <undisclosed> |");
 /// ```
-/// notes:
+/// Notes:
 /// * `"| "`: a fixed string
 /// * `dltc!("label", fixed_width = 6, align = 'L')`:
 ///   - a value-mapped component
 ///   - require a mapped value for key `label` when calling [`DumbLineTemplate::format`]
 ///   - also see the macros [`dlt_comps!`] and [`dltc!`]
 ///
-/// you may want to consider the helper [`crate::lblscreen::DumbLineByLineScreen`] for coding a simple terminal / text-based "screen"
+/// You may want to consider the helper [`crate::lblscreen::DumbLineByLineScreen`] for coding a simple terminal / text-based "screen"
 #[derive(Debug)]
 pub struct DumbLineTemplate {
     min_width: WIDTH,

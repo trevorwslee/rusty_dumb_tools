@@ -2,7 +2,7 @@
 
 A collection of [simple tools in ***Rust***](https://crates.io/crates/rusty_dumb_tools) as ***Rust*** modules:
 * [`crate::progress::DumbProgressIndicator`](https://docs.rs/rusty_dumb_tools/latest/rusty_dumb_tools/progress/struct.DumbProgressIndicator.html):
-  A simple `Iterator` wrapper that helps to show progress of the iteration.
+  A simple `Iterator` wrapper that helps to show progress of iteration.
 * [`crate::arg::DumbArgParser`](https://docs.rs/rusty_dumb_tools/latest/rusty_dumb_tools/arg/struct.DumbArgParser.html):
   A simple argument parser.
   It can be useful for handling command line argument parsing for a ***Rust*** program.
@@ -64,7 +64,7 @@ pub fn try_nested_progress() {
     }
 }
 ```
-Note that `dpi_iter` is a macro for wrapping `Vec` (`items.iter()`) into a `DumbProgressIndicator` object, which implements `Iterator` trait so that it can be used in *for* construct.
+Note that `dpi_iter` is a macro for wrapping `Vec` `items.iter()` into a `DumbProgressIndicator` object, which implements `Iterator` trait so that it can be used in *for* construct.
 
 The output will be like
 ```

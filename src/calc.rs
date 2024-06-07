@@ -136,10 +136,10 @@ pub fn test_calc() {}
 //     }
 // }
 
-/// a simple infix calculation processor that accepts a stream of "calculation units" and evaluate the result;
-/// please refer to [`DumbCalcProcessor::push`] for the acceptable "calculation units"
+/// A simple infix calculation processor that accepts a stream of "calculation units" and evaluate the result;
+/// Please refer to [`DumbCalcProcessor::push`] for the acceptable "calculation units"
 ///
-/// example:
+/// Example:
 /// ```
 /// use rusty_dumb_tools::calc::DumbCalcProcessor;
 /// let mut calc = DumbCalcProcessor::new();
@@ -151,7 +151,7 @@ pub fn test_calc() {}
 /// assert_eq!(5.0, calc.get_result().unwrap());
 /// ```
 ///
-/// you may want to refer to [`crate::demo::run_demo`] for a demo program that uses [`DumbCalcProcessor`];
+/// You may want to refer to [`crate::demo::run_demo`] for a demo program that uses [`DumbCalcProcessor`];
 /// additionally, you may want to consider [`crate::calculator::DumbCalculator`], which should make coding a calculator UI easier
 #[derive(Debug)]
 pub struct DumbCalcProcessor {

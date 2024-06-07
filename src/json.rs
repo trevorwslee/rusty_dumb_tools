@@ -96,9 +96,9 @@ const DEBUG_ON: bool = false;
 /// A simple JSON processor / stream parser, that processes input JSON (possibly streamed piece by piece).
 /// As soon as JSON entries are recognized, the configured callback is called for those recognized JSON entries
 ///
-/// for example:
+/// For example:
 /// ```
-/// use rusty_dumb_tools::json::{DumbJsonProcessor, InPlaceJsonEntryHandler, JsonEntry, JsonEntryHandler};
+/// use rusty_dumb_tools::prelude::*;
 /// let mut handler = InPlaceJsonEntryHandler::new(|json_entry| {
 ///     println!(
 ///         "In-Place JSON entry: `{}` => `{}`",
@@ -139,7 +139,7 @@ const DEBUG_ON: bool = false;
 ///   ]
 /// }
 /// ```
-/// the field-name/field-value pairs are:
+/// The field-name/field-value pairs are:
 /// - "simple_key" => "simple_value"
 /// - "nested.nested_key" => "nested_value"
 /// - "array.0" => "item0"

@@ -1,6 +1,6 @@
 //! A collection of simple tools in ***Rust*** as ***Rust*** modules:
 //! * [`crate::arg::DumbArgParser`]: A simple argument parser.
-//! * [`crate::progress::DumbProgressIndicator`]: A simple [`Iterator`] wrapper that helps to show progress of the iteration.
+//! * [`crate::progress::DumbProgressIndicator`]: A simple [`Iterator`] wrapper that helps to show progress of iteration.
 //! * [`crate::json::DumbJsonProcessor`]: A simple JSON processor / stream parser.
 //! It can be useful for handling command line argument parsing.
 //! * [`crate::calc::DumbCalcProcessor`]: A simple infix calculation processor.
