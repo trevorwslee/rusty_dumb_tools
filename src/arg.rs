@@ -221,8 +221,8 @@ fn debug_arg_sap() {
 /// | . <i32-arg> : REQUIRED; e.g. 123
 /// | . <multi-arg> ... : REQUIRED ...
 /// ```
-/// - `USAGE ...` -- indicate how the program should be run
-/// - `This is a simple argument parser` -- the provide description
+/// - `USAGE ...` -- the line that shows how the program should be invoked
+/// - `This is a simple argument parser` -- the provided description
 /// - `-h, --help : HELP` -- **special** for showing the `HELP` screen
 /// - '-v, --verbose : FLAG [true]' -- a *fixed* `FLAG` argument; when such *fixed* `FLAG` is supplied, the argument is treated as the *fixed* value `true`
 /// - `-n name, --name name : OPTIONAL; default [nobody]` -- an optional argument that requires a string (`name`) following it; if not supplied, the default value is `nobody`
