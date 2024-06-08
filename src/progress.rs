@@ -191,17 +191,17 @@ const MAX_NESTED_PROGRESS_BAR_COUNT: u8 = 2;
 
 /// [DumbProgressIndicator] is a simple [`Iterator`] wrapper that helps to show progress of iteration.
 /// It can show the progress of iteration like:
-/// <pre>
+/// ```_no_run
 /// 💠 STAGE: 1/3 🌑🌓🌕🌕🌕🌕🌕🌕🌕🌕 – iteration of stages 💠 …  done stage 1
 /// 💠 STAGE: 2/3 🌑🌑🌑🌕🌕🌕🌕🌕🌕🌕 – iteration of stages 💠 …  done stage 2
 /// 💠 STAGE: 3/3 🌑🌑🌑🌑🌑🌕🌕🌕🌕🌕 – iteration of stages 💠 …  done stage 3
-/// </pre>
+/// ```
 /// - `STAGE` -- the name of the progress indicator provided
 /// - `1/3` -- `1` means the 1st iteration, and `3` is the total number of iterations
 /// - `🌑🌓🌕🌕🌕🌕🌕🌕🌕🌕` -- the progress bar / percentage bar
 /// - `iteration of stages` -- the description of the progress indicator provided
 /// - `done stage 1` -- the [println!] output of the program
-/// 
+///
 /// Although [DumbProgressIndicator] can be created directly, it is recommended to use macro [dpiw!], [dpir!], [dpi_iter!] or [dpi_into_iter!].
 /// - For [Range], use [dpir!] like
 /// ```

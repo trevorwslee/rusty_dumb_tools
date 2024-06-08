@@ -187,7 +187,7 @@ fn debug_arg_sap() {
 /// use rusty_dumb_tools::prelude::*;
 /// let mut parser = DumbArgParser::new();
 /// parser.set_description("This is a simple argument parser.");
-/// parser.set_allow_missing_arguments();  // normal should not do this
+/// parser.set_allow_missing_arguments();  // *** normal should not do this; this is just to make this code to run without error  ***
 /// dap_arg!("-v", flag2="--verbose", fixed=true).add_to(&mut parser);  // argument flag "-v" / "--verbose" with fixed value (true) when the flag is present
 /// dap_arg!("-n", flag2="--name", default="nobody").add_to(&mut parser);  // argument "-n" / "--name" requiring input value, with default "nobody"
 /// dap_arg!("str-arg").add_to(&mut parser);  // positional argument "str-arg" (of type String)
@@ -206,6 +206,29 @@ fn debug_arg_sap() {
 /// * in case of invalid input argument, will show the error message as well as the help message, then the program will exit
 /// * arguments are typed; the default is [`String`]; others are [`std::i32`], [`std::i64`], [`std::f32`], [`std::f64`] and [`bool`]
 /// * also see the macro [`dap_arg`]
+///
+/// The above code, if run with invalid argument like `-x`, you will see the help screen like
+/// ```_no_run
+/// | !!!
+/// | !!! INVALID INPUT ARGUMENT: unknown input argument [-x]
+/// | !!!
+/// | USAGE: rusty_dumb_tools [-h] [-v] [-n name] <str-arg> <i32-arg> <multi-arg>
+/// | : This is a simple argument parser.
+/// | . -h, --help : HELP
+/// | . -v, --verbose : FLAG [true]
+/// | . -n name, --name name : OPTIONAL; default [nobody]
+/// | . <str-arg> : REQUIRED
+/// | . <i32-arg> : REQUIRED; e.g. 123
+/// | . <multi-arg> ... : REQUIRED ...
+/// ```
+/// - `USAGE ...` -- indicate how the program should be run
+/// - `This is a simple argument parser` -- the provide description
+/// - `-h, --help : HELP` -- **special** for showing the `HELP` screen
+/// - '-v, --verbose : FLAG [true]' -- a *fixed* `FLAG` argument; when such *fixed* `FLAG` is supplied, the argument is treated as the *fixed* value `true`
+/// - `-n name, --name name : OPTIONAL; default [nobody]` -- an optional argument that requires a string (`name`) following it; if not supplied, the default value is `nobody`
+/// - `<str-arg> : REQUIRED` -- a required positional argument of type `String`
+/// - `<i32-arg> : REQUIRED; e.g. 123` -- a required positional argument of type `i32`; the example value `123` is provided
+/// - `<multi-arg> ... : REQUIRED ...` -- positional argument that can accept multiple values; at least one argument is required; notice the `...`
 ///
 /// You may want to refer to [`crate::demo::run_demo`] for a demo program that uses [`DumbArgParser`].
 #[derive(Debug)]

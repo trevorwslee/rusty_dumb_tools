@@ -28,6 +28,47 @@ fn main() {
     println!("The version of this crate is: {}", version);
 
     if false {
+        use rusty_dumb_tools::prelude::*;
+        let mut handler = InPlaceJsonEntryHandler::new(|json_entry| {
+            println!(
+                "In-Place JSON entry: `{}` => `{}`",
+                json_entry.field_name, json_entry.field_value
+            );
+            assert!(json_entry.field_name == "greeting");
+            assert!(
+                json_entry.field_value.to_string()
+                    == "Hi❗ How are youüúüUÜÙÛ❓  👩‍⚕👨‍👩‍👧‍👦🇭🇰👍🏽😆"
+            );
+        });
+        let mut json_processor = DumbJsonProcessor::new(Box::new(&mut handler));
+        let json = r#"{ "greeting" : "Hi❗ How are youüúüUÜÙÛ❓  👩‍⚕👨‍👩‍👧‍👦🇭🇰👍🏽😆" }"#;
+        let res = json_processor.push_json(json);
+        assert!(res.is_ok() && res.unwrap().is_empty());
+        print!("~~~");
+        return;
+    }
+
+    if false {
+        use rusty_dumb_tools::prelude::*;
+        let mut parser = DumbArgParser::new();
+        parser.set_description("This is a simple argument parser.");
+        parser.set_allow_missing_arguments(); // normal should not do this
+        dap_arg!("-v", flag2 = "--verbose", fixed = true).add_to(&mut parser); // argument flag "-v" / "--verbose" with fixed value (true) when the flag is present
+        dap_arg!("-n", flag2 = "--name", default = "nobody").add_to(&mut parser); // argument "-n" / "--name" requiring input value, with default "nobody"
+        dap_arg!("str-arg").add_to(&mut parser); // positional argument "str-arg" (of type String)
+        dap_arg!("i32-arg", value = 123).add_to(&mut parser); // positional argument "i32-arg" of type i32 (inferred from the value 123)
+        dap_arg!("multi-arg").set_multi().add_to(&mut parser); // positional multi-argument "multi-arg" that will accept multiple values (one + rest)
+        parser.parse_args(); // parse from command-line arguments
+        println!(". -v: {:?}", parser.get::<bool>("-v"));
+        println!(". --verbose: {:?}", parser.get::<bool>("--verbose")); // will be the same parameter value as "-v"
+        println!(". --name: {:?}", parser.get::<String>("--name")); // can use "-n" as well
+        println!(". str-arg: {:?}", parser.get::<String>("str-arg"));
+        println!(". i32-arg: {:?}", parser.get::<i32>("i32-arg"));
+        println!(". multi-arg: {:?}", parser.get_multi::<String>("multi-arg"));
+        return;
+    }
+
+    if false {
         try_nested_progress();
         return;
     }

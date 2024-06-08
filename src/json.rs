@@ -111,8 +111,15 @@ const DEBUG_ON: bool = false;
 /// let json = r#"{ "greeting" : "Hi❗ How are youüúüUÜÙÛ❓  👩‍⚕👨‍👩‍👧‍👦🇭🇰👍🏽😆" }"#;
 /// let res = json_processor.push_json(json);
 /// assert!(res.is_ok() && res.unwrap().is_empty());
-/// print!("~~~")
+/// print!("~~~");
 /// ```
+///
+/// The output will be like:
+/// ```_no_run
+/// In-Place JSON entry: `greeting` => `Hi❗ How are youüúüUÜÙÛ❓  👩‍⚕👨‍👩‍👧‍👦🇭🇰👍🏽😆`
+/// ~~~
+/// ```
+///
 /// Note that [`InPlaceJsonEntryHandler`] is simply a helper that implements the [`JsonEntryHandler`] trait,
 /// which acts as a callback to handle [`JsonEntry`] as soon as it comes:
 /// * [`JsonEntryHandler::handle_json_entry`] is called when a JSON entry comes to be handled
