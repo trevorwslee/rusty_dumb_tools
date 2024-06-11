@@ -5,6 +5,7 @@ use crate::prelude::*;
 
 #[test]
 fn test_progress() {
+    // test one by one, since not thread-safe
     _test_progress_iter();
     _test_progress_into_iter();
     _test_progress_iter_objs();
